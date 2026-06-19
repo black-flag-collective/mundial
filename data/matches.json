@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T05:49:56.044Z",
+  "updatedAt": "2026-06-19T20:28:21.962Z",
   "days": [
     {
       "dow": "Thursday",
@@ -321,9 +321,10 @@
         "g": "D",
         "a": "USA",
         "b": "AUS",
-        "st": "UP",
-        "time": "3:00 PM ET",
-        "venue": "Lumen Field, Seattle"
+        "st": "LIVE",
+        "venue": "Lumen Field, Seattle",
+        "as": 2,
+        "bs": 0
       },
       {
         "g": "C",

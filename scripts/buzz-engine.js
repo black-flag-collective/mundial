@@ -2,12 +2,21 @@
  * Buzz engine — produces a live "social buzz" intensity per country for the
  * globe's beacon layer.
  *
- * This is the SIMULATED / GOAL-DERIVED source. It needs no external account and
- * runs for free. Buzz is synthesized from:
+ * This is the SIMULATED source. It needs no external account and runs for free.
+ * Buzz is synthesized from:
  *   - a rough per-country popularity weight (fan-base / social volume),
  *   - who is playing today / live (read from data/matches.json),
- *   - goal events (detected as scores change between data refreshes),
- *   - smooth procedural noise so the globe always feels alive.
+ *   - smooth procedural noise + live-match flares so the globe always feels alive,
+ *   - goal events, when the running process observes a score change on disk.
+ *
+ * Note on goal spikes: fireGoal() only triggers when the *same* engine instance
+ * sees matches.json change between reads. That happens in local dev or with an
+ * in-process updater, but NOT in the current production model, where the data
+ * is refreshed by a GitHub Action that commits matches.json and redeploys — each
+ * deploy starts a fresh process with a reset baseline, so cross-restart deltas
+ * are never observed. Live-match classification + procedural flares still drive
+ * spikes around in-progress games; precise per-goal spikes need a persistent
+ * baseline or a delta feed from the updater (not built here).
  *
  * It is intentionally source-agnostic: to wire in the real X API later, replace
  * `pump()` with an adapter that increments `count[code]` from the filtered

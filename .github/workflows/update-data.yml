@@ -17,8 +17,7 @@ on:
 
 concurrency:
   group: update-data
-  cancel-in-progress: false
-
+  cancel-in-progress: true
 permissions:
   contents: write
 

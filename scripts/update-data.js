@@ -64,7 +64,11 @@ function mergeUpdate(current, update) {
       const m = matches.find(x =>
         (x.a === um.a && x.b === um.b) || (x.a === um.b && x.b === um.a)
       );
-      if (m && (um.st === 'FT' || um.st === 'LIVE')) {
+      // Safety invariant: a confirmed final is immutable. Only patch matches that
+      // are not yet FT, and only with a final/live result. This guards against a
+      // web-search result silently rewriting a good score (e.g. CAN–QAT flipping
+      // 2–0 → 6–0 between runs).
+      if (m && m.st !== 'FT' && (um.st === 'FT' || um.st === 'LIVE')) {
         const flipped = m.a !== um.a;
         m.as = flipped ? um.bs : um.as;
         m.bs = flipped ? um.as : um.bs;

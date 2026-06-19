@@ -781,8 +781,11 @@ class Component extends DCLogic {
   }
 
   _loadBuzz() {
+    this._buzzStopped = false;
     const poll = () => {
-      fetch('/api/buzz.json')
+      if (this._buzzStopped) return;
+      this._buzzAbort = new AbortController();
+      fetch('/api/buzz.json', { signal: this._buzzAbort.signal })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data && Array.isArray(data.buzz)) {
@@ -792,7 +795,8 @@ class Component extends DCLogic {
           }
         })
         .catch(() => {})
-        .finally(() => { this._buzzTimer = setTimeout(poll, 4000); });
+        // Don't resurrect the loop after unmount: bail if stopped.
+        .finally(() => { if (!this._buzzStopped) this._buzzTimer = setTimeout(poll, 4000); });
     };
     poll();
   }
@@ -821,7 +825,9 @@ class Component extends DCLogic {
     window.removeEventListener('mousemove', this.onMove);
     window.removeEventListener('resize', this.onResize);
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
+    this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
+    if (this._buzzAbort) this._buzzAbort.abort();
     if (this.renderer) this.renderer.dispose();
   }
 

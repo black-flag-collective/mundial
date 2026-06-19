@@ -9,10 +9,12 @@
 <link rel="canonical" href="https://mundial.buzz/">
 <meta name="theme-color" content="#04101c">
 
-<!-- Icons -->
+<!-- Icons: .ico/.png fallbacks first (Safari & legacy clients don't reliably
+     support SVG favicons), then the scalable SVG for modern browsers. -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<!-- TODO: add a dedicated 180x180 apple-touch-icon.png; using the OG image here is too large. -->
-<!-- <link rel="apple-touch-icon" href="/og-image.png"> -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">

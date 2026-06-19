@@ -10,6 +10,18 @@ const INITIAL_DATA_PATH = path.join(__dirname, 'data', 'matches.json');
 // Ensure data directory exists
 fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
 
+// Canonical host: redirect www.mundial.buzz → mundial.buzz (preserving path + query).
+// The app is served over HTTPS (Fly force_https), so always redirect to https.
+app.use((req, res, next) => {
+  const host = (req.hostname || '').toLowerCase();
+
+  if (host === 'www.mundial.buzz') {
+    return res.redirect(301, `https://mundial.buzz${req.originalUrl}`);
+  }
+
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/data.json', (req, res) => {

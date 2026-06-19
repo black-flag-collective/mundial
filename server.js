@@ -22,7 +22,22 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Lightweight liveness probe for Fly health checks / uptime monitors.
+// Kept above static so it never touches the filesystem.
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+app.use(express.static(path.join(__dirname, 'public'), {
+  // Cache fingerprint-free assets for an hour, but always revalidate the app
+  // shell so HTML/data changes ship immediately on the next request.
+  maxAge: '1h',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 app.get('/api/data.json', (req, res) => {
   try {
@@ -46,6 +61,9 @@ app.get('/api/data.json', (req, res) => {
       data.days[data.days.length - 1].today = true;
     }
 
+    // Short TTL: data refreshes at most every ~30 min and the `today` flag only
+    // flips at midnight, so a 60s cache cuts load without serving stale scores.
+    res.set('Cache-Control', 'public, max-age=60');
     res.json(data);
   } catch (err) {
     console.error('Failed to serve data.json:', err.message);

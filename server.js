@@ -13,11 +13,12 @@ fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
 // Canonical host: redirect www.mundial.buzz → mundial.buzz (preserving path + query).
 // The app is served over HTTPS (Fly force_https), so always redirect to https.
 app.use((req, res, next) => {
-  const host = req.headers.host || '';
-  if (host.toLowerCase().startsWith('www.')) {
-    const canonical = host.slice(4);
-    return res.redirect(301, `https://${canonical}${req.originalUrl}`);
+  const host = (req.headers.host || '').split(':')[0].toLowerCase();
+
+  if (host === 'www.mundial.buzz') {
+    return res.redirect(301, `https://mundial.buzz${req.originalUrl}`);
   }
+
   next();
 });
 

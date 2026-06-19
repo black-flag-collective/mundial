@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; }
+  @keyframes hintPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
+  .mday-scroll::-webkit-scrollbar { width: 5px; }
+  .mday-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+  .bk-wrap::-webkit-scrollbar { height: 6px; }
+  .bk-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  @media (max-width: 760px) {
+    nav { padding: 12px 14px !important; }
+    .nav-brand { display: none !important; }
+    .nav-pills { position: static !important; left: auto !important; transform: none !important; gap: 2px !important; padding: 5px !important; width: 100%; justify-content: space-between !important; }
+    .nav-pills button { padding: 7px 10px !important; font-size: 12px !important; flex: 1; }
+    /* standings + bracket: globe is a prominent top band, content scrolls below it */
+    .pane-standings { top: 42vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
+    .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
+    .standings-rail .rail-desc { display: none !important; }
+    .standings-head { flex-wrap: wrap !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 8px !important; margin-top: 4px !important; }
+    .standings-grid { grid-template-columns: 1fr !important; margin-top: 10px !important; }
+    .pane-bracket { top: 42vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
+    .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
+    .bk-inner { gap: 7px !important; padding: 0 14px; }
+    .legend-cap { left: 50% !important; transform: translateX(-50%); bottom: auto !important; top: calc(32vh + 66px) !important; width: auto !important; }
+    .legend-backing { bottom: auto !important; top: -50px !important; left: 0 !important; width: 100vw !important; height: calc(32vh + 150px) !important; background: radial-gradient(60% 75% at 50% 42%, rgba(4,16,28,0.86), rgba(4,16,28,0) 78%) !important; }
+  }
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height: 100vh; background: #04101c; letter-spacing: -0.02em; font-family: 'Inter', sans-serif;">
+
+  <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;">
+    <div class="nav-brand" style="display: flex; align-items: center; gap: 10px;">
+      <svg width="26" height="26" viewBox="0 0 256 256" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z"></path>
+      </svg>
+      <span style="color: #fff; font-size: 24px; font-family: 'Playfair Display', serif; font-style: italic; line-height: 1;">Mundial</span>
+    </div>
+
+    <div class="nav-pills" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.16); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.28); border-radius: 999px; padding: 8px;">
+      <button onClick="{{ showGlobe }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ globePillBg }}; color: {{ globePillColor }};">Globe</button>
+      <button onClick="{{ showMatchday }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ matchdayPillBg }}; color: {{ matchdayPillColor }};">Matchday</button>
+      <button onClick="{{ showStandings }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ standingsPillBg }}; color: {{ standingsPillColor }};">Standings</button>
+      <button onClick="{{ showBracket }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ bracketPillBg }}; color: {{ bracketPillColor }};">Bracket</button>
+    </div>
+  </nav>
+
+  <section style="position: relative; width: 100%; overflow: hidden; height: 100vh; background: #04101c;">
+
+    <div data-anim="zoom" style="position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 92px), radial-gradient(120% 95% at 50% 18%, rgba(58,130,190,0.26), transparent 62%), linear-gradient(158deg, rgba(6,23,38,0.55) 0%, rgba(10,44,76,0.32) 54%, rgba(7,28,48,0.66) 100%);"></div>
+
+    <div ref="{{ globeWrapRef }}" style="position: absolute; top: 50%; left: 50%; width: min(118vmin, 1200px); height: min(118vmin, 1200px); transform-origin: center center; pointer-events: none;">
+      <div ref="{{ globeMountRef }}" data-anim="pop" data-delay="320" style="width: 100%; height: 100%; cursor: crosshair;"></div>
+    </div>
+
+    <sc-if value="{{ isLegendView }}" hint-placeholder-val="{{ false }}">
+      <div class="legend-backing" style="position: absolute; bottom: -60px; left: -60px; width: 440px; height: 470px; z-index: 54; pointer-events: none; background: radial-gradient(closest-side at 47% 44%, rgba(4,16,28,0.94), rgba(4,16,28,0.66) 56%, rgba(4,16,28,0) 78%);"></div>
+      <div class="legend-cap" style="position: absolute; bottom: 30px; left: 36px; z-index: 61; width: min(34vh, 300px); display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; pointer-events: none;">
+        <span style="font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.01em;">{{ legendTitle }}</span>
+        <span style="font-size: 11px; color: rgba(255,255,255,0.5);">{{ legendHint }}</span>
+      </div>
+    </sc-if>
+
+    <!-- ============ MATCHDAY VIEW ============ -->
+    <sc-if value="{{ isMatchday }}" hint-placeholder-val="{{ false }}">
+
+      <div style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: #fff; line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
+          <sc-if value="{{ dayIsToday }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #04101c; background: {{ accent }}; padding: 5px 12px; border-radius: 999px;">TODAY</span>
+          </sc-if>
+        </div>
+        <span style="font-size: 13px; color: rgba(255,255,255,0.55);">{{ dayCount }} matches</span>
+      </div>
+
+      <!-- featured match -->
+      <div ref="{{ displayRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: {{ accent }};">Group {{ fGroup }}</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 40px);">
+          <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fA }}</span>
+          <span style="font-family: 'Inter', sans-serif; font-weight: 700; font-size: clamp(2.2rem, 6vw, 5rem); line-height: 0.82; letter-spacing: -0.02em; color: {{ fScoreColor }}; white-space: nowrap;">{{ fScore }}</span>
+          <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fB }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.85); font-size: clamp(14px, 1.6vw, 18px);">
+          <span style="display: flex; align-items: center; gap: 9px;"><img src="{{ fAFlag }}" alt="" style="width: 28px; height: 19px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);">{{ fAName }}</span>
+          <span style="opacity: 0.4;">&middot;</span>
+          <span style="display: flex; align-items: center; gap: 9px;">{{ fBName }}<img src="{{ fBFlag }}" alt="" style="width: 28px; height: 19px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);"></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: {{ fStatusColor }}; background: {{ fStatusBg }}; border: 1px solid {{ fStatusBorder }}; padding: 5px 13px; border-radius: 999px;">{{ fStatus }}</span>
+          <span style="font-size: 13px; color: rgba(255,255,255,0.5);">{{ fVenue }}</span>
+        </div>
+      </div>
+
+      <!-- day slate (right) -->
+      <div style="position: absolute; top: 104px; right: 44px; bottom: 132px; z-index: 50; width: 388px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5);">{{ dayShort }} &middot; All Fixtures</span>
+        <div class="mday-scroll" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px;">
+          <sc-for list="{{ dayList }}" as="m" hint-placeholder-count="4">
+            <div onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" style="cursor: pointer; padding: 12px 14px; border-radius: 14px; background: {{ m.cardBg }}; border: 1px solid {{ m.cardBorder }}; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background 0.18s, border-color 0.18s;" style-hover="background: rgba(255,255,255,0.12);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.45);">GROUP {{ m.group }}</span>
+                <span style="font-size: 12px; font-weight: 600; color: {{ m.resultColor }};">{{ m.statusMini }}</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <span style="display: flex; align-items: center; gap: 7px; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;"><img src="{{ m.aFlag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-weight: 700; flex: none;">{{ m.aCode }}</span><span style="overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></span>
+                <span style="font-size: 15px; font-weight: 700; color: {{ m.aScoreColor }}; min-width: 14px; text-align: right;">{{ m.aScore }}</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 5px;">
+                <span style="display: flex; align-items: center; gap: 7px; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;"><img src="{{ m.bFlag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-weight: 700; flex: none;">{{ m.bCode }}</span><span style="overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></span>
+                <span style="font-size: 15px; font-weight: 700; color: {{ m.bScoreColor }}; min-width: 14px; text-align: right;">{{ m.bScore }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- date timeline slider -->
+      <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(660px, 82vw); display: flex; flex-direction: column; gap: 12px;">
+        <div ref="{{ sliderTrackRef }}" onPointerDown="{{ onSliderDown }}" onPointerMove="{{ onSliderMove }}" onPointerUp="{{ onSliderUp }}" style="position: relative; height: 30px; display: flex; align-items: center; cursor: pointer; touch-action: none;">
+          <div style="position: absolute; left: 6px; right: 6px; height: 3px; background: rgba(255,255,255,0.16); border-radius: 2px;"></div>
+          <div style="position: absolute; left: 6px; height: 3px; background: {{ accent }}; border-radius: 2px; width: {{ fillW }};"></div>
+          <sc-for list="{{ daysUI }}" as="d" hint-placeholder-count="6">
+            <div onClick="{{ d.onClick }}" style="position: absolute; left: {{ d.pct }}; top: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <span style="width: {{ d.dotSize }}; height: {{ d.dotSize }}; border-radius: 999px; background: {{ d.dotBg }}; border: 2px solid {{ d.dotBorder }};"></span>
+            </div>
+          </sc-for>
+          <div style="position: absolute; left: {{ fillW }}; transform: translate(-50%, 0); width: 18px; height: 18px; border-radius: 999px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.55); pointer-events: none;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 0 2px;">
+          <sc-for list="{{ daysUI }}" as="d" hint-placeholder-count="6">
+            <span style="font-size: 11px; font-weight: 500; color: {{ d.labelColor }};">{{ d.short }}</span>
+          </sc-for>
+        </div>
+        <span style="text-align: center; font-size: 12px; color: rgba(255,255,255,0.45);">Drag back through the tournament to replay every result</span>
+      </div>
+
+    </sc-if>
+
+    <!-- ============ STANDINGS VIEW ============ -->
+    <sc-if value="{{ isStandings }}" hint-placeholder-val="{{ false }}">
+      <div class="pane-standings" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: row; gap: 36px; padding: 92px 48px 36px; box-sizing: border-box;">
+        <div class="standings-rail" style="width: 290px; flex: none; display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
+          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: #fff; line-height: 1;">Standings</span>
+          <span class="rail-desc" style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 12px; max-width: 230px; line-height: 1.55;">Live group tables across all 12 groups. Hover a team to trace it on the globe below.</span>
+        </div>
+        <div class="standings-main" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+          <div class="standings-head" style="display: flex; align-items: center; justify-content: flex-end; gap: 18px;">
+            <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.7);"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{ accent }};"></span>Advances to Round of 32</span>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.45);">{{ dataUpdated }}</span>
+          </div>
+          <div class="standings-grid" style="flex: 1; min-height: 0; overflow-y: auto; margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 18px; align-content: start;">
+          <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 14px;">
+              <div style="display: grid; grid-template-columns: 18px 1fr repeat(5,18px) 26px; align-items: center; gap: 4px; padding: 0 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span></span>
+                <span style="font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.02em;">Group {{ g.group }}</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">P</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">W</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">D</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">L</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">GD</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: right;">Pts</span>
+              </div>
+              <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="4">
+                <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 18px 1fr repeat(5,18px) 26px; align-items: center; gap: 4px; padding: 7px 4px; border-left: 3px solid {{ r.bar }}; background: {{ r.rowBg }}; border-radius: 3px; margin-top: 2px; cursor: pointer; transition: background 0.16s;" style-hover="background: rgba(255,255,255,0.1);">
+                  <span style="font-size: 11px; font-weight: 700; color: {{ r.posColor }}; text-align: center;">{{ r.pos }}</span>
+                  <span style="display: flex; align-items: center; gap: 7px; min-width: 0;"><img src="{{ r.flag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-size: 12px; font-weight: 700; color: #fff; flex: none;">{{ r.code }}</span><span style="font-size: 12px; color: rgba(255,255,255,0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">{{ r.name }}</span></span>
+                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.P }}</span>
+                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.W }}</span>
+                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.D }}</span>
+                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.L }}</span>
+                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.GD }}</span>
+                  <span style="font-size: 12px; font-weight: 700; color: #fff; text-align: right;">{{ r.Pts }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ BRACKET VIEW ============ -->
+    <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
+      <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 22px; box-sizing: border-box;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
+          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: #fff; line-height: 1;">Projected Bracket</span>
+          <span style="font-size: 12px; color: rgba(255,255,255,0.45);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
+        </div>
+        <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
+          <div ref="{{ bracketInnerRef }}" class="bk-inner" style="display: flex; align-items: stretch; gap: 9px; height: 100%;">
+
+          <div style="display: flex; flex-direction: column; min-width: 150px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R32</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ leftR32 }}" as="m" hint-placeholder-count="8">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R16</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ leftR16 }}" as="m" hint-placeholder-count="4">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">QF</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ leftQF }}" as="m" hint-placeholder-count="2">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">SF</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around;">
+              <sc-for list="{{ leftSF }}" as="m" hint-placeholder-count="1">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 188px; gap: 16px; padding: 0 6px;">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.24em; color: {{ accent }};">FINAL</span>
+            <div onMouseEnter="{{ finalM.onEnter }}" onMouseLeave="{{ finalM.onLeave }}" onClick="{{ finalM.onEnter }}" style="width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; overflow: hidden; cursor: pointer;">
+              <div style="display: flex; align-items: center; gap: 6px; padding: 9px 10px 9px 0; border-left: 4px solid {{ finalM.aBar }};"><img src="{{ finalM.aFlag }}" alt="" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);"><span style="font-size: 15px; font-weight: {{ finalM.aWeight }}; color: {{ finalM.aColor }}; width: 36px; text-align: center;">{{ finalM.aCode }}</span><span style="font-size: 12px; color: {{ finalM.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ finalM.aName }}</span></div>
+              <div style="height: 1px; background: rgba(255,255,255,0.12);"></div>
+              <div style="display: flex; align-items: center; gap: 6px; padding: 9px 10px 9px 0; border-left: 4px solid {{ finalM.bBar }};"><img src="{{ finalM.bFlag }}" alt="" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);"><span style="font-size: 15px; font-weight: {{ finalM.bWeight }}; color: {{ finalM.bColor }}; width: 36px; text-align: center;">{{ finalM.bCode }}</span><span style="font-size: 12px; color: {{ finalM.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ finalM.bName }}</span></div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px;">
+              <span style="font-size: 10px; letter-spacing: 0.2em; color: rgba(255,255,255,0.45);">PROJECTED CHAMPION</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 44px; color: #fff; letter-spacing: -0.03em; line-height: 1;">{{ champCode }}</span>
+              <span style="font-size: 13px; color: {{ accent }};">{{ champName }}</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">SF</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around;">
+              <sc-for list="{{ rightSF }}" as="m" hint-placeholder-count="1">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">QF</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ rightQF }}" as="m" hint-placeholder-count="2">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 138px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R16</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ rightR16 }}" as="m" hint-placeholder-count="4">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-width: 150px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R32</span>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
+              <sc-for list="{{ rightR32 }}" as="m" hint-placeholder-count="8">
+                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
+                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ GLOBE VIEW ============ -->
+    <sc-if value="{{ isGlobe }}" hint-placeholder-val="{{ true }}">
+
+      <div data-anim="rise" data-delay="220" style="position: absolute; top: 120px; left: 0; right: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 0 20px; pointer-events: none;">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; white-space: nowrap; color: rgba(255,255,255,0.55);">FIFA World Cup 26</span>
+        <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.3rem, 2.6vw, 2rem); color: rgba(255,255,255,0.9);">{{ kicker }}</span>
+      </div>
+
+      <div style="position: absolute; bottom: 13%; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
+        <div data-anim="fade" data-delay="900" style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 999px; animation: hintPulse 2.6s ease-in-out infinite;">
+          <span style="width: 18px; height: 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.7); display: inline-block;"></span>
+          <span style="font-size: 13px; color: rgba(255,255,255,0.85); white-space: nowrap;">Hover any nation to trace its road through the group stage</span>
+        </div>
+      </div>
+
+      <div data-anim="fade" data-delay="700" style="position: absolute; bottom: 56px; left: 40px; z-index: 50;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5);">Confederations</span>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 9px; height: 9px; border-radius: 999px; background: {{ l.color }}; box-shadow: 0 0 10px {{ l.color }};"></span>
+              <span style="font-size: 13px; color: rgba(255,255,255,0.8); letter-spacing: 0.02em;">{{ l.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hovered }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ countryRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
+        <span style="font-size: clamp(13px, 1.4vw, 17px); font-weight: 600; letter-spacing: 0.36em; text-transform: uppercase; color: {{ confedColor }}; text-align: center; max-width: 80vw;">{{ countryName }}</span>
+        <img src="{{ countryFlag }}" alt="" style="width: 64px; height: 43px; border-radius: 5px; object-fit: cover; box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.22);">
+        <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; letter-spacing: -0.04em; color: rgba(236,245,252,0.95); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ countryCode }}</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px;">Group {{ groupLabel }}</span>
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: {{ confedColor }}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); padding: 6px 14px; border-radius: 999px;">{{ confedLabel }}</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
+        <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: rgba(236,245,252,0.92); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
+        <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: rgba(255,255,255,0.72); text-align: center;">One trophy. One summer across North America.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hovered }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; bottom: 56px; right: 48px; z-index: 50; width: 340px; display: flex; flex-direction: column; gap: 14px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: {{ confedColor }};">Group {{ groupLabel }} &middot; Fixtures</span>
+        <div style="display: flex; flex-direction: column; gap: 1px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); border-radius: 16px; overflow: hidden; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+          <sc-for list="{{ matches }}" as="m" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; background: rgba(255,255,255,0.015);">
+              <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                <span style="display: flex; align-items: center; gap: 7px; font-size: 15px; color: #fff; font-weight: 600; white-space: nowrap;"><img src="{{ m.oppFlag }}" alt="" style="width: 22px; height: 15px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);">vs <span style="color: {{ confedColor }};">{{ m.oppCode }}</span> &middot; {{ m.oppName }}</span>
+                <span style="font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.venue }}</span>
+              </div>
+              <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); white-space: nowrap;">{{ m.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
+      <div data-anim="fade" data-delay="820" style="position: absolute; bottom: 56px; right: 48px; z-index: 50; max-width: 300px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; text-align: right;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 26px; color: #fff; line-height: 1;">Jun 11 &ndash; Jul 19, 2026</span>
+          <span style="font-size: 14px; color: rgba(255,255,255,0.8);">104 matches &middot; 16 host cities &middot; 12 groups</span>
+          <span style="font-size: 13px; color: rgba(255,255,255,0.55);">Opening match: Mexico v South Africa</span>
+        </div>
+        <button style="background: {{ accent }}; color: #fff; font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
+      </div>
+    </sc-if>
+
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;accentColor&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#e8702a&quot; },
+  &quot;autoRotate&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true },
+  &quot;kicker&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Canada · Mexico · USA&quot; }
+}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.rootRef = React.createRef();
+    this.globeWrapRef = React.createRef();
+    this.globeMountRef = React.createRef();
+    this.displayRef = React.createRef();
+    this.countryRef = React.createRef();
+    this.sliderTrackRef = React.createRef();
+    this.bracketWrapRef = React.createRef();
+    this.bracketInnerRef = React.createRef();
+    this.state = { view: 'globe', hoverIdx: -1, selectedDay: 7, featuredIdx: 0 };
+    this.mouse = { x: -1, y: -1, has: false };
+    this.hoverIdx = -1;
+    this.idleLon = -70;
+    this.glReady = false;
+    this.focusS = 0.12;
+    this.camZ = 439;
+    this.camX = 0;
+    this.gx = 0; this.gy = 0; this.gs = 1; this.gop = 1;
+    if (typeof window !== 'undefined' && !window.__mundial) window.__mundial = { day: 7, mhover: -1, legendFocus: null, legendArc: null, view: 'globe' };
+    this.dataUpdatedAt = null;
+    this.legendFocus = null;
+    this.legendArcPair = null;
+    this._legendArcKey = null;
+    this.hoverMatchIdx = -1;
+    this.dragging = false;
+    this.markers = [];
+    this.hitMeshes = [];
+    this.arcGroup = null;
+
+    this.confed = {
+      AFC:      { label: 'AFC',      color: '#ff7fb0' },
+      CAF:      { label: 'CAF',      color: '#ffd35c' },
+      CONCACAF: { label: 'CONCACAF', color: '#ff8a5c' },
+      CONMEBOL: { label: 'CONMEBOL', color: '#5fe0a0' },
+      OFC:      { label: 'OFC',      color: '#5fd4e0' },
+      UEFA:     { label: 'UEFA',     color: '#6ea8ff' }
+    };
+
+    this.countries = [
+      { name: 'Mexico', code: 'MEX', group: 'A', confed: 'CONCACAF', lat: 23.6, lon: -102.5 },
+      { name: 'South Africa', code: 'RSA', group: 'A', confed: 'CAF', lat: -30.6, lon: 22.9 },
+      { name: 'South Korea', code: 'KOR', group: 'A', confed: 'AFC', lat: 36.5, lon: 127.8 },
+      { name: 'Czechia', code: 'CZE', group: 'A', confed: 'UEFA', lat: 49.8, lon: 15.5 },
+      { name: 'Canada', code: 'CAN', group: 'B', confed: 'CONCACAF', lat: 56.1, lon: -106.3 },
+      { name: 'Switzerland', code: 'SUI', group: 'B', confed: 'UEFA', lat: 46.8, lon: 8.2 },
+      { name: 'Qatar', code: 'QAT', group: 'B', confed: 'AFC', lat: 25.3, lon: 51.2 },
+      { name: 'Bosnia & Herzegovina', code: 'BIH', group: 'B', confed: 'UEFA', lat: 43.9, lon: 17.7 },
+      { name: 'Brazil', code: 'BRA', group: 'C', confed: 'CONMEBOL', lat: -14.2, lon: -51.9 },
+      { name: 'Morocco', code: 'MAR', group: 'C', confed: 'CAF', lat: 31.8, lon: -7.1 },
+      { name: 'Haiti', code: 'HAI', group: 'C', confed: 'CONCACAF', lat: 19.0, lon: -72.3 },
+      { name: 'Scotland', code: 'SCO', group: 'C', confed: 'UEFA', lat: 56.5, lon: -4.2 },
+      { name: 'United States', code: 'USA', group: 'D', confed: 'CONCACAF', lat: 39.8, lon: -98.6 },
+      { name: 'Paraguay', code: 'PAR', group: 'D', confed: 'CONMEBOL', lat: -23.4, lon: -58.4 },
+      { name: 'Australia', code: 'AUS', group: 'D', confed: 'AFC', lat: -25.3, lon: 133.8 },
+      { name: 'Türkiye', code: 'TUR', group: 'D', confed: 'UEFA', lat: 39.0, lon: 35.2 },
+      { name: 'Germany', code: 'GER', group: 'E', confed: 'UEFA', lat: 51.2, lon: 10.5 },
+      { name: 'Curaçao', code: 'CUW', group: 'E', confed: 'CONCACAF', lat: 12.2, lon: -69.0 },
+      { name: "Côte d'Ivoire", code: 'CIV', group: 'E', confed: 'CAF', lat: 7.5, lon: -5.5 },
+      { name: 'Ecuador', code: 'ECU', group: 'E', confed: 'CONMEBOL', lat: -1.8, lon: -78.2 },
+      { name: 'Netherlands', code: 'NED', group: 'F', confed: 'UEFA', lat: 52.1, lon: 5.3 },
+      { name: 'Japan', code: 'JPN', group: 'F', confed: 'AFC', lat: 36.2, lon: 138.3 },
+      { name: 'Tunisia', code: 'TUN', group: 'F', confed: 'CAF', lat: 33.9, lon: 9.6 },
+      { name: 'Sweden', code: 'SWE', group: 'F', confed: 'UEFA', lat: 60.1, lon: 18.6 },
+      { name: 'Belgium', code: 'BEL', group: 'G', confed: 'UEFA', lat: 50.5, lon: 4.5 },
+      { name: 'Egypt', code: 'EGY', group: 'G', confed: 'CAF', lat: 26.8, lon: 30.8 },
+      { name: 'Iran', code: 'IRN', group: 'G', confed: 'AFC', lat: 32.4, lon: 53.7 },
+      { name: 'New Zealand', code: 'NZL', group: 'G', confed: 'OFC', lat: -40.9, lon: 174.9 },
+      { name: 'Spain', code: 'ESP', group: 'H', confed: 'UEFA', lat: 40.5, lon: -3.7 },
+      { name: 'Cabo Verde', code: 'CPV', group: 'H', confed: 'CAF', lat: 16.0, lon: -24.0 },
+      { name: 'Saudi Arabia', code: 'KSA', group: 'H', confed: 'AFC', lat: 24.0, lon: 45.0 },
+      { name: 'Uruguay', code: 'URU', group: 'H', confed: 'CONMEBOL', lat: -33.0, lon: -56.0 },
+      { name: 'France', code: 'FRA', group: 'I', confed: 'UEFA', lat: 46.2, lon: 2.2 },
+      { name: 'Senegal', code: 'SEN', group: 'I', confed: 'CAF', lat: 14.5, lon: -14.5 },
+      { name: 'Norway', code: 'NOR', group: 'I', confed: 'UEFA', lat: 60.5, lon: 8.5 },
+      { name: 'Iraq', code: 'IRQ', group: 'I', confed: 'AFC', lat: 33.2, lon: 43.7 },
+      { name: 'Argentina', code: 'ARG', group: 'J', confed: 'CONMEBOL', lat: -38.4, lon: -63.6 },
+      { name: 'Algeria', code: 'ALG', group: 'J', confed: 'CAF', lat: 28.0, lon: 1.7 },
+      { name: 'Austria', code: 'AUT', group: 'J', confed: 'UEFA', lat: 47.5, lon: 14.6 },
+      { name: 'Jordan', code: 'JOR', group: 'J', confed: 'AFC', lat: 30.6, lon: 36.2 },
+      { name: 'Portugal', code: 'POR', group: 'K', confed: 'UEFA', lat: 39.4, lon: -8.2 },
+      { name: 'Uzbekistan', code: 'UZB', group: 'K', confed: 'AFC', lat: 41.4, lon: 64.6 },
+      { name: 'Colombia', code: 'COL', group: 'K', confed: 'CONMEBOL', lat: 4.6, lon: -74.3 },
+      { name: 'DR Congo', code: 'COD', group: 'K', confed: 'CAF', lat: -4.0, lon: 21.8 },
+      { name: 'England', code: 'ENG', group: 'L', confed: 'UEFA', lat: 52.4, lon: -1.5 },
+      { name: 'Croatia', code: 'CRO', group: 'L', confed: 'UEFA', lat: 45.1, lon: 15.2 },
+      { name: 'Ghana', code: 'GHA', group: 'L', confed: 'CAF', lat: 7.9, lon: -1.0 },
+      { name: 'Panama', code: 'PAN', group: 'L', confed: 'CONCACAF', lat: 8.5, lon: -80.0 }
+    ];
+    this.byCode = {};
+    this.countries.forEach((c) => { this.byCode[c.code] = c; });
+
+    // FIFA code -> ISO 3166-1 alpha-2 (flagcdn). England/Scotland use GB subdivisions.
+    this.iso = {
+      MEX: 'mx', RSA: 'za', KOR: 'kr', CZE: 'cz', CAN: 'ca', SUI: 'ch', QAT: 'qa', BIH: 'ba',
+      BRA: 'br', MAR: 'ma', HAI: 'ht', SCO: 'gb-sct', USA: 'us', PAR: 'py', AUS: 'au', TUR: 'tr',
+      GER: 'de', CUW: 'cw', CIV: 'ci', ECU: 'ec', NED: 'nl', JPN: 'jp', TUN: 'tn', SWE: 'se',
+      BEL: 'be', EGY: 'eg', IRN: 'ir', NZL: 'nz', ESP: 'es', CPV: 'cv', KSA: 'sa', URU: 'uy',
+      FRA: 'fr', SEN: 'sn', NOR: 'no', IRQ: 'iq', ARG: 'ar', ALG: 'dz', AUT: 'at', JOR: 'jo',
+      POR: 'pt', UZB: 'uz', COL: 'co', COD: 'cd', ENG: 'gb-eng', CRO: 'hr', GHA: 'gh', PAN: 'pa'
+    };
+
+    this.matches = this.buildMatches();
+
+    // dated schedule (results are real, Jun 11-18 2026; current day = Jun 18)
+    this.days = [
+      { dow: 'Thursday', short: 'Jun 11', long: 'June 11' },
+      { dow: 'Friday', short: 'Jun 12', long: 'June 12' },
+      { dow: 'Saturday', short: 'Jun 13', long: 'June 13' },
+      { dow: 'Sunday', short: 'Jun 14', long: 'June 14' },
+      { dow: 'Monday', short: 'Jun 15', long: 'June 15' },
+      { dow: 'Tuesday', short: 'Jun 16', long: 'June 16' },
+      { dow: 'Wednesday', short: 'Jun 17', long: 'June 17' },
+      { dow: 'Thursday', short: 'Jun 18', long: 'June 18', today: true }
+    ];
+    this.dayMatches = [
+      [ { g: 'A', a: 'MEX', b: 'RSA', as: 2, bs: 0, st: 'FT', venue: 'Estadio Azteca, Mexico City' } ],
+      [ { g: 'A', a: 'KOR', b: 'CZE', as: 2, bs: 1, st: 'FT', venue: 'Estadio Guadalajara' },
+        { g: 'B', a: 'CAN', b: 'BIH', as: 1, bs: 1, st: 'FT', venue: 'BMO Field, Toronto' } ],
+      [ { g: 'D', a: 'USA', b: 'PAR', as: 4, bs: 1, st: 'FT', venue: 'SoFi Stadium, Los Angeles' },
+        { g: 'B', a: 'QAT', b: 'SUI', as: 1, bs: 1, st: 'FT', venue: 'San Francisco Bay Area' },
+        { g: 'C', a: 'BRA', b: 'MAR', as: 1, bs: 1, st: 'FT', venue: 'New York / New Jersey' } ],
+      [ { g: 'C', a: 'HAI', b: 'SCO', as: 0, bs: 1, st: 'FT', venue: 'Group C' },
+        { g: 'D', a: 'AUS', b: 'TUR', as: 2, bs: 0, st: 'FT', venue: 'Group D' },
+        { g: 'E', a: 'GER', b: 'CUW', as: 7, bs: 1, st: 'FT', venue: 'Group E' },
+        { g: 'F', a: 'NED', b: 'JPN', as: 2, bs: 2, st: 'FT', venue: 'Group F' } ],
+      [ { g: 'H', a: 'ESP', b: 'CPV', as: 0, bs: 0, st: 'FT', venue: 'Atlanta Stadium' },
+        { g: 'H', a: 'KSA', b: 'URU', as: 1, bs: 1, st: 'FT', venue: 'Group H' },
+        { g: 'G', a: 'EGY', b: 'BEL', as: 1, bs: 1, st: 'FT', venue: 'Group G' },
+        { g: 'E', a: 'CIV', b: 'ECU', as: 1, bs: 0, st: 'FT', venue: 'Group E' },
+        { g: 'F', a: 'SWE', b: 'TUN', as: 5, bs: 1, st: 'FT', venue: 'Group F' } ],
+      [ { g: 'I', a: 'FRA', b: 'SEN', as: 3, bs: 1, st: 'FT', venue: 'MetLife, New York / New Jersey' },
+        { g: 'G', a: 'IRN', b: 'NZL', as: 2, bs: 2, st: 'FT', venue: 'Group G' },
+        { g: 'I', a: 'IRQ', b: 'NOR', as: 0, bs: 2, st: 'FT', venue: 'Gillette Stadium, Boston' },
+        { g: 'J', a: 'ARG', b: 'ALG', as: 3, bs: 0, st: 'FT', venue: 'Arrowhead, Kansas City' },
+        { g: 'J', a: 'AUT', b: 'JOR', as: 2, bs: 1, st: 'FT', venue: "Levi's Stadium, SF Bay" } ],
+      [ { g: 'K', a: 'POR', b: 'UZB', as: 3, bs: 1, st: 'FT', venue: 'Lumen Field, Seattle' },
+        { g: 'L', a: 'ENG', b: 'CRO', as: 2, bs: 1, st: 'FT', venue: 'NRG Stadium, Houston' },
+        { g: 'K', a: 'COL', b: 'COD', as: 2, bs: 0, st: 'FT', venue: 'Hard Rock Stadium, Miami' },
+        { g: 'L', a: 'GHA', b: 'PAN', as: 1, bs: 1, st: 'FT', venue: 'Mercedes-Benz Stadium, Atlanta' } ],
+      [ { g: 'A', a: 'MEX', b: 'KOR', as: 2, bs: 1, st: 'FT', venue: 'Estadio Azteca, Mexico City' },
+        { g: 'A', a: 'RSA', b: 'CZE', as: 1, bs: 1, st: 'FT', venue: 'Estadio Guadalajara' },
+        { g: 'B', a: 'CAN', b: 'QAT', as: 2, bs: 0, st: 'FT', venue: 'BC Place, Vancouver' },
+        { g: 'B', a: 'SUI', b: 'BIH', st: 'UP', time: '6:00 PM ET', venue: 'BMO Field, Toronto' },
+        { g: 'C', a: 'BRA', b: 'HAI', st: 'UP', time: '9:00 PM ET', venue: 'SoFi Stadium, Los Angeles' } ]
+    ];
+
+    // rough strength order (FIFA ranking / title odds) used to project knockout winners
+    this.rank = {
+      ESP: 1, ARG: 2, FRA: 3, ENG: 4, BRA: 5, POR: 6, NED: 7, BEL: 8, GER: 9, CRO: 10,
+      MAR: 11, COL: 12, URU: 13, USA: 14, SUI: 15, JPN: 16, SEN: 17, MEX: 18, ECU: 19, AUT: 20,
+      AUS: 21, KOR: 22, IRN: 23, NOR: 24, EGY: 25, SWE: 26, PAN: 27, CIV: 28, TUR: 29, CAN: 30,
+      QAT: 31, PAR: 32, SCO: 33, ALG: 34, TUN: 35, CZE: 36, GHA: 37, KSA: 38, IRQ: 39, JOR: 40,
+      UZB: 41, COD: 42, BIH: 43, RSA: 44, NZL: 45, CPV: 46, CUW: 47, HAI: 48
+    };
+    // Round of 32 pairings projected from group favourites (FIFA bracket positions)
+    this.r32 = [
+      ['GER', 'PAR'], ['FRA', 'SWE'], ['KOR', 'CAN'], ['NED', 'MAR'],
+      ['COL', 'CRO'], ['ESP', 'AUT'], ['USA', 'BIH'], ['BEL', 'CZE'],
+      ['BRA', 'JPN'], ['ECU', 'NOR'], ['MEX', 'SCO'], ['ENG', 'SEN'],
+      ['ARG', 'URU'], ['TUR', 'EGY'], ['SUI', 'ALG'], ['POR', 'CIV']
+    ];
+  }
+
+  computeStandings() {
+    const t = {};
+    this.countries.forEach((c) => { t[c.code] = { code: c.code, name: c.name, group: c.group, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, Pts: 0 }; });
+    this.dayMatches.forEach((day) => day.forEach((m) => {
+      if (m.st !== 'FT') return;
+      const A = t[m.a], B = t[m.b];
+      A.P++; B.P++; A.GF += m.as; A.GA += m.bs; B.GF += m.bs; B.GA += m.as;
+      if (m.as > m.bs) { A.W++; B.L++; A.Pts += 3; }
+      else if (m.as < m.bs) { B.W++; A.L++; B.Pts += 3; }
+      else { A.D++; B.D++; A.Pts++; B.Pts++; }
+    }));
+    const groups = {};
+    Object.keys(t).forEach((code) => { const s = t[code]; s.GD = s.GF - s.GA; (groups[s.group] = groups[s.group] || []).push(s); });
+    return Object.keys(groups).sort().map((g) => {
+      const rows = groups[g].sort((a, b) => b.Pts - a.Pts || b.GD - a.GD || b.GF - a.GF || a.code.localeCompare(b.code));
+      return { group: g, rows: rows };
+    });
+  }
+
+  resolveBracket() {
+    const win = (a, b) => (this.rank[a] <= this.rank[b] ? a : b);
+    const r32 = this.r32.map((p) => ({ a: p[0], b: p[1], w: win(p[0], p[1]) }));
+    const build = (prev) => {
+      const out = [];
+      for (let i = 0; i < prev.length; i += 2) { const a = prev[i].w, b = prev[i + 1].w; out.push({ a: a, b: b, w: win(a, b) }); }
+      return out;
+    };
+    const r16 = build(r32), qf = build(r16), sf = build(qf), final = build(sf);
+    return { r32: r32, r16: r16, qf: qf, sf: sf, final: final[0], champ: final[0].w };
+  }
+
+  mkM(m, accent) {
+    return {
+      aFlag: this.flagUrl(m.a), bFlag: this.flagUrl(m.b),
+      aCode: m.a, aName: this.byCode[m.a].name, aWin: m.w === m.a,
+      aColor: m.w === m.a ? '#ffffff' : 'rgba(255,255,255,0.4)',
+      aBar: m.w === m.a ? accent : 'transparent',
+      aWeight: m.w === m.a ? '700' : '500',
+      bCode: m.b, bName: this.byCode[m.b].name, bWin: m.w === m.b,
+      bColor: m.w === m.b ? '#ffffff' : 'rgba(255,255,255,0.4)',
+      bBar: m.w === m.b ? accent : 'transparent',
+      bWeight: m.w === m.b ? '700' : '500',
+      onEnter: () => this.setLegendMatch(m.a, m.b),
+      onLeave: () => this.clearLegend()
+    };
+  }
+
+  buildMatches() {
+    const groups = {};
+    this.countries.forEach((c) => { (groups[c.group] = groups[c.group] || []).push(c.code); });
+    const known = {
+      'MEX_RSA': { date: 'Jun 11', venue: 'Estadio Azteca, Mexico City' },
+      'CZE_KOR': { date: 'Jun 12', venue: 'Estadio Guadalajara' },
+      'QAT_SUI': { date: 'Jun 13', venue: 'San Francisco Bay Area' },
+      'BRA_MAR': { date: 'Jun 13', venue: 'New York / New Jersey' },
+      'PAR_USA': { date: 'Jun 13', venue: 'SoFi Stadium, Los Angeles' },
+      'TUR_USA': { date: 'Jun 19', venue: 'Los Angeles Stadium' },
+      'AUS_PAR': { date: 'Jun 16', venue: 'San Francisco Bay Area' },
+      'CIV_CUW': { date: 'Jun 14', venue: 'Philadelphia Stadium' },
+      'ECU_GER': { date: 'Jun 14', venue: 'New York / New Jersey' },
+      'JPN_SWE': { date: 'Jun 15', venue: 'Dallas Stadium' },
+      'NED_TUN': { date: 'Jun 15', venue: 'Kansas City Stadium' },
+      'EGY_IRN': { date: 'Jun 15', venue: 'Seattle Stadium' },
+      'BEL_NZL': { date: 'Jun 15', venue: 'BC Place, Vancouver' },
+      'CPV_KSA': { date: 'Jun 14', venue: 'Houston Stadium' },
+      'CPV_ESP': { date: 'Jun 15', venue: 'Atlanta Stadium' },
+      'ESP_KSA': { date: 'Jun 20', venue: 'Atlanta Stadium' },
+      'ESP_URU': { date: 'Jun 24', venue: 'Guadalajara Stadium' },
+      'FRA_NOR': { date: 'Jun 26', venue: 'Boston Stadium' },
+      'IRQ_SEN': { date: 'Jun 26', venue: 'Toronto Stadium' },
+      'FRA_SEN': { date: 'Jun 16', venue: 'MetLife, New York / New Jersey' },
+      'IRQ_NOR': { date: 'Jun 16', venue: 'Gillette Stadium, Boston' },
+      'ALG_AUT': { date: 'Jun 22', venue: 'Kansas City Stadium' },
+      'ARG_JOR': { date: 'Jun 22', venue: 'Dallas Stadium' },
+      'ALG_ARG': { date: 'Jun 16', venue: 'Arrowhead, Kansas City' },
+      'AUT_JOR': { date: 'Jun 16', venue: "Levi's Stadium, SF Bay" },
+      'POR_UZB': { date: 'Jun 17', venue: 'Lumen Field, Seattle' },
+      'CRO_ENG': { date: 'Jun 17', venue: 'NRG Stadium, Houston' },
+      'COD_COL': { date: 'Jun 17', venue: 'Hard Rock Stadium, Miami' },
+      'GHA_PAN': { date: 'Jun 17', venue: 'Mercedes-Benz Stadium, Atlanta' },
+      'ENG_PAN': { date: 'Jun 27', venue: 'New York / New Jersey' },
+      'CRO_GHA': { date: 'Jun 27', venue: 'Philadelphia Stadium' },
+      'ENG_GHA': { date: 'Jun 23', venue: 'Boston Stadium' }
+    };
+    const order = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+    const out = [];
+    Object.keys(groups).sort().forEach((g) => {
+      const t = groups[g];
+      order.forEach((pr) => {
+        const a = t[pr[0]], b = t[pr[1]];
+        const k = known[[a, b].sort().join('_')] || {};
+        out.push({ group: g, a: a, b: b, date: k.date || '', venue: k.venue || '' });
+      });
+    });
+    return out;
+  }
+
+  matchesFor(code) {
+    return this.matches.filter((m) => m.a === code || m.b === code).map((m) => {
+      const oppCode = m.a === code ? m.b : m.a;
+      const opp = this.byCode[oppCode];
+      return {
+        oppCode: oppCode,
+        oppFlag: this.flagUrl(oppCode),
+        oppName: opp ? opp.name : '',
+        date: m.date || 'TBD',
+        venue: m.venue || ('Group ' + m.group + ' \u00b7 venue TBD')
+      };
+    });
+  }
+
+  setView(v) {
+    if (this.state.view === v) return;
+    if (window.__mundial) { window.__mundial.view = v; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; window.__mundial.mhover = -1; }
+    this.setState({ view: v, hoverIdx: -1 });
+    this.hoverIdx = -1;
+  }
+
+  setLegendTeam = (code) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = code ? [code] : null; window.__mundial.legendArc = null; };
+  setLegendMatch = (a, b) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = [a, b]; window.__mundial.legendArc = { a: a, b: b }; };
+  clearLegend = () => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; };
+
+  setDay(idx) {
+    idx = Math.max(0, Math.min(this.days.length - 1, idx));
+    if (window.__mundial) window.__mundial.day = idx;
+    if (idx === this.state.selectedDay) return;
+    this.setState({ selectedDay: idx, featuredIdx: 0 });
+  }
+
+  setFeatured(i) { this.setState({ featuredIdx: i }); }
+
+  onSliderDown = (e) => {
+    this.dragging = true;
+    if (e.currentTarget && e.currentTarget.setPointerCapture && e.pointerId != null) {
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    this.sliderFromX(e.clientX);
+  };
+
+  onSliderMove = (e) => { if (this.dragging) this.sliderFromX(e.clientX); };
+
+  onSliderUp = () => { this.dragging = false; };
+
+  sliderFromX(x) {
+    const el = this.sliderTrackRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    let p = (x - r.left) / r.width;
+    p = Math.max(0, Math.min(1, p));
+    this.setDay(Math.round(p * (this.days.length - 1)));
+  }
+
+  componentDidMount() {
+    this.onMove = (e) => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.has = true; this.pickHover(); };
+    window.addEventListener('mousemove', this.onMove);
+    this.onResize = () => { this.resize(); this.scaleBracket(); this.forceUpdate(); };
+    window.addEventListener('resize', this.onResize);
+    this.initGlobe();
+    this.loop();
+    this.playEntrance();
+    this._loadLiveData();
+  }
+
+  _loadLiveData() {
+    fetch('/api/data.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || !data.days || !data.dayMatches) return;
+        this.days = data.days;
+        this.dayMatches = data.dayMatches;
+        if (data.updatedAt) {
+          const d = new Date(data.updatedAt);
+          this.dataUpdatedAt = 'Updated ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        const todayIdx = data.days.findIndex(d => d.today);
+        const sel = todayIdx >= 0 ? todayIdx : data.days.length - 1;
+        if (window.__mundial) window.__mundial.day = sel;
+        this.setState({ selectedDay: sel, featuredIdx: 0 });
+        this.rebuildArcs();
+      })
+      .catch(() => {});
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('mousemove', this.onMove);
+    window.removeEventListener('resize', this.onResize);
+    if (this.rafRef) cancelAnimationFrame(this.rafRef);
+    if (this.renderer) this.renderer.dispose();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (!prevState) return;
+    if (prevState.view !== this.state.view) {
+      this.hoverMatchIdx = -1;
+      this.applyViewMarkers();
+      this.rebuildArcs();
+      this.playEntrance();
+    }
+    if (this.state.view === 'matchday') {
+      if (prevState.selectedDay !== this.state.selectedDay) { this.hoverMatchIdx = -1; this.rebuildArcs(); }
+      if (prevState.selectedDay !== this.state.selectedDay || prevState.featuredIdx !== this.state.featuredIdx) {
+        this.animateIn(this.displayRef.current);
+      }
+    } else if (prevState.hoverIdx !== this.state.hoverIdx && this.state.hoverIdx >= 0) {
+      this.animateIn(this.countryRef.current);
+    }
+  }
+
+  animateIn(el) {
+    if (el && el.animate) {
+      el.animate(
+        [{ opacity: 0, transform: 'translateY(10px) scale(0.985)' }, { opacity: 1, transform: 'none' }],
+        { duration: 420, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'both' }
+      );
+    }
+  }
+
+  initGlobe() {
+    let tries = 0;
+    const tick = () => {
+      const mount = this.globeMountRef.current;
+      const THREE = window.THREE;
+      if (!THREE || !mount) {
+        if (tries++ < 120) setTimeout(tick, 50);
+        return;
+      }
+      this.buildGlobe(THREE, mount);
+    };
+    tick();
+  }
+
+  buildGlobe(THREE, mount) {
+    const w = mount.clientWidth || 600;
+    const h = mount.clientHeight || 600;
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    mount.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 2000);
+    camera.position.set(0, 0, 439);
+
+    const globe = new THREE.Group();
+    globe.rotation.order = 'YXZ';
+    scene.add(globe);
+
+    const R = 100;
+    const mat = new THREE.MeshPhongMaterial({ color: 0x16344f, emissive: 0x081826, shininess: 6, specular: 0x0a1a28 });
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 96), mat);
+    globe.add(sphere);
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg', (t) => {
+      if (t.anisotropy !== undefined) t.anisotropy = 4;
+      mat.map = t;
+      mat.color.set(0xffffff);
+      mat.emissive.set(0x0a1422);
+      mat.emissiveIntensity = 0.35;
+      mat.needsUpdate = true;
+    });
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+    dir.position.set(-1.2, 0.9, 1.8);
+    scene.add(dir);
+
+    this.arcGroup = new THREE.Group();
+    globe.add(this.arcGroup);
+
+    this.countries.forEach((c, idx) => {
+      const v = this.latLonToVec(c.lat, c.lon, R * 1.01);
+      const color = parseInt(this.confed[c.confed].color.slice(1), 16);
+      const grp = new THREE.Group();
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(1.7, 14, 14), new THREE.MeshBasicMaterial({ color: color }));
+      const ring = new THREE.Mesh(
+        new THREE.SphereGeometry(3.0, 16, 16),
+        new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.26 })
+      );
+      grp.add(dot); grp.add(ring);
+      grp.position.copy(v);
+      globe.add(grp);
+
+      const hit = new THREE.Mesh(
+        new THREE.SphereGeometry(6.5, 10, 10),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+      );
+      hit.position.copy(v);
+      hit.userData.idx = idx;
+      globe.add(hit);
+      this.hitMeshes.push(hit);
+      this.markers.push({ grp: grp, dot: dot, ring: ring, idx: idx });
+    });
+
+    this.raycaster = new THREE.Raycaster();
+    this.renderer = renderer;
+    this.scene = scene;
+    this.camera = camera;
+    this.globe = globe;
+    this.sphere = sphere;
+    this.mount = mount;
+    this.R = R;
+    this.globe.quaternion.copy(this.faceQuat(6, this.idleLon));
+    this.glReady = true;
+    this.applyViewMarkers();
+    this.rebuildArcs();
+  }
+
+  applyViewMarkers() {
+    if (!this.glReady) return;
+    const v = this.currentView();
+    const md = v === 'matchday';
+    const legend = v === 'standings' || v === 'bracket';
+    const showGlobe = v === 'globe' || md || legend;
+    this.markers.forEach((m) => { m.grp.visible = showGlobe; });
+    this.hitMeshes.forEach((h) => { h.visible = v === 'globe'; });
+  }
+
+  applyGlobePlacement() {
+    const wrap = this.globeWrapRef.current;
+    if (!wrap) return;
+    const v = this.currentView();
+    const legend = v === 'standings' || v === 'bracket';
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const full = Math.min(1.18 * Math.min(vw, vh), 1200);
+    const mobile = vw <= 760;
+    let cx, cy, s, z, op;
+    if (legend && mobile) {
+      const sz = Math.min(0.32 * vh, 0.7 * vw);
+      s = sz / full; cx = vw / 2; cy = 56 + sz / 2; z = 20; op = 1;
+    } else if (v === 'standings') {
+      const sz = Math.min(0.42 * vh, 300);
+      s = sz / full; cx = 193; cy = vh - 74 - sz / 2; z = 60; op = 1;
+    } else if (legend) {
+      const sz = Math.min(0.34 * vh, 300);
+      s = sz / full; cx = 36 + sz / 2; cy = vh - 64 - sz / 2; z = 60; op = 1;
+    } else {
+      s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : 1);
+    }
+    const tx = cx - vw / 2, ty = cy - vh / 2;
+    this.gx += (tx - this.gx) * 0.12;
+    this.gy += (ty - this.gy) * 0.12;
+    this.gs += (s - this.gs) * 0.12;
+    this.gop += (op - this.gop) * 0.15;
+    wrap.style.transform = 'translate(-50%, -50%) translate(' + this.gx.toFixed(1) + 'px, ' + this.gy.toFixed(1) + 'px) scale(' + this.gs.toFixed(4) + ')';
+    wrap.style.zIndex = z;
+    wrap.style.opacity = this.gop.toFixed(2);
+  }
+
+  currentView() {
+    if (window.__mundial && window.__mundial.view) return window.__mundial.view;
+    return this.state.view;
+  }
+
+  busDay() {
+    return (window.__mundial && typeof window.__mundial.day === 'number') ? window.__mundial.day : this.state.selectedDay;
+  }
+
+  // Pick hovered country only when the mouse moves (not every frame) so the globe
+  // can snap a country to center without re-picking under the now-stationary cursor.
+  // Selects the nearest country to wherever you point; releases when you leave the globe.
+  pickHover() {
+    if (!this.glReady || this.state.view !== 'globe' || !this.sphere) return;
+    const T = window.THREE;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    let newHover = -1;
+    if (this.mouse.has) {
+      const nx = ((this.mouse.x - rect.left) / rect.width) * 2 - 1;
+      const ny = -((this.mouse.y - rect.top) / rect.height) * 2 + 1;
+      if (nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1) {
+        this.globe.updateMatrixWorld();
+        this.raycaster.setFromCamera({ x: nx, y: ny }, this.camera);
+        const hit = this.raycaster.intersectObject(this.sphere, false)[0];
+        if (hit) {
+          const p = hit.point;
+          const wp = new T.Vector3();
+          let best = -1, bestD = Infinity;
+          for (let i = 0; i < this.hitMeshes.length; i++) {
+            this.hitMeshes[i].getWorldPosition(wp);
+            const d = wp.distanceTo(p);
+            if (d < bestD) { bestD = d; best = this.hitMeshes[i].userData.idx; }
+          }
+          newHover = best;
+        }
+      }
+    }
+    this.hoverIdx = newHover;
+    if (newHover !== this.state.hoverIdx) this.setState({ hoverIdx: newHover });
+  }
+
+  playingSet() {
+    const day = this.dayMatches[this.busDay()] || [];
+    const s = new Set();
+    day.forEach((m) => { s.add(m.a); s.add(m.b); });
+    return s;
+  }
+
+  rebuildArcs() {
+    if (!this.glReady || !this.arcGroup) return;
+    const T = window.THREE;
+    this._legendArcKey = null;
+    while (this.arcGroup.children.length) {
+      const c = this.arcGroup.children.pop();
+      this.arcGroup.remove(c);
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) c.material.dispose();
+    }
+    const md = this.currentView() === 'matchday';
+    this.arcGroup.visible = md;
+    this.arcKey = md ? ('matchday:' + this.busDay()) : 'globe';
+    if (!md) return;
+    const R = this.R || 100;
+    const day = this.dayMatches[this.busDay()] || [];
+    day.forEach((m, mi) => {
+      const ca = this.byCode[m.a], cb = this.byCode[m.b];
+      if (!ca || !cb) return;
+      const p1 = this.latLonToVec(ca.lat, ca.lon, R * 1.02);
+      const p2 = this.latLonToVec(cb.lat, cb.lon, R * 1.02);
+      const span = p1.distanceTo(p2);
+      const mid = p1.clone().add(p2).multiplyScalar(0.5).normalize().multiplyScalar(R * 1.02 + span * 0.45 + 6);
+      const curve = new T.QuadraticBezierCurve3(p1, mid, p2);
+      const geo = new T.TubeGeometry(curve, 44, 0.75, 8, false);
+      const line = new T.Mesh(geo, new T.MeshBasicMaterial({ color: 0xffd0a8, transparent: true, opacity: 0.55 }));
+      line.userData.matchIdx = mi;
+      this.arcGroup.add(line);
+    });
+  }
+
+  buildLegendArc(arc) {
+    if (!this.glReady || !this.arcGroup) return;
+    const T = window.THREE;
+    while (this.arcGroup.children.length) {
+      const c = this.arcGroup.children.pop();
+      this.arcGroup.remove(c);
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) c.material.dispose();
+    }
+    if (!arc) return;
+    const ca = this.byCode[arc.a], cb = this.byCode[arc.b];
+    if (!ca || !cb) return;
+    const R = this.R || 100;
+    const p1 = this.latLonToVec(ca.lat, ca.lon, R * 1.02);
+    const p2 = this.latLonToVec(cb.lat, cb.lon, R * 1.02);
+    const span = p1.distanceTo(p2);
+    const mid = p1.clone().add(p2).multiplyScalar(0.5).normalize().multiplyScalar(R * 1.02 + span * 0.45 + 6);
+    const curve = new T.QuadraticBezierCurve3(p1, mid, p2);
+    const geo = new T.TubeGeometry(curve, 44, 1.1, 8, false);
+    const line = new T.Mesh(geo, new T.MeshBasicMaterial({ color: 0xffd0a8, transparent: true, opacity: 0.95 }));
+    this.arcGroup.add(line);
+  }
+
+  renderLegend(t) {
+    const bus = window.__mundial || {};
+    const focusCodes = bus.legendFocus;
+    const arc = bus.legendArc;
+    const key = arc ? (arc.a + '_' + arc.b) : '';
+    if (this._legendArcKey !== key) { this._legendArcKey = key; this.buildLegendArc(arc); }
+    if (this.arcGroup) this.arcGroup.visible = !!arc;
+
+    const T = window.THREE;
+    let targetQ, targetZ = 432;
+    if (focusCodes && focusCodes.length) {
+      const vecs = focusCodes.map((cd) => { const c = this.byCode[cd]; return c ? this.latLonToVec(c.lat, c.lon, 1) : null; }).filter(Boolean);
+      if (vecs.length) {
+        let mid = vecs.reduce((a, v) => a.add(v), new T.Vector3());
+        if (mid.length() < 1e-4) mid = vecs[0].clone();
+        mid.normalize();
+        targetQ = this.faceVec(mid);
+        if (vecs.length === 2) targetZ = Math.max(432, Math.min(540, 432 + vecs[0].angleTo(vecs[1]) * 110));
+      } else { targetQ = this.faceQuat(10, this.idleLon); }
+    } else {
+      const autoRotate = this.props.autoRotate ?? true;
+      if (autoRotate) this.idleLon += 0.16;
+      targetQ = this.faceQuat(12, this.idleLon);
+    }
+    this.globe.quaternion.slerp(targetQ, 0.1);
+    this.camZ += (targetZ - this.camZ) * 0.08;
+    this.camera.position.z = this.camZ;
+
+    const focus = new Set(focusCodes || []);
+    for (let i = 0; i < this.markers.length; i++) {
+      const mk = this.markers[i];
+      const on = focus.has(this.countries[mk.idx].code);
+      const pulse = 1 + Math.sin(t + mk.idx) * 0.1;
+      mk.ring.scale.setScalar((on ? 2.7 : 0.7) * pulse);
+      mk.ring.material.opacity = on ? 0.72 : (focus.size ? 0.05 : 0.16);
+      mk.dot.scale.setScalar(on ? 2.2 : 0.6);
+    }
+  }
+
+  updateGlobe() {
+    if (!this.glReady) return;
+    this.resize();
+    this.applyGlobePlacement();
+    const _v = this.currentView();
+    if (this._appliedView !== _v) {
+      this._appliedView = _v;
+      this.applyViewMarkers();
+      this.rebuildArcs();
+      if (_v === 'bracket') { requestAnimationFrame(() => this.scaleBracket()); setTimeout(() => this.scaleBracket(), 350); }
+    }
+    const T = window.THREE;
+    const md = _v === 'matchday';
+    this.globe.updateMatrixWorld();
+    const t = performance.now() * 0.003;
+
+    // Slide the globe left in matchday so the fixtures panel never overlaps it.
+    // Moving the camera +x shifts the globe toward the left of the frame.
+    const targetX = md ? 104 : 0;
+    this.camX += (targetX - this.camX) * 0.07;
+    this.camera.position.x = this.camX;
+
+    if (md) {
+      const dayIdx = this.busDay();
+      const day = this.dayMatches[dayIdx] || [];
+      if (this.arcGroup && this.arcKey !== ('matchday:' + dayIdx)) this.rebuildArcs();
+      if (this.arcGroup) this.arcGroup.visible = true;
+      const hm = (window.__mundial ? window.__mundial.mhover : -1);
+      const hMatch = (hm >= 0 && hm < day.length) ? day[hm] : null;
+      let targetQ, targetZ;
+      if (hMatch) {
+        const ca = this.byCode[hMatch.a], cb = this.byCode[hMatch.b];
+        const v1 = this.latLonToVec(ca.lat, ca.lon, 1);
+        const v2 = this.latLonToVec(cb.lat, cb.lon, 1);
+        let mid = v1.clone().add(v2);
+        if (mid.length() < 1e-4) mid = v1.clone();
+        mid.normalize();
+        targetQ = this.faceVec(mid);
+        targetZ = Math.max(560, Math.min(720, 560 + v1.angleTo(v2) * 150));
+      } else {
+        const autoRotate = this.props.autoRotate ?? true;
+        if (autoRotate) this.idleLon += 0.08;
+        targetQ = this.faceQuat(8, this.idleLon);
+        targetZ = 560;
+      }
+      this.globe.quaternion.slerp(targetQ, hMatch ? 0.085 : 0.06);
+      this.camZ += (targetZ - this.camZ) * 0.06;
+      this.camera.position.z = this.camZ;
+
+      const focus = hMatch ? new Set([hMatch.a, hMatch.b]) : this.playingSet();
+      for (let i = 0; i < this.markers.length; i++) {
+        const mk = this.markers[i];
+        const on = focus.has(this.countries[mk.idx].code);
+        const pulse = 1 + Math.sin(t + mk.idx) * 0.1;
+        mk.ring.scale.setScalar((on ? 2.3 : 0.8) * pulse);
+        mk.ring.material.opacity = on ? 0.6 : (hMatch ? 0.04 : 0.1);
+        mk.dot.scale.setScalar(on ? 1.9 : 0.65);
+      }
+      if (this.arcGroup) {
+        this.arcGroup.children.forEach((ln) => {
+          const foc = ln.userData.matchIdx === hm;
+          ln.material.opacity = hm >= 0 ? (foc ? 0.95 : 0.06) : 0.5;
+        });
+      }
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
+    // ---- standings / bracket : small legend globe ----
+    if (_v === 'standings' || _v === 'bracket') {
+      this.renderLegend(t);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
+    // ---- globe view (hover is picked on mousemove via pickHover, not per-frame) ----
+    if (this.arcGroup) this.arcGroup.visible = false;
+    const autoRotate = this.props.autoRotate ?? true;
+    let target, focusT;
+    if (this.hoverIdx >= 0) {
+      const c = this.countries[this.hoverIdx];
+      target = this.faceQuat(c.lat, c.lon);
+      this.idleLon = c.lon;
+      focusT = 0.5;
+    } else {
+      if (autoRotate) this.idleLon += 0.12;
+      target = this.faceQuat(6, this.idleLon);
+      focusT = 0.12;
+    }
+    this.globe.quaternion.slerp(target, 0.08);
+    this.focusS += (focusT - this.focusS) * 0.05;
+    this.camera.position.z = 439 - this.focusS * 101;
+
+    for (let i = 0; i < this.markers.length; i++) {
+      const m = this.markers[i];
+      const isH = m.idx === this.hoverIdx;
+      const pulse = 1 + Math.sin(t + m.idx) * 0.12;
+      m.ring.scale.setScalar((isH ? 2.1 : 1) * pulse);
+      m.ring.material.opacity = isH ? 0.52 : 0.24;
+      m.dot.scale.setScalar(isH ? 1.7 : 1);
+    }
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  playEntrance() {
+    const root = this.rootRef.current;
+    if (!root) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ease = 'cubic-bezier(0.16,1,0.3,1)';
+    requestAnimationFrame(() => {
+      root.querySelectorAll('[data-anim]').forEach((el) => {
+        const tp = el.getAttribute('data-anim');
+        const delay = parseInt(el.getAttribute('data-delay') || '0', 10);
+        let frames, dur;
+        if (tp === 'zoom') {
+          frames = [{ transform: 'scale(1.08)' }, { transform: 'scale(1)' }];
+          dur = 1900;
+        } else if (tp === 'pop') {
+          frames = [{ opacity: 0, transform: 'scale(0.9)', filter: 'blur(6px)' }, { opacity: 1, transform: 'scale(1)', filter: 'blur(0)' }];
+          dur = 1300;
+        } else if (tp === 'rise') {
+          frames = [{ opacity: 0, transform: 'translateY(28px)', filter: 'blur(10px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }];
+          dur = 1100;
+        } else {
+          frames = [{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'translateY(0)' }];
+          dur = 1000;
+        }
+        el.animate(frames, { duration: dur, delay: delay, easing: ease, fill: 'both' });
+      });
+    });
+  }
+
+  latLonToVec(lat, lon, r) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lon + 180) * Math.PI / 180;
+    const x = -r * Math.sin(phi) * Math.cos(theta);
+    const y = r * Math.cos(phi);
+    const z = r * Math.sin(phi) * Math.sin(theta);
+    return new window.THREE.Vector3(x, y, z);
+  }
+
+  faceQuat(lat, lon) {
+    const T = window.THREE;
+    const v = this.latLonToVec(lat, lon, 1).normalize();
+    return new T.Quaternion().setFromUnitVectors(v, new T.Vector3(0, 0, 1));
+  }
+
+  faceVec(dir) {
+    const T = window.THREE;
+    return new T.Quaternion().setFromUnitVectors(dir.clone().normalize(), new T.Vector3(0, 0, 1));
+  }
+
+  scaleBracket() {
+    const wrap = this.bracketWrapRef.current, inner = this.bracketInnerRef.current;
+    if (!wrap || !inner) return;
+    if (window.innerWidth <= 760) { inner.style.transform = 'none'; return; }
+    inner.style.transform = 'none';
+    const aw = wrap.clientWidth, iw = inner.scrollWidth;
+    const s = iw > 0 ? Math.min(1, (aw - 6) / iw) : 1;
+    inner.style.transformOrigin = 'center center';
+    inner.style.transform = 'scale(' + s + ')';
+  }
+
+  resize() {
+    if (!this.glReady || !this.mount) return;
+    const w = this.mount.clientWidth, h = this.mount.clientHeight;
+    if (w === 0 || h === 0) return;
+    if (w === this._lastW && h === this._lastH) return;
+    this._lastW = w; this._lastH = h;
+    this.renderer.setSize(w, h);
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+  }
+
+  loop = () => {
+    this.updateGlobe();
+    this.rafRef = requestAnimationFrame(this.loop);
+  };
+
+  flagUrl(code) {
+    const iso = this.iso[code];
+    return iso ? 'https://flagcdn.com/w40/' + iso + '.png' : '';
+  }
+
+  hexToRgba(hex, a) {
+    const h = (hex || '').replace('#', '');
+    if (h.length !== 6) return 'rgba(232,112,42,' + a + ')';
+    return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+  }
+
+  darken(hex, f) {
+    const h = (hex || '').replace('#', '');
+    if (h.length !== 6) return '#d2611f';
+    const adj = (c) => Math.max(0, Math.round(parseInt(c, 16) * (1 - f))).toString(16).padStart(2, '0');
+    return '#' + adj(h.slice(0, 2)) + adj(h.slice(2, 4)) + adj(h.slice(4, 6));
+  }
+
+  renderVals() {
+    const accent = this.props.accentColor ?? '#e8702a';
+    const isGlobe = this.state.view === 'globe';
+    const isMatchday = this.state.view === 'matchday';
+    const isStandings = this.state.view === 'standings';
+    const isBracket = this.state.view === 'bracket';
+
+    // ---- standings ----
+    const standings = this.computeStandings().map((g) => ({
+      group: g.group,
+      rows: g.rows.map((r, idx) => ({
+        pos: String(idx + 1),
+        code: r.code, name: r.name, flag: this.flagUrl(r.code),
+        P: String(r.P), W: String(r.W), D: String(r.D), L: String(r.L),
+        GD: (r.GD > 0 ? '+' : '') + r.GD, Pts: String(r.Pts),
+        bar: idx < 2 ? accent : (idx === 2 ? 'rgba(255,255,255,0.3)' : 'transparent'),
+        rowBg: idx < 2 ? 'rgba(255,255,255,0.06)' : 'transparent',
+        posColor: idx < 2 ? accent : 'rgba(255,255,255,0.4)',
+        onEnter: () => this.setLegendTeam(r.code),
+        onLeave: () => this.clearLegend()
+      }))
+    }));
+
+    // ---- bracket ----
+    const B = this.resolveBracket();
+    const mk = (arr) => arr.map((m) => this.mkM(m, accent));
+    const champ = this.byCode[B.champ];
+
+    // ---- globe view vals ----
+    const i = this.state.hoverIdx;
+    const c = (isGlobe && i >= 0) ? this.countries[i] : null;
+    const conf = c ? this.confed[c.confed] : null;
+
+    // ---- matchday vals ----
+    const sel = this.state.selectedDay;
+    const day = this.days[sel];
+    const dms = this.dayMatches[sel] || [];
+    const fi = Math.max(0, Math.min(this.state.featuredIdx, dms.length - 1));
+    const fm = dms[fi] || { g: '', a: '', b: '', st: 'UP' };
+    const nm = (code) => (this.byCode[code] ? this.byCode[code].name : '');
+    const fFT = fm.st === 'FT';
+
+    const dayList = dms.map((m, idx) => {
+      const ft = m.st === 'FT';
+      const isSel = idx === fi;
+      const aWin = ft && m.as > m.bs, bWin = ft && m.bs > m.as;
+      return {
+        group: m.g,
+        aCode: m.a, bCode: m.b,
+        aFlag: this.flagUrl(m.a), bFlag: this.flagUrl(m.b),
+        aName: nm(m.a), bName: nm(m.b),
+        aScore: ft ? String(m.as) : '', bScore: ft ? String(m.bs) : '',
+        aScoreColor: aWin ? accent : 'rgba(255,255,255,0.85)',
+        bScoreColor: bWin ? accent : 'rgba(255,255,255,0.85)',
+        statusMini: ft ? 'FT' : (m.time || 'KO'),
+        resultColor: ft ? 'rgba(255,255,255,0.55)' : accent,
+        cardBg: isSel ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.05)',
+        cardBorder: isSel ? accent : 'rgba(255,255,255,0.12)',
+        onClick: () => this.setFeatured(idx),
+        onEnter: () => { if (window.__mundial) window.__mundial.mhover = idx; },
+        onLeave: () => { if (window.__mundial && window.__mundial.mhover === idx) window.__mundial.mhover = -1; }
+      };
+    });
+
+    const lastIdx = this.days.length - 1;
+    const fillW = (sel / lastIdx * 100) + '%';
+    const daysUI = this.days.map((d, idx) => {
+      const isSel = idx === sel;
+      const past = idx <= sel;
+      return {
+        short: d.short,
+        pct: (idx / lastIdx * 100) + '%',
+        dotSize: isSel ? '13px' : '9px',
+        dotBg: past ? accent : 'rgba(255,255,255,0.25)',
+        dotBorder: isSel ? '#ffffff' : 'transparent',
+        labelColor: isSel ? '#fff' : 'rgba(255,255,255,0.45)',
+        onClick: () => this.setDay(idx)
+      };
+    });
+
+    return {
+      rootRef: this.rootRef,
+      globeWrapRef: this.globeWrapRef,
+      globeMountRef: this.globeMountRef,
+      displayRef: this.displayRef,
+      countryRef: this.countryRef,
+      sliderTrackRef: this.sliderTrackRef,
+      accent: accent,
+      accentHover: this.darken(accent, 0.12),
+      accentGlow: this.hexToRgba(accent, 0.3),
+      kicker: this.props.kicker ?? 'Canada \u00b7 Mexico \u00b7 USA',
+      dataUpdated: this.dataUpdatedAt || 'Updated Jun 18',
+      isGlobe: isGlobe,
+      isMatchday: isMatchday,
+      isStandings: isStandings,
+      isBracket: isBracket,
+      isLegendView: isStandings || isBracket,
+      legendTitle: isBracket ? 'Knockout path' : 'Group locator',
+      legendHint: isBracket ? 'Hover a match to trace it' : 'Hover a team to locate it',
+      showGlobe: () => this.setView('globe'),
+      showMatchday: () => this.setView('matchday'),
+      showStandings: () => this.setView('standings'),
+      showBracket: () => this.setView('bracket'),
+      onSliderDown: this.onSliderDown,
+      onSliderMove: this.onSliderMove,
+      onSliderUp: this.onSliderUp,
+      globePillBg: isGlobe ? 'rgba(255,255,255,0.18)' : 'transparent',
+      globePillColor: isGlobe ? '#ffffff' : 'rgba(255,255,255,0.8)',
+      matchdayPillBg: isMatchday ? 'rgba(255,255,255,0.18)' : 'transparent',
+      matchdayPillColor: isMatchday ? '#ffffff' : 'rgba(255,255,255,0.8)',
+      standingsPillBg: isStandings ? 'rgba(255,255,255,0.18)' : 'transparent',
+      standingsPillColor: isStandings ? '#ffffff' : 'rgba(255,255,255,0.8)',
+      bracketPillBg: isBracket ? 'rgba(255,255,255,0.18)' : 'transparent',
+      bracketPillColor: isBracket ? '#ffffff' : 'rgba(255,255,255,0.8)',
+      standings: standings,
+      leftR32: mk(B.r32.slice(0, 8)), rightR32: mk(B.r32.slice(8)),
+      leftR16: mk(B.r16.slice(0, 4)), rightR16: mk(B.r16.slice(4)),
+      leftQF: mk(B.qf.slice(0, 2)), rightQF: mk(B.qf.slice(2)),
+      leftSF: mk([B.sf[0]]), rightSF: mk([B.sf[1]]),
+      bracketWrapRef: this.bracketWrapRef,
+      bracketInnerRef: this.bracketInnerRef,
+      finalM: this.mkM(B.final, accent),
+      champCode: B.champ, champName: champ ? champ.name : '',
+      // globe hover
+      hovered: !!c,
+      globeIdle: isGlobe && !c,
+      countryName: c ? c.name : '',
+      countryCode: c ? c.code : '',
+      countryFlag: c ? this.flagUrl(c.code) : '',
+      groupLabel: c ? c.group : '',
+      confedLabel: conf ? conf.label : '',
+      confedColor: conf ? conf.color : '#ffffff',
+      matches: c ? this.matchesFor(c.code) : [],
+      legend: Object.keys(this.confed).map((k) => ({ label: this.confed[k].label, color: this.confed[k].color })),
+      // matchday
+      dayDow: day.dow,
+      dayLong: day.long,
+      dayShort: day.short,
+      dayIsToday: !!day.today,
+      dayCount: String(dms.length),
+      fGroup: fm.g,
+      fA: fm.a, fB: fm.b,
+      fAFlag: this.flagUrl(fm.a), fBFlag: this.flagUrl(fm.b),
+      fAName: nm(fm.a), fBName: nm(fm.b),
+      fScore: fFT ? (fm.as + ' \u2013 ' + fm.bs) : 'vs',
+      fScoreColor: fFT ? accent : 'rgba(255,255,255,0.6)',
+      fStatus: fFT ? 'Full Time' : (fm.time || 'Kick-off'),
+      fStatusColor: fFT ? 'rgba(255,255,255,0.85)' : accent,
+      fStatusBg: fFT ? 'rgba(255,255,255,0.1)' : this.hexToRgba(accent, 0.18),
+      fStatusBorder: fFT ? 'rgba(255,255,255,0.2)' : this.hexToRgba(accent, 0.5),
+      fVenue: fm.venue || ('Group ' + fm.g),
+      fillW: fillW,
+      daysUI: daysUI,
+      dayList: dayList
+    };
+  }
+}
+</script>
+</body>
+</html>

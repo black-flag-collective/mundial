@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+.git
+chats
+project
+*.log
+.DS_Store

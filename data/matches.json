@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T21:24:41.352Z",
+  "updatedAt": "2026-06-19T21:51:10.392Z",
   "days": [
     {
       "dow": "Thursday",
@@ -330,8 +330,7 @@
         "g": "C",
         "a": "SCO",
         "b": "MAR",
-        "st": "UP",
-        "time": "6:00 PM ET",
+        "st": "LIVE",
         "venue": "Gillette Stadium, Foxborough"
       },
       {

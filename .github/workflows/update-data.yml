@@ -64,7 +64,6 @@ jobs:
           git config user.name "mundial-bot"
           git config user.email "actions@github.com"
           git add data/matches.json
-          git commit -m "chore(data): update match results [skip ci]"
-          git fetch origin main
+          git commit -m "chore(data): update match results"
           git rebase origin/main
           git push origin HEAD:main

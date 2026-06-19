@@ -960,25 +960,33 @@ class Component extends DCLogic {
   // outward across the map from each country, colored by confederation and
   // driven by live buzz. A single shader shell replaces per-location meshes.
   buildBuzzLayer(THREE, globe, R) {
-    const n = this.countries.length;
-    const pts = new Array(n);   // vec4: xyz = unit surface dir, w = intensity
-    const cols = new Array(n);  // vec4: rgb = confed color, a = spike
-    this.countries.forEach((c, idx) => {
+    // Per-country geometry kept on the JS side; only the K hottest are uploaded
+    // to the shader each frame (keeps fragment-uniform usage bounded and well
+    // under MAX_FRAGMENT_UNIFORM_VECTORS on low-end WebGL1 GPUs).
+    const K = 24;
+    this._buzzK = K;
+    this._buzzPos = [];   // unit surface direction per country
+    this._buzzCol = [];   // confederation color (r,g,b 0..1) per country
+    this.countries.forEach((c) => {
       const v = this.latLonToVec(c.lat, c.lon, 1).normalize();
-      pts[idx] = new THREE.Vector4(v.x, v.y, v.z, 0);
+      this._buzzPos.push(v);
       const hex = this.confed[c.confed].color.replace('#', '');
-      cols[idx] = new THREE.Vector4(
+      this._buzzCol.push([
         parseInt(hex.slice(0, 2), 16) / 255,
         parseInt(hex.slice(2, 4), 16) / 255,
-        parseInt(hex.slice(4, 6), 16) / 255,
-        0
-      );
+        parseInt(hex.slice(4, 6), 16) / 255
+      ]);
       this.buzzDisp[c.code] = { score: 0, spike: 0 };
     });
+
+    const pts = [];   // vec4: xyz = unit dir, w = intensity
+    const cols = [];  // vec4: rgb = confed color, a = spike
+    for (let i = 0; i < K; i++) { pts.push(new THREE.Vector4()); cols.push(new THREE.Vector4()); }
 
     this.buzzUniforms = {
       uPts:     { value: pts },
       uCol:     { value: cols },
+      uCount:   { value: 0 },
       uTime:    { value: 0 },
       uOpacity: { value: 1.0 }
     };
@@ -998,9 +1006,10 @@ class Component extends DCLogic {
       ].join('\n'),
       fragmentShader: [
         'precision highp float;',
-        '#define N ' + n,
-        'uniform vec4 uPts[N];',
-        'uniform vec4 uCol[N];',
+        '#define K ' + K,
+        'uniform vec4 uPts[K];',
+        'uniform vec4 uCol[K];',
+        'uniform int uCount;',
         'uniform float uTime;',
         'uniform float uOpacity;',
         'varying vec3 vDir;',
@@ -1010,12 +1019,15 @@ class Component extends DCLogic {
         '  vec3 col = vec3(0.0);',
         '  float a = 0.0;',
         '  float field = 0.0;',  // total local buzz, drives the grid pulse
-        '  for (int i = 0; i < N; i++) {',
+        '  for (int i = 0; i < K; i++) {',
+        '    if (i >= uCount) break;',
         '    float inten = uPts[i].w;',
         '    float spike = uCol[i].a;',
         '    float d = acos(clamp(dot(nd, uPts[i].xyz), -1.0, 1.0));',
         '    float reach = 0.22 + inten * 0.5 + spike * 0.32;',
-        '    float env = smoothstep(reach, 0.0, d) * step(0.005, inten);',
+        // smoothstep needs edge0 < edge1 (reversed edges are undefined in GLSL ES);
+        // build an increasing ramp and invert so env is 1 at center, 0 at reach.
+        '    float env = (1.0 - smoothstep(0.0, reach, d)) * step(0.005, inten);',
         '    float wave = 0.5 + 0.5 * sin(d * 34.0 - uTime * (2.2 + spike * 4.5));',
         '    wave = pow(wave, 2.4);',  // crisper concentric rings
         '    float v = env * wave * (0.32 + inten * 1.0 + spike * 1.3);',
@@ -1028,8 +1040,8 @@ class Component extends DCLogic {
         '  float lon = atan(nd.z, nd.x);',
         '  float latC = lat / (PI / 12.0);',
         '  float lonC = lon / (PI / 12.0);',
-        '  float latL = smoothstep(0.06, 0.0, abs(fract(latC + 0.5) - 0.5));',
-        '  float lonL = smoothstep(0.06, 0.0, abs(fract(lonC + 0.5) - 0.5)) * max(cos(lat), 0.0);',
+        '  float latL = 1.0 - smoothstep(0.0, 0.06, abs(fract(latC + 0.5) - 0.5));',
+        '  float lonL = (1.0 - smoothstep(0.0, 0.06, abs(fract(lonC + 0.5) - 0.5))) * max(cos(lat), 0.0);',
         '  float grid = max(latL, lonL);',
         '  float gridA = grid * (0.018 + clamp(field, 0.0, 1.0) * 0.62);',
         '  col += vec3(0.45, 0.72, 1.0) * gridA;',
@@ -1055,7 +1067,8 @@ class Component extends DCLogic {
     this.buzzGroup.visible = (v === 'globe' || v === 'matchday');
   }
 
-  // Per-frame: ease displayed buzz toward server targets, feed the shader.
+  // Per-frame: ease displayed buzz toward server targets, then upload only the
+  // K hottest countries to the shader (the rest contribute ~nothing visually).
   updateBuzz(now) {
     if (!this.buzzGroup || !this.buzzGroup.visible || !this.buzzUniforms) return;
     const dt = this._buzzLastT ? Math.min((now - this._buzzLastT) / 1000, 0.1) : 0.016;
@@ -1063,17 +1076,30 @@ class Component extends DCLogic {
     const ease = 1 - Math.exp(-dt / 0.5); // ~0.5s catch-up to server targets
     this.buzzUniforms.uTime.value += dt;
 
-    const pts = this.buzzUniforms.uPts.value;
-    const cols = this.buzzUniforms.uCol.value;
+    // Ease every country's displayed buzz, collecting those worth drawing.
+    const hot = [];
     for (let i = 0; i < this.countries.length; i++) {
-      const code = this.countries[i].code;
-      const target = this.buzzByCode[code] || { score: 0, spike: 0 };
-      const disp = this.buzzDisp[code];
+      const disp = this.buzzDisp[this.countries[i].code];
+      const target = this.buzzByCode[this.countries[i].code] || { score: 0, spike: 0 };
       disp.score += (target.score - disp.score) * ease;
       disp.spike += (target.spike - disp.spike) * ease;
-      pts[i].w = disp.score;
-      cols[i].w = disp.spike;
+      const heat = disp.score + disp.spike;
+      if (heat > 0.02) hot.push({ i: i, heat: heat });
     }
+    hot.sort((p, q) => q.heat - p.heat);
+
+    const K = this._buzzK;
+    const count = Math.min(hot.length, K);
+    const pts = this.buzzUniforms.uPts.value;
+    const cols = this.buzzUniforms.uCol.value;
+    for (let j = 0; j < count; j++) {
+      const idx = hot[j].i;
+      const disp = this.buzzDisp[this.countries[idx].code];
+      const v = this._buzzPos[idx], c = this._buzzCol[idx];
+      pts[j].set(v.x, v.y, v.z, disp.score);
+      cols[j].set(c[0], c[1], c[2], disp.spike);
+    }
+    this.buzzUniforms.uCount.value = count;
   }
 
   applyViewMarkers() {

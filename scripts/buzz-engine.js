@@ -19,6 +19,7 @@
  */
 
 const fs = require('fs');
+const fsp = fs.promises;
 const path = require('path');
 
 const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
@@ -64,22 +65,23 @@ class BuzzEngine {
 
   start() {
     if (this._timer) return;
-    this.reloadData(true);
-    this._timer = setInterval(() => this.tick(), this._tickMs);
+    this.reloadData(true).catch(() => {});
+    this._timer = setInterval(() => { this.tick().catch(() => {}); }, this._tickMs);
     if (this._timer.unref) this._timer.unref();
     console.log('[buzz] engine started (simulated / goal-derived source)');
   }
 
   stop() { if (this._timer) { clearInterval(this._timer); this._timer = null; } }
 
-  /** Read matches.json (when it changes), classify today's teams, detect goals. */
-  reloadData(initial) {
+  /** Read matches.json (when it changes), classify today's teams, detect goals.
+   *  Async + non-blocking so the file I/O never stalls the event loop. */
+  async reloadData(initial) {
     let stat;
-    try { stat = fs.statSync(DATA_PATH); } catch { return; }
+    try { stat = await fsp.stat(DATA_PATH); } catch { return; }
     if (!initial && stat.mtimeMs === this._dataMtime) return;
 
     let data;
-    try { data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); } catch { return; }
+    try { data = JSON.parse(await fsp.readFile(DATA_PATH, 'utf8')); } catch { return; }
     if (!data || !Array.isArray(data.days) || !Array.isArray(data.dayMatches)) return;
 
     // Only advance the mtime watermark once we have valid data, so a read that
@@ -121,8 +123,8 @@ class BuzzEngine {
     if (this.state[conceder]) this.state[conceder].spike = clamp01(this.state[conceder].spike + 0.55);
   }
 
-  tick() {
-    this.reloadData(false);
+  async tick() {
+    await this.reloadData(false);
     const now = Date.now();
     const dtMs = Math.min(now - this.now, 5000);
     this.now = now;

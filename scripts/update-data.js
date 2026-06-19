@@ -92,7 +92,12 @@ function parseResponseJson(text) {
 }
 
 async function updateData() {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // maxRetries lets the SDK automatically back off and honor the API's
+  // `retry-after` header on transient 429/5xx responses.
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    maxRetries: 5
+  });
 
   const current = loadCurrentData();
   if (!current) throw new Error('No existing matches.json found');
@@ -165,18 +170,42 @@ Rules:
 - If there is nothing to update, return empty arrays: { "new_days": [], "updated_matches": [] }
 `;
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8192,
-    tools: [
-      {
-        type: 'web_search_20250305',
-        name: 'web_search',
-        max_uses: 10
-      }
-    ],
-    messages: [{ role: 'user', content: prompt }]
-  });
+  // Keep the request lightweight. Each web_search result page is pulled back
+  // into context as input tokens, so a high max_uses can blow past a low
+  // input-tokens-per-minute rate limit mid-request (429). Three searches is
+  // enough to cover "results since last day", "today's schedule", and
+  // "upcoming results" while keeping the token footprint small.
+  let response;
+  try {
+    response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 3072,
+      tools: [
+        {
+          type: 'web_search_20250305',
+          name: 'web_search',
+          max_uses: 3
+        }
+      ],
+      messages: [{ role: 'user', content: prompt }]
+    });
+  } catch (err) {
+    // A persistent rate limit (after the SDK's own retries) is not a failure
+    // worth going red over on a 30-min cron — skip this run and let the next
+    // one try. Surfacing it as an error would just spam notifications.
+    if (err && err.status === 429) {
+      const h = err.headers;
+      const reset = h && (typeof h.get === 'function'
+        ? h.get('anthropic-ratelimit-input-tokens-reset')
+        : h['anthropic-ratelimit-input-tokens-reset']);
+      console.warn(
+        `[update] Rate limited by the Anthropic API (429). Skipping this run; ` +
+        `the next scheduled run will retry.${reset ? ` Input-token limit resets at ${reset}.` : ''}`
+      );
+      return;
+    }
+    throw err;
+  }
 
   // Extract text from response (may contain tool_result blocks from web search)
   const textBlocks = response.content.filter(b => b.type === 'text');

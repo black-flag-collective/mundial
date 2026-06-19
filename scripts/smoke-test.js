@@ -10,7 +10,7 @@ const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
 
-const PORT = process.env.SMOKE_PORT || 3999;
+const PORT = Number(process.env.SMOKE_PORT) || 3999;
 const BASE = `http://127.0.0.1:${PORT}`;
 const BOOT_TIMEOUT_MS = 15000;
 

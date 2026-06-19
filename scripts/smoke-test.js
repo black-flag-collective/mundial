@@ -81,6 +81,23 @@ async function run() {
     check('data.json has dayMatches[]', Array.isArray(json?.dayMatches));
     check('days and dayMatches align', Array.isArray(json?.days) && Array.isArray(json?.dayMatches) && json.days.length === json.dayMatches.length);
     check('exactly one day flagged today', Array.isArray(json?.days) && json.days.filter(d => d.today).length === 1);
+
+    const buzz = await get('/api/buzz.json');
+    check('GET /api/buzz.json returns 200', buzz.status === 200);
+
+    let bjson = null;
+    try {
+      bjson = JSON.parse(buzz.body);
+    } catch {
+      /* leave bjson null */
+    }
+    check('buzz.json is valid JSON', bjson !== null);
+    check('buzz.json has updatedAt/window/source',
+      bjson && typeof bjson.updatedAt === 'string' && typeof bjson.window === 'string' && typeof bjson.source === 'string');
+    check('buzz.json has non-empty buzz[]', Array.isArray(bjson?.buzz) && bjson.buzz.length > 0);
+    const b0 = Array.isArray(bjson?.buzz) ? bjson.buzz[0] : null;
+    check('buzz entries have code/score/spike/rank',
+      b0 && typeof b0.code === 'string' && typeof b0.score === 'number' && typeof b0.spike === 'number' && typeof b0.rank === 'number');
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

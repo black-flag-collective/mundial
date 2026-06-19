@@ -39,6 +39,20 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+// Live buzz layer: per-country social intensity for the globe beacons.
+const { getEngine } = require('./scripts/buzz-engine');
+const buzz = getEngine();
+
+app.get('/api/buzz.json', (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json(buzz.snapshot());
+  } catch (err) {
+    console.error('Failed to serve buzz.json:', err.message);
+    res.status(503).json({ error: 'buzz not available' });
+  }
+});
+
 app.get('/api/data.json', (req, res) => {
   try {
     const raw = fs.existsSync(DATA_PATH)
@@ -73,6 +87,9 @@ app.get('/api/data.json', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Mundial server running on port ${PORT}`);
+
+  // Start the buzz engine (no API key required — simulated/goal-derived source).
+  buzz.start();
 });
 
 // NOTE: Match data is refreshed by the "Update match data" GitHub Action

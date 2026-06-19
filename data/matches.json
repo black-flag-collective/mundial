@@ -301,7 +301,7 @@
         "g": "B",
         "a": "CAN",
         "b": "QAT",
-        "as": 6,
+        "as": 2,
         "bs": 0,
         "st": "FT",
         "venue": "BC Place, Vancouver"
@@ -314,14 +314,6 @@
         "venue": "BMO Field, Toronto",
         "as": 4,
         "bs": 1
-      },
-      {
-        "g": "C",
-        "a": "BRA",
-        "b": "HAI",
-        "st": "UP",
-        "time": "9:00 PM ET",
-        "venue": "SoFi Stadium, Los Angeles"
       }
     ],
     [

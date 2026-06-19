@@ -82,6 +82,20 @@ async function run() {
     check('days and dayMatches align', Array.isArray(json?.days) && Array.isArray(json?.dayMatches) && json.days.length === json.dayMatches.length);
     check('exactly one day flagged today', Array.isArray(json?.days) && json.days.filter(d => d.today).length === 1);
 
+    // Data-integrity: a fixture (team-pair) must appear on exactly one day. This
+    // catches the class of bug where the updater scheduled the same match twice
+    // (e.g. BRA–HAI on two days). Group-stage pairs are unique by definition.
+    const pairDays = new Map();
+    (json?.dayMatches || []).forEach((ms, i) => (ms || []).forEach(m => {
+      const k = [m.a, m.b].sort().join('_');
+      (pairDays.get(k) || pairDays.set(k, []).get(k)).push(json.days[i]?.short || i);
+    }));
+    const dupFixtures = [...pairDays.entries()].filter(([, days]) => days.length > 1);
+    if (dupFixtures.length) {
+      console.error('  duplicate fixtures: ' + dupFixtures.map(([k, d]) => `${k} on ${d.join(', ')}`).join('; '));
+    }
+    check('no duplicate fixtures across days', dupFixtures.length === 0);
+
     const buzz = await get('/api/buzz.json');
     check('GET /api/buzz.json returns 200', buzz.status === 200);
 

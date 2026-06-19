@@ -37,21 +37,44 @@ function saveData(data) {
 }
 
 /** Merge Claude's response into the existing data file.
- *  new_days   → append days/dayMatches not already present
- *  updated_matches → patch scores on existing FT/UP entries
+ *  new_days        → append days/dayMatches, skipping fixtures we already have
+ *  updated_matches → patch scores on not-yet-final entries
+ *
+ *  Returns { data, changed }. `changed` is true only when match content actually
+ *  moved — so the caller can avoid rewriting the file (and triggering a deploy)
+ *  on runs where Claude echoed data we already had.
  */
 function mergeUpdate(current, update) {
   const data = JSON.parse(JSON.stringify(current)); // deep clone
+  let changed = false;
 
-  // Add new days
+  // Group-stage invariant: each pair of teams meets exactly once, so a team-pair
+  // is a stable fixture id. We use it to dedupe — the same match must never be
+  // added on two different days (this is what produced the duplicate BRA–HAI).
+  const pairKey = (x, y) => [x, y].sort().join('_');
+  const knownPairs = new Set();
+  data.dayMatches.forEach(ms => ms.forEach(m => knownPairs.add(pairKey(m.a, m.b))));
+
+  // Add new days (and fixtures on existing days), de-duplicating by fixture.
   if (Array.isArray(update.new_days)) {
     for (const nd of update.new_days) {
       if (!nd.day_short) continue;
-      const exists = data.days.some(d => d.short === nd.day_short);
-      if (!exists) {
+      const fresh = (nd.matches || []).filter(m => {
+        if (!m.a || !m.b) return false;
+        const k = pairKey(m.a, m.b);
+        if (knownPairs.has(k)) return false; // already scheduled elsewhere
+        knownPairs.add(k);
+        return true;
+      });
+      if (!fresh.length) continue; // nothing new on this day → skip
+      const dayIdx = data.days.findIndex(d => d.short === nd.day_short);
+      if (dayIdx < 0) {
         data.days.push({ dow: nd.day_dow, short: nd.day_short, long: nd.day_long });
-        data.dayMatches.push(nd.matches || []);
+        data.dayMatches.push(fresh);
+      } else {
+        data.dayMatches[dayIdx].push(...fresh);
       }
+      changed = true;
     }
   }
 
@@ -70,15 +93,22 @@ function mergeUpdate(current, update) {
       // 2–0 → 6–0 between runs).
       if (m && m.st !== 'FT' && (um.st === 'FT' || um.st === 'LIVE')) {
         const flipped = m.a !== um.a;
-        m.as = flipped ? um.bs : um.as;
-        m.bs = flipped ? um.as : um.bs;
-        m.st = um.st;
-        delete m.time; // remove kickoff time once score is known
+        const newAs = flipped ? um.bs : um.as;
+        const newBs = flipped ? um.as : um.bs;
+        // Only record a change if something actually differs — otherwise a run
+        // that re-reports an unchanged match would still trigger a deploy.
+        if (m.as !== newAs || m.bs !== newBs || m.st !== um.st) {
+          m.as = newAs;
+          m.bs = newBs;
+          m.st = um.st;
+          delete m.time; // remove kickoff time once score is known
+          changed = true;
+        }
       }
     }
   }
 
-  return data;
+  return { data, changed };
 }
 
 /** Extract <match_data>…</match_data> JSON block from Claude's text response */
@@ -229,7 +259,14 @@ Rules:
     return;
   }
 
-  const merged = mergeUpdate(current, update);
+  const { data: merged, changed } = mergeUpdate(current, update);
+  if (!changed) {
+    // Claude reported items, but they were all dupes or already-final matches, so
+    // nothing actually moved. Don't rewrite the file — saveData() bumps updatedAt
+    // unconditionally, and a timestamp-only commit would trigger a needless deploy.
+    console.log(`[update] Response had ${hadNewDays} day(s)/${hadUpdates} update(s), but no net change — skipping save.`);
+    return;
+  }
   saveData(merged);
   console.log(`[update] Saved: ${hadNewDays} new days, ${hadUpdates} match updates`);
 }
@@ -243,4 +280,4 @@ if (require.main === module) {
   updateData().catch(err => { console.error(err); process.exit(1); });
 }
 
-module.exports = { updateData };
+module.exports = { updateData, mergeUpdate };

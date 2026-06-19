@@ -4,6 +4,10 @@
 **Repo:** https://github.com/black-flag-collective/mundial-buzz
 **Target URL:** https://mundial-buzz.fly.dev (Fly.io)
 
+> **Data layer details:** see [`docs/DATA-PIPELINE.md`](docs/DATA-PIPELINE.md) for
+> the full schedule/score pipeline, data-accuracy invariants, the deploy
+> `GITHUB_TOKEN` gotcha, and how to correct data by hand.
+
 ---
 
 ## What this is

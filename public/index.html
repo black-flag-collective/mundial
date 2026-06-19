@@ -827,6 +827,7 @@ class Component extends DCLogic {
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
+    this._buzzTimer = null;
     if (this._buzzAbort) this._buzzAbort.abort();
     if (this.renderer) this.renderer.dispose();
   }

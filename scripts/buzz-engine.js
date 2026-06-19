@@ -77,11 +77,14 @@ class BuzzEngine {
     let stat;
     try { stat = fs.statSync(DATA_PATH); } catch { return; }
     if (!initial && stat.mtimeMs === this._dataMtime) return;
-    this._dataMtime = stat.mtimeMs;
 
     let data;
     try { data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); } catch { return; }
     if (!data || !Array.isArray(data.days) || !Array.isArray(data.dayMatches)) return;
+
+    // Only advance the mtime watermark once we have valid data, so a read that
+    // catches the file mid-write (parse fails) is retried on the next tick.
+    this._dataMtime = stat.mtimeMs;
 
     // Determine "today" the same way server.js does.
     const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

@@ -18,10 +18,12 @@
  * spikes around in-progress games; precise per-goal spikes need a persistent
  * baseline or a delta feed from the updater (not built here).
  *
- * It is intentionally source-agnostic: to wire in the real X API later, replace
- * `pump()` with an adapter that increments `count[code]` from the filtered
- * stream (Pro) or recent-search polling (pay-per-use). Everything downstream —
- * the score model, the snapshot shape, the globe layer — stays the same.
+ * It is intentionally source-agnostic: to wire in the real X API later, feed a
+ * real per-country signal into the model — e.g. keep rolling tweet counts per
+ * country and map them onto this.state[code].score / .spike inside tick() —
+ * sourced from the X filtered stream (Pro) or recent-search polling (the
+ * pay-per-use default). Everything downstream — the snapshot shape and the
+ * globe layer — stays the same.
  *
  * Privacy: only aggregate intensity per country is ever kept. No tweet text,
  * authors, or ids are stored.
@@ -75,8 +77,10 @@ class BuzzEngine {
 
   start() {
     if (this._timer) return;
-    this.reloadData(true).catch(() => {});
-    this._timer = setInterval(() => { this.tick().catch(() => {}); }, this._tickMs);
+    this.reloadData(true).catch(err => console.error('[buzz] initial data load failed:', err.message));
+    this._timer = setInterval(() => {
+      this.tick().catch(err => console.error('[buzz] tick failed:', err.message));
+    }, this._tickMs);
     if (this._timer.unref) this._timer.unref();
     console.log('[buzz] engine started (simulated / goal-derived source)');
   }

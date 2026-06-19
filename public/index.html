@@ -444,6 +444,13 @@ class Component extends DCLogic {
     this.hitMeshes = [];
     this.arcGroup = null;
 
+    // Buzz layer: pulsing beacons driven by live social volume per country.
+    this.buzzGroup = null;
+    this.beacons = [];
+    this.buzzByCode = {};   // code -> { score, spike } target from /api/buzz.json
+    this.buzzDisp = {};     // code -> eased display values
+    this._buzzLastT = 0;
+
     this.confed = {
       AFC:      { label: 'AFC',      color: '#ff7fb0' },
       CAF:      { label: 'CAF',      color: '#ffd35c' },
@@ -739,6 +746,24 @@ class Component extends DCLogic {
     this.loop();
     this.playEntrance();
     this._loadLiveData();
+    this._loadBuzz();
+  }
+
+  _loadBuzz() {
+    const poll = () => {
+      fetch('/api/buzz.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && Array.isArray(data.buzz)) {
+            const map = {};
+            data.buzz.forEach(b => { map[b.code] = { score: b.score || 0, spike: b.spike || 0 }; });
+            this.buzzByCode = map;
+          }
+        })
+        .catch(() => {})
+        .finally(() => { this._buzzTimer = setTimeout(poll, 4000); });
+    };
+    poll();
   }
 
   _loadLiveData() {
@@ -765,6 +790,7 @@ class Component extends DCLogic {
     window.removeEventListener('mousemove', this.onMove);
     window.removeEventListener('resize', this.onResize);
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
+    if (this._buzzTimer) clearTimeout(this._buzzTimer);
     if (this.renderer) this.renderer.dispose();
   }
 
@@ -876,6 +902,8 @@ class Component extends DCLogic {
       this.markers.push({ grp: grp, dot: dot, ring: ring, idx: idx });
     });
 
+    this.buildBuzzLayer(THREE, globe, R);
+
     this.raycaster = new THREE.Raycaster();
     this.renderer = renderer;
     this.scene = scene;
@@ -888,6 +916,100 @@ class Component extends DCLogic {
     this.glReady = true;
     this.applyViewMarkers();
     this.rebuildArcs();
+  }
+
+  // Build one beacon per country: a soft glow halo + a pool of shockwave rings
+  // that expand and fade outward. Intensity is driven later by buzzDisp.
+  buildBuzzLayer(THREE, globe, R) {
+    const RING_POOL = 3;
+    this.buzzGroup = new THREE.Group();
+    globe.add(this.buzzGroup);
+    this.beacons = [];
+
+    const ringGeo = new THREE.RingGeometry(0.62, 1.0, 40);
+
+    this.countries.forEach((c, idx) => {
+      const v = this.latLonToVec(c.lat, c.lon, R * 1.015);
+      const color = parseInt(this.confed[c.confed].color.slice(1), 16);
+
+      const node = new THREE.Group();
+      node.position.copy(v);
+      // Orient the rings tangent to the surface (their +Z faces outward).
+      node.lookAt(v.clone().multiplyScalar(2));
+
+      // Steady glow halo — additive sphere that swells with sustained volume.
+      const glow = new THREE.Mesh(
+        new THREE.SphereGeometry(2.6, 16, 16),
+        new THREE.MeshBasicMaterial({
+          color: color, transparent: true, opacity: 0,
+          blending: THREE.AdditiveBlending, depthWrite: false
+        })
+      );
+      glow.position.copy(v);
+      this.buzzGroup.add(glow);
+
+      // Expanding shockwave rings, phase-staggered so they cascade outward.
+      const rings = [];
+      for (let r = 0; r < RING_POOL; r++) {
+        const ring = new THREE.Mesh(
+          ringGeo,
+          new THREE.MeshBasicMaterial({
+            color: color, transparent: true, opacity: 0, side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending, depthWrite: false
+          })
+        );
+        ring.scale.setScalar(0.001);
+        node.add(ring);
+        rings.push({ mesh: ring, p: r / RING_POOL });
+      }
+      this.buzzGroup.add(node);
+
+      this.beacons.push({ code: c.code, glow: glow, rings: rings });
+      this.buzzDisp[c.code] = { score: 0, spike: 0 };
+    });
+
+    this.applyBuzzVisibility();
+  }
+
+  applyBuzzVisibility() {
+    if (!this.buzzGroup) return;
+    const v = this.currentView();
+    // The buzz layer reads best on the full globe and on matchday.
+    this.buzzGroup.visible = (v === 'globe' || v === 'matchday');
+  }
+
+  // Per-frame animation of the beacons. Called from updateGlobe.
+  updateBuzz(now) {
+    if (!this.buzzGroup || !this.buzzGroup.visible || !this.beacons.length) return;
+    const dt = this._buzzLastT ? Math.min((now - this._buzzLastT) / 1000, 0.1) : 0.016;
+    this._buzzLastT = now;
+    const ease = 1 - Math.exp(-dt / 0.45); // ~0.45s catch-up to server targets
+
+    for (let i = 0; i < this.beacons.length; i++) {
+      const b = this.beacons[i];
+      const target = this.buzzByCode[b.code] || { score: 0, spike: 0 };
+      const disp = this.buzzDisp[b.code];
+      disp.score += (target.score - disp.score) * ease;
+      disp.spike += (target.spike - disp.spike) * ease;
+      const score = disp.score, spike = disp.spike;
+      const heat = Math.min(1, score + spike * 0.6);
+
+      // Glow halo: size + brightness track sustained volume, flares on spikes.
+      b.glow.scale.setScalar(0.8 + score * 3.4 + spike * 1.6);
+      b.glow.material.opacity = 0.08 + score * 0.42 + spike * 0.35;
+
+      // Shockwaves: emit faster and brighter the hotter the country is.
+      const speed = (0.18 + score * 0.55 + spike * 1.4) * dt;
+      const maxScale = 3.2 + heat * 6.5;
+      for (let r = 0; r < b.rings.length; r++) {
+        const ring = b.rings[r];
+        ring.p += speed;
+        if (ring.p >= 1) ring.p -= 1;
+        const p = ring.p;
+        ring.mesh.scale.setScalar(0.4 + p * maxScale);
+        ring.mesh.material.opacity = (1 - p) * (0.12 + heat * 0.7);
+      }
+    }
   }
 
   applyViewMarkers() {
@@ -1081,12 +1203,14 @@ class Component extends DCLogic {
     if (this._appliedView !== _v) {
       this._appliedView = _v;
       this.applyViewMarkers();
+      this.applyBuzzVisibility();
       this.rebuildArcs();
       if (_v === 'bracket') { requestAnimationFrame(() => this.scaleBracket()); setTimeout(() => this.scaleBracket(), 350); }
     }
     const T = window.THREE;
     const md = _v === 'matchday';
     this.globe.updateMatrixWorld();
+    this.updateBuzz(performance.now());
     const t = performance.now() * 0.003;
 
     // Slide the globe left in matchday so the fixtures panel never overlaps it.

@@ -1,0 +1,5 @@
+{
+  "shape": "storybook",
+  "storybookConfigDir": "packages/mundial-ui/.storybook",
+  "readmeHeader": ".design-sync/conventions.md"
+}

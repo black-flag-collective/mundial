@@ -39,10 +39,17 @@ GitHub Action (.github/workflows/update-data.yml, every 30 min + manual)
         └─ Claude (claude-sonnet-4-6) + web_search_20250305 tool
              └─ finds latest WC2026 results, mergeUpdate() patches
                 data/matches.json  (ADDITIVE ONLY — never overwrites FT scores)
-        └─ commits data/matches.json back to main  ──► persists + triggers deploy
+        └─ commits data/matches.json back to main  ──► persists the data
+        └─ flyctl deploy --remote-only (same job, only when data changed) ──► Fly.io
 
-Deploy:  git push main ──► GitHub Actions (.github/workflows/fly.yml)
+Deploy (code changes):  git push main ──► GitHub Actions (.github/workflows/fly.yml)
                             └─ flyctl deploy --remote-only ──► Fly.io
+
+NOTE: the updater deploys itself rather than relying on its commit to trigger
+fly.yml. A push made with the default GITHUB_TOKEN does NOT trigger other
+workflows (GitHub blocks recursive runs), so fly.yml's `on: push` never fired
+for bot data commits — the data persisted but the site never redeployed. Both
+the updater workflow and fly.yml need the FLY_API_TOKEN repo secret.
 ```
 
 ## Key files

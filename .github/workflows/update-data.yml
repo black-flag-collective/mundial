@@ -55,9 +55,11 @@ jobs:
         run: node scripts/update-data.js
 
       - name: Commit changes if any
+        id: commit
         run: |
           if git diff --quiet -- data/matches.json; then
             echo "No data changes — nothing to commit."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "mundial-bot"
@@ -67,3 +69,20 @@ jobs:
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      # The commit above is pushed with the default GITHUB_TOKEN, which by design
+      # does NOT trigger other workflows (GitHub blocks this to avoid recursive
+      # runs). That means the separate "Deploy to Fly.io" workflow (on: push) never
+      # fires for bot data commits, so fresh scores would sit in the repo but never
+      # reach the running Fly machine. We therefore deploy directly here whenever
+      # new data was committed.
+      - name: Set up flyctl
+        if: steps.commit.outputs.committed == 'true'
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        if: steps.commit.outputs.committed == 'true'
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

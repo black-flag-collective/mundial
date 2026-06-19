@@ -61,6 +61,7 @@ class BuzzEngine {
     this._classified = {};   // code -> match state today (LIVE/UP/FT) or undefined
     this._tickMs = 2000;
     this._timer = null;
+    this._ticking = false;
   }
 
   start() {
@@ -124,6 +125,11 @@ class BuzzEngine {
   }
 
   async tick() {
+    // Re-entrancy guard: setInterval can fire again before an awaited tick
+    // resolves; skip overlapping runs so _lastScores / goal spikes stay consistent.
+    if (this._ticking) return;
+    this._ticking = true;
+    try {
     await this.reloadData(false);
     const now = Date.now();
     const dtMs = Math.min(now - this.now, 5000);
@@ -154,6 +160,9 @@ class BuzzEngine {
       // Spikes decay over ~12s.
       s.spike *= Math.pow(0.92, dtMs / this._tickMs);
       if (s.spike < 0.01) s.spike = 0;
+    }
+    } finally {
+      this._ticking = false;
     }
   }
 

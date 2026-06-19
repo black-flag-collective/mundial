@@ -34,11 +34,12 @@ Browser ──GET /──────────► public/index.html + public/
                                injects dynamic `today` flag, returns JSON
                                └─ app's _loadLiveData() swaps in fresh data
 
-server.js (on startup + every 30 min, if ANTHROPIC_API_KEY set)
-   └─ scripts/update-data.js
+GitHub Action (.github/workflows/update-data.yml, every 30 min + manual)
+   └─ scripts/update-data.js  (needs ANTHROPIC_API_KEY repo secret)
         └─ Claude (claude-sonnet-4-6) + web_search_20250305 tool
              └─ finds latest WC2026 results, mergeUpdate() patches
                 data/matches.json  (ADDITIVE ONLY — never overwrites FT scores)
+        └─ commits data/matches.json back to main  ──► persists + triggers deploy
 
 Deploy:  git push main ──► GitHub Actions (.github/workflows/fly.yml)
                             └─ flyctl deploy --remote-only ──► Fly.io
@@ -51,8 +52,9 @@ Deploy:  git push main ──► GitHub Actions (.github/workflows/fly.yml)
 | `public/index.html` | The app (modified design export — added `_loadLiveData()` + `dataUpdated` binding) |
 | `public/support.js` | DC runtime (loads React 18, parses `<x-dc>` template). Verbatim copy, do not edit. |
 | `data/matches.json` | Seed data Jun 11–18. `today` is NOT stored here — server adds it per-request. |
-| `server.js` | Express: serves `public/`, `/api/data.json`, schedules updater |
+| `server.js` | Express: serves `public/` + `/api/data.json` (injects per-request `today`). No longer runs the updater in-process. |
 | `scripts/update-data.js` | Claude web-search updater. Run standalone: `node scripts/update-data.js` |
+| `.github/workflows/update-data.yml` | Scheduled (every 30 min) updater: runs the script and commits `matches.json` back to main. Needs `ANTHROPIC_API_KEY` repo secret. |
 | `Dockerfile` | Node 20 Alpine |
 | `fly.toml` | app=`mundial-buzz`, region=iad, 256MB, auto-stop when idle |
 | `.github/workflows/fly.yml` | Auto-deploy on push to main + manual dispatch |
@@ -85,10 +87,13 @@ Deploy:  git push main ──► GitHub Actions (.github/workflows/fly.yml)
 ```bash
 fly auth login
 fly apps create mundial-buzz
-fly secrets set ANTHROPIC_API_KEY=sk-ant-...    # enables the live updater in prod
 fly tokens create deploy -x 999999h             # copy the FlyV1... token
 ```
-Then GitHub → Settings → Secrets and variables → Actions → add `FLY_API_TOKEN`.
+Then GitHub → Settings → Secrets and variables → Actions, and add:
+- `FLY_API_TOKEN`     — the `FlyV1...` token above (deploys).
+- `ANTHROPIC_API_KEY` — `sk-ant-...` (enables the scheduled "Update match data"
+  workflow that fetches results and commits them back to the repo).
+
 Next push (or Actions → Run workflow) deploys to mundial-buzz.fly.dev.
 
 First deploy can also be done by hand: `fly deploy` from repo root.
@@ -106,10 +111,16 @@ First deploy can also be done by hand: `fly deploy` from repo root.
 - Fly deploys run in GitHub Actions (full network), so the container never needs
   to reach Fly directly.
 - App still works without `ANTHROPIC_API_KEY` — it just won't auto-refresh scores.
+  The key now lives as a **GitHub Actions secret** (used by the updater workflow),
+  not as a Fly secret — the server no longer runs the updater in-process.
+- **Why the updater moved out of the server:** Fly machines have no persistent
+  volume and `min_machines_running = 0`, so the filesystem resets on every
+  restart/redeploy (and the in-process timer never ran while auto-stopped). Any
+  score written in-process was silently lost. The scheduled Action commits
+  `matches.json` to the repo, which persists it and triggers a redeploy.
 
 ## Possible next steps (not started)
 
-- Add a `.claude/` SessionStart hook (e.g. `npm ci`) so connected sessions boot ready.
 - First live deploy + smoke-test mundial-buzz.fly.dev.
 - Tune updater cadence / prompt once real tournament data flows in.
 - Consider a real football API as a fallback/cross-check to the Claude agent.

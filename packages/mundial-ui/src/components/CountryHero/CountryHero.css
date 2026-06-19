@@ -1,0 +1,39 @@
+.mun-country {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.mun-country__name {
+  font-size: clamp(13px, 1.4vw, 17px);
+  font-weight: 600;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  max-width: 80vw;
+}
+.mun-country__code {
+  font-family: var(--mun-font-sans);
+  font-weight: 800;
+  font-size: clamp(5rem, 21vw, 19rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: var(--mun-fg-display);
+  text-shadow: var(--mun-shadow-card);
+}
+.mun-country__badges { display: flex; align-items: center; gap: 10px; }
+.mun-country__badge {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mun-fg);
+  background: var(--mun-surface-4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--mun-radius-pill);
+}
+.mun-country__badge--confed {
+  letter-spacing: 0.08em;
+  background: var(--mun-surface-2);
+  border-color: rgba(255, 255, 255, 0.14);
+}

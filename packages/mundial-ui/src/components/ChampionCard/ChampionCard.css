@@ -1,0 +1,33 @@
+.mun-champion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 188px;
+  gap: 16px;
+  padding: 0 6px;
+}
+.mun-champion__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--mun-accent);
+}
+.mun-champion > .mun-bracket-match { width: 100%; }
+.mun-champion__crown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+.mun-champion__caption { font-size: 10px; letter-spacing: 0.2em; color: var(--mun-fg-faint); }
+.mun-champion__code {
+  font-family: var(--mun-font-sans);
+  font-weight: 800;
+  font-size: 44px;
+  color: var(--mun-fg);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.mun-champion__name { font-size: 13px; color: var(--mun-accent); }

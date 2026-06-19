@@ -1,0 +1,14 @@
+.mun-legend { display: inline-flex; flex-direction: column; }
+.mun-legend__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.mun-legend__item { display: flex; align-items: center; gap: 10px; }
+.mun-legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--mun-radius-pill);
+}
+.mun-legend__label { font-size: 13px; color: var(--mun-fg-muted); letter-spacing: 0.02em; }

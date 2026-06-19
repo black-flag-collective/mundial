@@ -15,8 +15,12 @@ fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0].toLowerCase();
 
-  if (host === 'www.mundial.buzz') {
-    return res.redirect(301, `https://mundial.buzz${req.originalUrl}`);
+  if (host.startsWith('www.')) {
+    const canonicalHost = host.slice(4);
+    // Prevent open redirects by only canonicalizing the expected domain.
+    if (canonicalHost === 'mundial.buzz') {
+      return res.redirect(301, `https://${canonicalHost}${req.originalUrl}`);
+    }
   }
 
   next();

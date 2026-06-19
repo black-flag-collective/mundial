@@ -1,0 +1,11 @@
+.mun-eyebrow {
+  font-family: var(--mun-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--mun-tracking-eyebrow);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mun-eyebrow--default { color: var(--mun-fg-subtle); }
+.mun-eyebrow--strong { color: var(--mun-fg-muted); }
+.mun-eyebrow--subtle { color: var(--mun-fg-faint); }

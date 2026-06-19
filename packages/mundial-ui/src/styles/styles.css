@@ -1,0 +1,19 @@
+/**
+ * Style entry for the Mundial design system.
+ *
+ * Importing this (or the built `@mundial/ui/styles`) loads the design tokens
+ * and the fonts the system is designed around. Component styles ship compiled
+ * into the same CSS bundle. This is the stylesheet the design agent should read
+ * before styling, and the @import closure rendered designs receive.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+@import './tokens.css';
+
+/* Base font for anything rendered inside the design system. */
+.mun-root {
+  font-family: var(--mun-font-sans);
+  letter-spacing: var(--mun-tracking-tight);
+  color: var(--mun-fg);
+  background: var(--mun-bg);
+}

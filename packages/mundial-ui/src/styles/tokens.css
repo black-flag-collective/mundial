@@ -1,0 +1,68 @@
+/**
+ * Mundial design tokens.
+ *
+ * The single source of truth for the design system's palette, type, radii, and
+ * effects. Every component styles itself from these `--mun-*` custom
+ * properties — never hard-coded values — so the whole system re-themes from
+ * here. Build app layout with these tokens too.
+ */
+
+:root {
+  /* Brand */
+  --mun-bg: #04101c;
+  --mun-accent: #e8702a;
+  --mun-accent-hover: #d2611f;
+  --mun-accent-glow: rgba(232, 112, 42, 0.3);
+  --mun-accent-soft: rgba(232, 112, 42, 0.18);
+  --mun-accent-border: rgba(232, 112, 42, 0.5);
+  --mun-blue: #3a82c0;
+
+  /* Foreground (text on the dark field) */
+  --mun-fg: #ffffff;
+  --mun-fg-display: rgba(236, 245, 252, 0.96);
+  --mun-fg-strong: rgba(255, 255, 255, 0.85);
+  --mun-fg-muted: rgba(255, 255, 255, 0.7);
+  --mun-fg-subtle: rgba(255, 255, 255, 0.55);
+  --mun-fg-faint: rgba(255, 255, 255, 0.45);
+  --mun-fg-dim: rgba(255, 255, 255, 0.4);
+
+  /* Surfaces (translucent glass over the dark field) */
+  --mun-surface-1: rgba(255, 255, 255, 0.04);
+  --mun-surface-2: rgba(255, 255, 255, 0.06);
+  --mun-surface-3: rgba(255, 255, 255, 0.08);
+  --mun-surface-4: rgba(255, 255, 255, 0.13);
+  --mun-surface-nav: rgba(255, 255, 255, 0.16);
+  --mun-surface-active: rgba(255, 255, 255, 0.18);
+
+  /* Borders */
+  --mun-border-soft: rgba(255, 255, 255, 0.1);
+  --mun-border: rgba(255, 255, 255, 0.12);
+  --mun-border-strong: rgba(255, 255, 255, 0.28);
+
+  /* Radii */
+  --mun-radius-pill: 999px;
+  --mun-radius-lg: 16px;
+  --mun-radius-md: 14px;
+  --mun-radius-card: 12px;
+  --mun-radius-sm: 8px;
+  --mun-radius-flag: 2px;
+
+  /* Typography */
+  --mun-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --mun-font-display: 'Playfair Display', Georgia, serif;
+  --mun-tracking-tight: -0.02em;
+  --mun-tracking-eyebrow: 0.34em;
+
+  /* Effects */
+  --mun-blur: 12px;
+  --mun-shadow-card: 0 12px 60px rgba(0, 0, 0, 0.55);
+  --mun-shadow-flag: 0 0 0 1px rgba(255, 255, 255, 0.18);
+
+  /* Confederation accents */
+  --mun-confed-afc: #ff7fb0;
+  --mun-confed-caf: #ffd35c;
+  --mun-confed-concacaf: #ff8a5c;
+  --mun-confed-conmebol: #5fe0a0;
+  --mun-confed-ofc: #5fd4e0;
+  --mun-confed-uefa: #6ea8ff;
+}

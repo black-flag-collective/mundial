@@ -1,0 +1,11 @@
+.mun-navpills {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--mun-radius-pill);
+  background: var(--mun-surface-nav);
+  border: 1px solid var(--mun-border-strong);
+  backdrop-filter: blur(var(--mun-blur));
+  -webkit-backdrop-filter: blur(var(--mun-blur));
+}

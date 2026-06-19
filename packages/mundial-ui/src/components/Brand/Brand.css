@@ -1,0 +1,11 @@
+.mun-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mun-brand__word {
+  color: var(--mun-fg);
+  font-family: var(--mun-font-display);
+  font-style: italic;
+  line-height: 1;
+}

@@ -1,0 +1,20 @@
+.mun-pill {
+  border: none;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: var(--mun-radius-pill);
+  font-family: var(--mun-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--mun-fg-muted);
+  transition: background 0.2s, color 0.2s;
+}
+.mun-pill:hover {
+  color: var(--mun-fg);
+}
+.mun-pill[data-active] {
+  background: var(--mun-surface-active);
+  color: var(--mun-fg);
+}

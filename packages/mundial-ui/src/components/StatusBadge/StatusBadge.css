@@ -1,0 +1,27 @@
+.mun-status {
+  display: inline-block;
+  font-family: var(--mun-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 5px 13px;
+  border-radius: var(--mun-radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.mun-status--final {
+  color: var(--mun-fg-strong);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.mun-status--upcoming {
+  color: var(--mun-accent);
+  background: var(--mun-accent-soft);
+  border-color: var(--mun-accent-border);
+}
+.mun-status--today {
+  color: var(--mun-bg);
+  background: var(--mun-accent);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}

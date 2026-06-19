@@ -1,0 +1,21 @@
+.mun-flag {
+  display: inline-block;
+  border-radius: var(--mun-radius-flag);
+  object-fit: cover;
+  flex: none;
+  box-shadow: var(--mun-shadow-flag);
+}
+.mun-flag--sm { width: 20px; height: 14px; }
+.mun-flag--md { width: 28px; height: 19px; border-radius: 3px; }
+.mun-flag--lg {
+  width: 64px;
+  height: 43px;
+  border-radius: 5px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.mun-flag--xl {
+  width: 88px;
+  height: 59px;
+  border-radius: 6px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.22);
+}

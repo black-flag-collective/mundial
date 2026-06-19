@@ -4,5 +4,6 @@ npm-debug.log
 .git
 chats
 project
+packages
 *.log
 .DS_Store

@@ -45,6 +45,10 @@ export type { BracketColumnProps } from './components/BracketColumn/BracketColum
 export { ChampionCard } from './components/ChampionCard/ChampionCard';
 export type { ChampionCardProps } from './components/ChampionCard/ChampionCard';
 
+// ---- Globe ----
+export { Globe } from './components/Globe/Globe';
+export type { GlobeProps, GlobeNation, GlobeArc } from './components/Globe/Globe';
+
 // ---- Globe panels ----
 export { ConfederationLegend } from './components/ConfederationLegend/ConfederationLegend';
 export type { ConfederationLegendProps } from './components/ConfederationLegend/ConfederationLegend';

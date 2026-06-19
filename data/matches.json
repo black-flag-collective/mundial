@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T04:52:57.823Z",
+  "updatedAt": "2026-06-19T05:28:15.374Z",
   "days": [
     {
       "dow": "Thursday",
@@ -301,7 +301,7 @@
         "g": "B",
         "a": "CAN",
         "b": "QAT",
-        "as": 2,
+        "as": 6,
         "bs": 0,
         "st": "FT",
         "venue": "BC Place, Vancouver"

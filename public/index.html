@@ -829,6 +829,12 @@ class Component extends DCLogic {
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
     this._buzzTimer = null;
     if (this._buzzAbort) this._buzzAbort.abort();
+    // renderer.dispose() doesn't free geometries/materials we created — dispose
+    // the buzz shell explicitly so repeated mounts don't leak GPU resources.
+    if (this.buzzShell) {
+      this.buzzShell.geometry.dispose();
+      this.buzzShell.material.dispose();
+    }
     if (this.renderer) this.renderer.dispose();
   }
 

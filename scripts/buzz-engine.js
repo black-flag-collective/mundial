@@ -130,37 +130,37 @@ class BuzzEngine {
     if (this._ticking) return;
     this._ticking = true;
     try {
-    await this.reloadData(false);
-    const now = Date.now();
-    const dtMs = Math.min(now - this.now, 5000);
-    this.now = now;
-    const t = now * 0.001;
+      await this.reloadData(false);
+      const now = Date.now();
+      const dtMs = Math.min(now - this.now, 5000);
+      this.now = now;
+      const t = now * 0.001;
 
-    for (const code of CODES) {
-      const s = this.state[code];
-      const stClass = this._classified[code] || 'IDLE';
-      const base = POP[code] ?? DEFAULT_POP;
+      for (const code of CODES) {
+        const s = this.state[code];
+        const stClass = this._classified[code] || 'IDLE';
+        const base = POP[code] ?? DEFAULT_POP;
 
-      // Smooth procedural chatter: slow sine + a gentle random walk.
-      s.drift += (Math.random() - 0.5) * 0.06;
-      s.drift = Math.max(-0.25, Math.min(0.25, s.drift * 0.92));
-      const noise = 0.55 + 0.3 * Math.sin(t * 0.27 + s.phase) + s.drift;
+        // Smooth procedural chatter: slow sine + a gentle random walk.
+        s.drift += (Math.random() - 0.5) * 0.06;
+        s.drift = Math.max(-0.25, Math.min(0.25, s.drift * 0.92));
+        const noise = 0.55 + 0.3 * Math.sin(t * 0.27 + s.phase) + s.drift;
 
-      const target = clamp01(base * MULT[stClass] * noise);
+        const target = clamp01(base * MULT[stClass] * noise);
 
-      // Ease the steady glow toward target (~3s time constant).
-      const k = 1 - Math.exp(-dtMs / 3000);
-      s.score += (target - s.score) * k;
+        // Ease the steady glow toward target (~3s time constant).
+        const k = 1 - Math.exp(-dtMs / 3000);
+        s.score += (target - s.score) * k;
 
-      // Live teams occasionally flare (near-miss, big chance, card).
-      if (stClass === 'LIVE' && Math.random() < 0.05) {
-        s.spike = clamp01(s.spike + 0.35 + Math.random() * 0.3);
+        // Live teams occasionally flare (near-miss, big chance, card).
+        if (stClass === 'LIVE' && Math.random() < 0.05) {
+          s.spike = clamp01(s.spike + 0.35 + Math.random() * 0.3);
+        }
+
+        // Spikes decay over ~12s.
+        s.spike *= Math.pow(0.92, dtMs / this._tickMs);
+        if (s.spike < 0.01) s.spike = 0;
       }
-
-      // Spikes decay over ~12s.
-      s.spike *= Math.pow(0.92, dtMs / this._tickMs);
-      if (s.spike < 0.01) s.spike = 0;
-    }
     } finally {
       this._ticking = false;
     }

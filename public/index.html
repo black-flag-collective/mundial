@@ -1005,7 +1005,13 @@ class Component extends DCLogic {
         '}'
       ].join('\n'),
       fragmentShader: [
+        // Fall back to mediump where highp isn't supported in fragment shaders
+        // (older/mobile WebGL1) so the layer compiles instead of failing.
+        '#ifdef GL_FRAGMENT_PRECISION_HIGH',
         'precision highp float;',
+        '#else',
+        'precision mediump float;',
+        '#endif',
         '#define K ' + K,
         'uniform vec4 uPts[K];',
         'uniform vec4 uCol[K];',

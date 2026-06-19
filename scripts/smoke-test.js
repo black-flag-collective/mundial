@@ -74,10 +74,10 @@ async function run() {
       /* leave json null */
     }
     check('data.json is valid JSON', json !== null);
-    check('data.json has days[]', json && Array.isArray(json.days) && json.days.length > 0);
-    check('data.json has dayMatches[]', json && Array.isArray(json.dayMatches));
-    check('days and dayMatches align', json && json.days.length === json.dayMatches.length);
-    check('exactly one day flagged today', json && json.days.filter(d => d.today).length === 1);
+    check('data.json has days[]', Array.isArray(json?.days) && json.days.length > 0);
+    check('data.json has dayMatches[]', Array.isArray(json?.dayMatches));
+    check('days and dayMatches align', Array.isArray(json?.days) && Array.isArray(json?.dayMatches) && json.days.length === json.dayMatches.length);
+    check('exactly one day flagged today', Array.isArray(json?.days) && json.days.filter(d => d.today).length === 1);
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

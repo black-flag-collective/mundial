@@ -55,23 +55,12 @@ app.get('/api/data.json', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Mundial server running on port ${PORT}`);
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    // Initial update a few seconds after startup
-    setTimeout(() => runUpdate(), 8000);
-    // Refresh every 30 minutes
-    setInterval(() => runUpdate(), 30 * 60 * 1000);
-  } else {
-    console.warn('ANTHROPIC_API_KEY not set — automatic data updates disabled. Set it to enable live score fetching.');
-  }
 });
 
-async function runUpdate() {
-  try {
-    const { updateData } = require('./scripts/update-data');
-    await updateData();
-    console.log('[update] Match data refreshed successfully');
-  } catch (err) {
-    console.error('[update] Failed to refresh match data:', err.message);
-  }
-}
+// NOTE: Match data is refreshed by the "Update match data" GitHub Action
+// (.github/workflows/update-data.yml), which runs scripts/update-data.js on a
+// schedule and commits data/matches.json back to the repo. The server no longer
+// runs the updater in-process: Fly machines have no persistent volume and reset
+// their filesystem on restart/redeploy, so in-process writes were silently lost
+// (and never ran at all while the machine was auto-stopped). Committing to the
+// repo persists the data and triggers a redeploy with the fresh scores.

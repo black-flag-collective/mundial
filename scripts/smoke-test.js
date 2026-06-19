@@ -26,9 +26,12 @@ function get(pathname) {
   });
 }
 
-async function waitForBoot() {
+async function waitForBoot(server) {
   const start = Date.now();
   while (Date.now() - start < BOOT_TIMEOUT_MS) {
+    if (server.exitCode !== null) {
+      throw new Error(`server exited before boot (code ${server.exitCode})`);
+    }
     try {
       const res = await get('/');
       if (res.status === 200) return;
@@ -55,7 +58,7 @@ async function run() {
 
   let failed = false;
   try {
-    await waitForBoot();
+    await waitForBoot(server);
 
     const index = await get('/');
     check('GET / returns 200', index.status === 200);

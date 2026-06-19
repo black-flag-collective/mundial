@@ -52,7 +52,7 @@ async function run() {
   const root = path.join(__dirname, '..');
   const server = spawn('node', ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT, ANTHROPIC_API_KEY: '' },
+    env: { ...process.env, PORT: String(PORT), ANTHROPIC_API_KEY: '' },
     stdio: 'inherit'
   });
 

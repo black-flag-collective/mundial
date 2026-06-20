@@ -27,3 +27,51 @@ upload itself is the only remaining step.
 `conventions.md` is human-editable and prepended to the generated README.
 Every token/component it names was validated against the built artifacts. If
 the component set or token vocabulary changes, re-validate before syncing.
+
+## Sync run findings (2026-06-20, first sync)
+- **[GENERAL] CSS sidecar must be pointed at explicitly.** The library ships its
+  compiled stylesheet as a *separate* `dist/mundial-ui.css` that the JS bundle
+  does not import, so esbuild's `_ds_bundle.css` came up empty and the scrape
+  found no CSS (`[CSS_PLACEHOLDER]`/`[CSS_RUNTIME]`). Fix: `cfg.cssEntry =
+  "dist/mundial-ui.css"` (package-relative). Without it every card ships
+  unstyled.
+- **[GENERAL] Components are white-on-dark and need the `mun-root` dark field.**
+  The preview card body is white; Mundial components render white text/marks
+  (`--mun-fg:#fff`) designed to sit on `mun-root` (`--mun-bg:#04101c`). On the
+  white card they render invisibly. The reference Storybook only shows them
+  because of its `backgrounds:#04101c` *parameter* (not a decorator, so nothing
+  to auto-bundle). Fix: a `MundialRoot` wrapper in
+  `.design-sync/preview-root.tsx`, merged onto the global via
+  `cfg.extraEntries` and applied via `cfg.provider`. This is also the correct
+  presentation for the uploaded cards.
+- **GRID_OVERFLOW (wide):** `FeaturedMatch`, `MatchCard`, `Eyebrow` render wider
+  than a grid cell → `cfg.overrides.<Name>.cardMode = "column"`.
+- **`[FONT_REMOTE]` is expected, not a miss.** `mundial-ui.css` loads Inter +
+  Playfair Display via a `@import` from `fonts.googleapis.com` at runtime — no
+  `@font-face` ships in the bundle. Don't chase `[FONT_MISSING]`; it doesn't
+  fire here.
+
+## Re-sync risks (watch-list for the next sync)
+- **`MundialRoot` provider is a sync-only shim**, defined in
+  `.design-sync/preview-root.tsx` and wired via `cfg.extraEntries` +
+  `cfg.provider`. It is NOT a real `@mundial/ui` export. If the library ever
+  ships its own root/provider component, switch `cfg.provider` to that and drop
+  the shim. If a future build errors on the `extraEntries` path, confirm it's
+  still `../../.design-sync/preview-root.tsx` (package-relative to
+  `packages/mundial-ui`, workspace-bounded).
+- **`[REFERENCE_STALE?]` is expected on a config-only re-sync.** `cssEntry`,
+  `provider`, and `extraEntries` change the *bundle/previews* but not the DS
+  *source*, so the reference Storybook stays valid and need NOT be rebuilt.
+  Only rebuild `.design-sync/sb-reference` when `packages/mundial-ui/src`
+  changes.
+- **CDN dependencies at capture time.** Previews load remote assets: the Globe's
+  earth texture (`unpkg.com/three-globe/.../earth-blue-marble.jpg`), flag images
+  (flagcdn), and the Google Fonts `@import`. A network-sandboxed shell will blank
+  these on both panels (`[ASSETS_BLOCKED]`) and grades can falsely pass — run
+  capture from a shell with egress. This sync verified the textured Globe and
+  flags rendered on both sides.
+- **Grades are framing-tolerant by design.** All 17 graded `match` even though
+  preview cards frame components in a full-width dark `mun-root` panel while the
+  reference Storybook centers them on a full dark canvas. That framing delta is
+  intentional (rubric: judge the component, not its surroundings) — don't
+  re-grade it as drift.

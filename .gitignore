@@ -2,3 +2,11 @@ node_modules/
 .env
 *.log
 .DS_Store
+
+# design-sync transient artifacts (durable set under .design-sync/ stays tracked)
+.ds-sync/
+ds-bundle/
+.design-sync/sb-reference/
+.design-sync/learnings/
+.design-sync/.cache/
+.design-sync/node_modules

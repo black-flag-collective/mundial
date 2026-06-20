@@ -1,5 +1,18 @@
 {
+  "projectId": "2dcfc96a-d5ae-4ae7-9cf3-56c804263090",
+  "pkg": "@mundial/ui",
+  "globalName": "MundialUI",
   "shape": "storybook",
   "storybookConfigDir": "packages/mundial-ui/.storybook",
-  "readmeHeader": ".design-sync/conventions.md"
+  "storybookStatic": ".design-sync/sb-reference",
+  "cssEntry": "dist/mundial-ui.css",
+  "extraEntries": ["../../.design-sync/preview-root.tsx"],
+  "provider": { "component": "MundialRoot" },
+  "buildCmd": "npm --prefix packages/mundial-ui run build",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "FeaturedMatch": { "cardMode": "column" },
+    "MatchCard": { "cardMode": "column" },
+    "Eyebrow": { "cardMode": "column" }
+  }
 }

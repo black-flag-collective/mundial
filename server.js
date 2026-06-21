@@ -46,6 +46,7 @@ app.get('/api/buzz.json', (req, res) => {
   try {
     res.set('Cache-Control', 'no-store');
     const snap = buzz.snapshot();
+    snap.oracle = !!oracleClient; // lets the UI show the "Ask the Oracle" button without probing it
     // Tell the truth about the source: when the counts poller is live and not
     // capped, in-play nations are driven by real X post volume (blended with the
     // ambient simulation). When capped/idle it has faded back to simulation.

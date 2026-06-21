@@ -270,6 +270,32 @@
           <sc-if value="{{ buzzInfoOpen }}" hint-placeholder-val="{{ false }}">
             <span style="max-width: 560px; margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: var(--mun-fg-muted); background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); padding: 11px 15px;">{{ buzzHowText }}</span>
           </sc-if>
+
+          <sc-if value="{{ showOracleBtn }}" hint-placeholder-val="{{ false }}">
+            <span onClick="{{ askOracle }}" style="margin-top: 6px; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 7px 16px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleBtnLabel }}</span>
+          </sc-if>
+          <sc-if value="{{ oracleLoading }}" hint-placeholder-val="{{ false }}">
+            <span style="margin-top: 6px; font-size: 12px; color: var(--mun-fg-subtle);">Reading the world&rsquo;s buzz&hellip;</span>
+          </sc-if>
+          <sc-if value="{{ oracleErr }}" hint-placeholder-val="{{ false }}">
+            <span style="margin-top: 6px; font-size: 12px; color: var(--mun-fg-muted);">{{ oracleErrMsg }}</span>
+          </sc-if>
+
+          <sc-if value="{{ oracleDone }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 10px; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 9px; text-align: left; background: var(--mun-surface-2); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 15px 17px;">
+              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mun-accent);">&#128302; The Buzz Oracle predicts</span>
+              <div style="display: flex; align-items: center; gap: 11px;">
+                <img src="{{ oracleChampFlag }}" alt="" style="width: 38px; height: 25px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                <div style="display: flex; flex-direction: column;">
+                  <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.5rem; color: var(--mun-fg-display); line-height: 1.1;">{{ oracleChampName }} lift the trophy</span>
+                  <span style="font-size: 12px; color: var(--mun-fg-subtle);">projected final &middot; {{ oracleFinal }}</span>
+                </div>
+              </div>
+              <span style="font-size: 14px; color: var(--mun-fg); line-height: 1.45;">&ldquo;{{ oracleHotTake }}&rdquo;</span>
+              <span style="font-size: 12px; color: var(--mun-fg-muted); line-height: 1.5;">{{ oracleEvidence }}</span>
+              <span style="font-size: 10px; color: var(--mun-fg-faint); letter-spacing: 0.04em;">mundial.buzz &middot; data-grounded from live X buzz &middot; {{ oracleCachedNote }}</span>
+            </div>
+          </sc-if>
         </div>
 
         <sc-if value="{{ buzzReady }}" hint-placeholder-val="{{ true }}">
@@ -863,7 +889,7 @@ class Component extends DCLogic {
             });
             this._prevSpike = {}; data.buzz.forEach(b => { this._prevSpike[b.code] = b.spike || 0; });
             this.buzzByCode = map;
-            this.buzzMeta = { status: 'live', updatedAt: data.updatedAt || null, source: data.source || null, window: data.window || null };
+            this.buzzMeta = { status: 'live', updatedAt: data.updatedAt || null, source: data.source || null, window: data.window || null, oracle: !!data.oracle };
             // Fire a surge toast on the Globe view (rate-limited), so a spike reads
             // across views, not just on the board's SURGING flag.
             const now = Date.now();
@@ -960,6 +986,27 @@ class Component extends DCLogic {
     if (!live) return { live: false, clock: '', score: '' };
     const clock = (mins == null) ? 'LIVE' : (mins >= 90 ? "90+'" : mins + "'");
     return { live: true, clock: clock, score: (m.as || 0) + ' – ' + (m.bs || 0) };
+  }
+
+  // On-demand: ask the Buzz Oracle for a prediction (one cheap, server-cached
+  // AI call). Guarded against double-taps; result/err kept off-state for render.
+  askOracle() {
+    if (this._oracleLoading) return;
+    this._oracleLoading = true;
+    this.setState({ oracleStatus: 'loading' });
+    fetch('/api/predict')
+      .then((r) => r.json().catch(() => null))
+      .then((d) => {
+        this._oracleLoading = false;
+        if (d && d.available && d.prediction) {
+          this._oracle = { ...d.prediction, cached: !!d.cached };
+          this.setState({ oracleStatus: 'done' });
+        } else {
+          this._oracleErr = (d && d.error) || 'The Oracle is quiet right now — try again shortly.';
+          this.setState({ oracleStatus: 'error' });
+        }
+      })
+      .catch(() => { this._oracleLoading = false; this._oracleErr = 'Could not reach the Oracle.'; this.setState({ oracleStatus: 'error' }); });
   }
 
   // Compact post-count formatting for trend chips: 950→"950", 12000→"12K", 1.2M.
@@ -1862,6 +1909,14 @@ class Component extends DCLogic {
     const buzzIsLive = bm.source === 'counts';
     const xh = this.xHealth || {};
     const xWindowMin = xh.windowMin || 10;
+    // ---- Buzz Oracle (on-demand prediction) ----
+    const oracleStatus = this.state.oracleStatus || 'idle';
+    const oracleAvailable = !!bm.oracle;
+    const oracleLoading = oracleStatus === 'loading';
+    const oracleDone = oracleStatus === 'done' && !!this._oracle;
+    const oracleErr = oracleStatus === 'error';
+    const op = this._oracle || {};
+    const oracleBtnLabel = oracleLoading ? 'Consulting the buzz…' : (oracleDone ? 'Ask again' : '\u{1F52E} Ask the Oracle');
     // Held data is honest about itself: while X has us paused (rate-limited) or the
     // daily budget is spent, the numbers are the last poll's, not fresh.
     const buzzPaused = !!bm.paused;
@@ -2019,6 +2074,21 @@ class Component extends DCLogic {
       buzzLeader: buzzLeader,
       trendStrip: trendStrip,
       hasTrends: hasTrends,
+      // Buzz Oracle
+      showOracleBtn: isBuzz && oracleAvailable && !oracleLoading,
+      oracleBtnLabel: oracleBtnLabel,
+      askOracle: () => this.askOracle(),
+      oracleLoading: oracleLoading,
+      oracleDone: oracleDone,
+      oracleErr: oracleErr,
+      oracleErrMsg: this._oracleErr || '',
+      oracleChampFlag: op.champion ? this.flagUrl(op.champion) : '',
+      oracleChampCode: op.champion || '',
+      oracleChampName: op.championName || op.champion || '',
+      oracleFinal: op.finalScore ? (op.finalScore + (op.runnerUp ? ' vs ' + op.runnerUp : '')) : '',
+      oracleHotTake: op.hotTake || '',
+      oracleEvidence: op.evidence || '',
+      oracleCachedNote: op.cached ? 'the world’s current read' : 'fresh read',
       buzzLoading: buzzLoading,
       buzzError: buzzError,
       buzzEmpty: buzzEmpty,

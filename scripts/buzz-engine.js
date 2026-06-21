@@ -205,6 +205,12 @@ class BuzzEngine {
         // Live teams occasionally flare (near-miss, big chance, card).
         if (stClass === 'LIVE' && Math.random() < 0.05) {
           s.spike = clamp01(s.spike + 0.35 + Math.random() * 0.3);
+        } else if (Math.random() < 0.006 * (base + 0.35)) {
+          // Ambient viral moments: even outside live matches, a clip or headline
+          // about a popular nation occasionally pops. Scaled by popularity so the
+          // bigger fanbases surge more often. Keeps the surge cue alive in the
+          // simulated source (real X-counts spikes come through ingest()/setSignals).
+          s.spike = clamp01(s.spike + 0.3 + Math.random() * 0.3);
         }
 
         // Spikes decay over ~12s.

@@ -271,7 +271,7 @@
                   <span style="display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     <span style="font-size: 14px; font-weight: 700; color: var(--mun-fg);">{{ r.code }}</span>
                     <span style="font-size: 13px; color: var(--mun-fg-muted); overflow: hidden; text-overflow: ellipsis;">{{ r.name }}</span>
-                    <sc-if value="{{ r.hot }}" hint-placeholder-val="{{ false }}"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--mun-accent); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 1px 7px;">HOT</span></sc-if>
+                    <sc-if value="{{ r.surging }}" hint-placeholder-val="{{ false }}"><span class="bz-surge" style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--mun-accent); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 1px 7px;">&#9650; SURGING</span></sc-if>
                   </span>
                   <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;">
                     <span style="position: absolute; inset: 0 auto 0 0; width: {{ r.pct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span>
@@ -355,6 +355,7 @@
         <div onClick="{{ showBuzz }}" title="Open the live buzz board" style="display: flex; align-items: center; gap: 10px; background: var(--mun-surface-3); border: 1px solid var(--mun-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 7px 14px 7px 13px; border-radius: var(--mun-radius-pill); cursor: pointer;">
           <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent); flex: none;"></span>
           <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">Buzzing now</span>
+          <span style="font-size: 11px; font-weight: 700; color: var(--mun-fg-faint);">{{ buzzChipRank }}</span>
           <img src="{{ buzzTop1Flag }}" alt="" style="width: 20px; height: 13px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag); flex: none;">
           <span style="font-size: 13px; font-weight: 700; color: var(--mun-fg); white-space: nowrap;">{{ buzzTop1Code }}</span>
           <span style="font-size: 13px; font-weight: 700; color: var(--mun-accent);">{{ buzzTop1Score }}</span>
@@ -733,6 +734,12 @@ class Component extends DCLogic {
     this.playEntrance();
     this._loadLiveData();
     this._loadBuzz();
+    // Cycle the idle-globe "Buzzing now" chip through the current top 3.
+    this._chipTimer = setInterval(() => {
+      if (this.currentView() === 'globe' && this.state.hoverIdx < 0) {
+        this.setState({ buzzChipIdx: ((this.state.buzzChipIdx || 0) + 1) % 3 });
+      }
+    }, 3500);
   }
 
   _loadBuzz() {
@@ -794,6 +801,7 @@ class Component extends DCLogic {
       el.removeEventListener('pointercancel', this.onGlobeUp);
     }
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
+    if (this._chipTimer) clearInterval(this._chipTimer);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
     this._buzzTimer = null;
@@ -1383,9 +1391,13 @@ class Component extends DCLogic {
       return;
     }
 
-    // ---- globe view (hover is picked on mousemove via pickHover, not per-frame) ----
+    // ---- globe view + buzz view (marble/hover; buzz also reacts to board-row focus) ----
     if (this.arcGroup) this.arcGroup.visible = false;
     const autoRotate = this.props.autoRotate ?? true;
+    // Two-way link: in the Buzz view, hovering a leaderboard row sets legendFocus →
+    // bring that nation to center behind the board.
+    const gbus = window.__mundial || {};
+    const boardFocus = (_v === 'buzz' && gbus.legendFocus && gbus.legendFocus.length) ? gbus.legendFocus[0] : null;
     let target, focusT;
     const coasting = !this.dragging && (Math.abs(this.velLon) > 0.02 || Math.abs(this.velLat) > 0.02);
     if (this.dragging || coasting) {
@@ -1400,6 +1412,11 @@ class Component extends DCLogic {
       }
       target = this.faceQuat(this.idleLat, this.idleLon);
       focusT = 0.12;
+    } else if (boardFocus && this.byCode[boardFocus]) {
+      const c = this.byCode[boardFocus];
+      target = this.faceQuat(c.lat, c.lon);
+      this.idleLon = c.lon; this.idleLat = c.lat;
+      focusT = 0.42;
     } else if (this.hoverIdx >= 0) {
       // Settled near a nation → snap + zoom to center it, same as before.
       const c = this.countries[this.hoverIdx];
@@ -1411,17 +1428,24 @@ class Component extends DCLogic {
       target = this.faceQuat(this.idleLat, this.idleLon);
       focusT = 0.12;
     }
-    this.globe.quaternion.slerp(target, this.dragging ? 0.45 : 0.08);
+    this.globe.quaternion.slerp(target, this.dragging ? 0.45 : (boardFocus ? 0.1 : 0.08));
     this.focusS += (focusT - this.focusS) * 0.05;
     this.camera.position.z = 439 - this.focusS * 101;
 
     for (let i = 0; i < this.markers.length; i++) {
       const m = this.markers[i];
-      const isH = m.idx === this.hoverIdx;
+      const code = this.countries[m.idx].code;
+      const isH = m.idx === this.hoverIdx || code === boardFocus;
+      // Markers carry the live buzz: size/brightness track score, and a spike
+      // gives a brief flare — the same signal as the blooms and the leaderboard.
+      const d = this.buzzDisp[code] || { score: 0, spike: 0 };
+      const bz = Math.min(d.score + d.spike, 1);
+      const flare = Math.min(d.spike, 1);
       const pulse = 1 + Math.sin(t + m.idx) * 0.12;
-      m.ring.scale.setScalar((isH ? 2.1 : 1) * pulse);
-      m.ring.material.opacity = isH ? 0.52 : 0.24;
-      m.dot.scale.setScalar(isH ? 1.7 : 1);
+      const dim = boardFocus && !isH;
+      m.ring.scale.setScalar((isH ? 2.1 : (0.7 + bz * 1.4 + flare * 1.1)) * pulse);
+      m.ring.material.opacity = isH ? 0.6 : (dim ? 0.05 : (0.16 + bz * 0.46 + flare * 0.3));
+      m.dot.scale.setScalar(isH ? 1.7 : (0.6 + bz * 0.9 + flare * 0.7));
     }
     this.renderer.render(this.scene, this.camera);
   }
@@ -1541,10 +1565,13 @@ class Component extends DCLogic {
       confedColor: (r.confed && this.confed[r.confed]) ? this.confed[r.confed].color : 'var(--mun-blue)',
       pct: Math.max(6, Math.round((r.score / (buzzMax || 1)) * 100)) + '%',
       score: String(Math.round(r.score * 100)),
-      hot: r.spike > 0.15 || idx === 0,
+      surging: r.spike > 0.1,
       onEnter: () => this.setLegendTeam(r.code),
       onLeave: () => this.clearLegend()
     }));
+    // The idle-globe chip cycles through the current top 3 (timer bumps buzzChipIdx).
+    const chipN = Math.min(3, buzzLeader.length);
+    const buzzChip = chipN ? buzzLeader[(this.state.buzzChipIdx || 0) % chipN] : null;
     const buzzStatus = bm.status || 'loading';
     const buzzLoading = buzzStatus === 'loading';
     const buzzError = buzzStatus === 'error';
@@ -1689,14 +1716,15 @@ class Component extends DCLogic {
       confedColor: conf ? conf.color : '#ffffff',
       matches: c ? this.matchesFor(c.code) : [],
       legend: Object.keys(this.confed).map((k) => ({ label: this.confed[k].label, color: this.confed[k].color })),
-      // buzz ↔ globe: live top buzzer chip (links to the Buzz view) + the hovered nation's buzz standing
+      // buzz ↔ globe: live top-buzzer chip (cycles the top 3; links to the Buzz view) + the hovered nation's buzz standing
       showBuzz: () => this.setView('buzz'),
       showBuzzChip: isGlobe && !c && !!(buzzLeader[0]),
       hasBuzzTop1: !!(buzzLeader[0]),
-      buzzTop1Code: buzzLeader[0] ? buzzLeader[0].code : '',
-      buzzTop1Name: buzzLeader[0] ? buzzLeader[0].name : '',
-      buzzTop1Flag: buzzLeader[0] ? buzzLeader[0].flag : '',
-      buzzTop1Score: buzzLeader[0] ? buzzLeader[0].score : '',
+      buzzTop1Code: buzzChip ? buzzChip.code : '',
+      buzzTop1Name: buzzChip ? buzzChip.name : '',
+      buzzTop1Flag: buzzChip ? buzzChip.flag : '',
+      buzzTop1Score: buzzChip ? buzzChip.score : '',
+      buzzChipRank: buzzChip ? ('#' + buzzChip.rank) : '',
       hasHoverBuzz: !!(c && this.buzzByCode[c.code] && this.buzzByCode[c.code].score > 0.001),
       hoverBuzzRank: (c && this.buzzByCode[c.code] && this.buzzByCode[c.code].rank) ? ('#' + this.buzzByCode[c.code].rank) : '',
       hoverBuzzScore: (c && this.buzzByCode[c.code]) ? String(Math.round((this.buzzByCode[c.code].score || 0) * 100)) : '0',

@@ -294,7 +294,7 @@
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelName }} isn&rsquo;t in a live match right now, so we&rsquo;re not querying X for it &mdash; to keep cost bounded we only poll nations while their match is live. Its bar shows ambient interest (popularity + match-day buzz), not live X volume.</div>
+                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelInactiveText }}</div>
                 </sc-if>
                 <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">Live X polling is paused right now, so this is the simulated demo signal. When the feed is active you&rsquo;ll see the exact X query and post volume for {{ xSelName }} here.</div>
@@ -924,6 +924,43 @@ class Component extends DCLogic {
     if (!live) return { live: false, clock: '', score: '' };
     const clock = (mins == null) ? 'LIVE' : (mins >= 90 ? "90+'" : mins + "'");
     return { live: true, clock: clock, score: (m.as || 0) + ' – ' + (m.bs || 0) };
+  }
+
+  // Today's fixture for a nation, if any (matched by date like the counts poller,
+  // falling back to the `today` flag, then the last day).
+  todayMatchFor(code) {
+    const days = this.days || [], dm = this.dayMatches || [];
+    const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    let di = days.findIndex((d) => d.short === todayShort);
+    if (di < 0) di = days.findIndex((d) => d.today);
+    if (di < 0) di = days.length - 1;
+    return (dm[di] || []).find((m) => m.a === code || m.b === code) || null;
+  }
+
+  // Helpful explainer for a nation that isn't being polled live right now: tells
+  // the user *when* its match is (upcoming / earlier / not today) using kickoff
+  // (`ko`) data, so "ambient interest" never reads as a dead end.
+  buzzMatchNote(code) {
+    const name = this.byCode[code] ? this.byCode[code].name : code;
+    const ambient = 'Its bar shows ambient interest (popularity + match-day buzz), not live X volume.';
+    const m = this.todayMatchFor(code);
+    if (!m) {
+      return name + ' isn’t playing today, so we’re not querying X for it — to keep cost bounded we only poll nations while their match is live. ' + ambient;
+    }
+    if (this.liveInfo(m).live) {
+      return name + ' just kicked off — its live X volume will appear here within a minute or two. ' + ambient;
+    }
+    const koMs = m.ko ? new Date(m.ko).getTime() : null;
+    const now = Date.now();
+    if (koMs != null && koMs > now) {
+      const t = new Date(m.ko).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const mins = Math.round((koMs - now) / 60000);
+      const rel = mins < 60 ? ('in ' + mins + ' min') : ('in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm');
+      const opp = this.byCode[m.a === code ? m.b : m.a];
+      const vs = opp ? (' vs ' + opp.name) : '';
+      return name + ' kicks off at ' + t + ' (' + rel + ')' + vs + ' — we’ll start pulling its live X volume then. For now its bar shows ambient interest (popularity + match-day buzz).';
+    }
+    return name + ' played earlier today, so we’ve stopped polling it. ' + ambient;
   }
 
   componentWillUnmount() {
@@ -1773,6 +1810,9 @@ class Component extends DCLogic {
     const xInspectShow = isBuzz && !!xSel;
     const xInspectActive = !!xPer;
     const xSelName = xSel ? (this.byCode[xSel] ? this.byCode[xSel].name : xSel) : '';
+    // For a selected nation that isn't being polled live, explain *when* its
+    // match is (kicks off later / played earlier / not today) from kickoff data.
+    const xSelInactiveText = xSel ? this.buzzMatchNote(xSel) : '';
 
     // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
     const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
@@ -1876,6 +1916,7 @@ class Component extends DCLogic {
       xInspectInactive: xInspectShow && !xInspectActive && buzzIsLive,
       xInspectSim: xInspectShow && !buzzIsLive,
       xSelName: xSelName,
+      xSelInactiveText: xSelInactiveText,
       xSelCode: xSel || '',
       xSelFlag: xSel ? this.flagUrl(xSel) : '',
       xSelQuery: xPer ? xPer.query : '',

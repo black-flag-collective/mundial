@@ -64,8 +64,22 @@ simulated buzz signal.
   X API when configured). See [`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md).
 
 Architecture, the data model, and operational notes live in
-[`HANDOFF.md`](HANDOFF.md). Deployment is documented in
-[`DEPLOY.md`](DEPLOY.md).
+[`HANDOFF.md`](HANDOFF.md).
+
+## Deploy your own
+
+Want to run your own copy on [Fly.io](https://fly.io)? Fork the repo, pick your
+own Fly app name, and **bring your own API keys** — see
+**[DEPLOY.md](DEPLOY.md)** for the full walkthrough.
+
+The web server needs no keys to run. The two optional integrations each use a key
+you create under your own account (and which bills to you, so never reuse anyone
+else's):
+
+- **Live score updates** — your own [Anthropic](https://console.anthropic.com)
+  `ANTHROPIC_API_KEY` (a GitHub Actions secret).
+- **Live X buzz** — your own [X](https://developer.x.com/en/portal)
+  `X_BEARER_TOKEN` (a Fly secret).
 
 ## Project structure
 

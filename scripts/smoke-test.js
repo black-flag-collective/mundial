@@ -129,6 +129,10 @@ async function run() {
     try { pjson = JSON.parse(predict.body); } catch { /* leave null */ }
     // No API key in CI → the Oracle reports unavailable (button hidden), not an error.
     check('predict reports availability flag', pjson && typeof pjson.available === 'boolean');
+
+    const notFound = await get('/api/nope-does-not-exist');
+    check('unknown route → generic 404, no framework/stack leak',
+      notFound.status === 404 && /not found/.test(notFound.body) && !/Cannot GET|\bat \//.test(notFound.body));
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

@@ -348,6 +348,19 @@ app.get('/api/data.json', (req, res) => {
   }
 });
 
+// Generic 404 + error handlers, registered last. These guarantee clients never
+// see a stack trace or internal detail regardless of NODE_ENV — the real cause
+// is logged server-side only.
+app.use((req, res) => {
+  res.status(404).json({ error: 'not found' });
+});
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[server] unhandled error:', err && err.stack ? err.stack : err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'internal error' });
+});
+
 const server = app.listen(PORT, () => {
   console.log(`Mundial server running on port ${PORT}`);
 

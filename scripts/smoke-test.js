@@ -118,6 +118,13 @@ async function run() {
     let tjson = null;
     try { tjson = JSON.parse(trends.body); } catch { /* leave null */ }
     check('trends.json has locations[] + health', tjson && Array.isArray(tjson.locations) && typeof tjson.health === 'object');
+
+    const predict = await get('/api/predict');
+    check('GET /api/predict returns 200', predict.status === 200);
+    let pjson = null;
+    try { pjson = JSON.parse(predict.body); } catch { /* leave null */ }
+    // No API key in CI → the Oracle reports unavailable (button hidden), not an error.
+    check('predict reports availability flag', pjson && typeof pjson.available === 'boolean');
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

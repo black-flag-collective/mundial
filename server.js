@@ -82,6 +82,25 @@ app.get('/api/trends.json', (req, res) => {
   res.json({ ...trendsPoller.snapshot(), health: trendsPoller.stats() });
 });
 
+// Buzz Oracle: on-demand, cost-bounded AI tournament prediction. GET so it's a
+// trivial fetch from the UI; the heavy lifting (cache, rate limit, daily cap) is
+// inside the oracle. `available:false` lets the UI hide the button cleanly.
+app.get('/api/predict', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!oracleClient) return res.status(200).json({ available: false });
+  try {
+    const matches = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+    const buzzSnap = buzz.snapshot();
+    const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot() });
+    const signature = signatureOf(buzzSnap);
+    const ip = (req.headers['x-forwarded-for'] || req.ip || 'anon').split(',')[0].trim();
+    const out = await oracle.predict({ context, signature, ip });
+    res.json({ available: true, ...out });
+  } catch (err) {
+    res.status(err.status || 500).json({ available: true, error: err.message });
+  }
+});
+
 // ── Live X buzz stream (optional) ──────────────────────────────────────────
 // One upstream X Filtered Stream connection per process feeds the buzz engine
 // (per-country signal) AND is relayed to every browser over Server-Sent Events.
@@ -92,10 +111,26 @@ const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
 const { createCountsPoller, resolveBuzzMode } = require('./scripts/buzz-counts');
 const { createTrendsPoller } = require('./scripts/x-trends');
+const { createOracle, buildContext, signatureOf } = require('./scripts/predict');
 
 // X Trends (what's trending per location) runs alongside whichever buzz source —
 // it's a separate, per-location read, billed independently and very cheaply.
 const trendsPoller = createTrendsPoller({});
+
+// Buzz Oracle — on-demand, cost-bounded AI tournament prediction. Only wired up
+// when an API key is present; otherwise the endpoint reports it's unavailable
+// and the UI hides the button. The client is created lazily to avoid requiring
+// the SDK at boot when there's no key.
+let oracleClient = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    oracleClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 2 });
+  } catch (err) {
+    console.error('[oracle] SDK unavailable:', err.message);
+  }
+}
+const oracle = createOracle({ client: oracleClient });
 
 // Aborting this on shutdown drops the X connection promptly so the single
 // allowed stream slot is released before a redeploy's new machine connects

@@ -464,6 +464,32 @@ concurrent connection). To remove all rules: `node scripts/x-rules.js clear`.
 
 ---
 
+## Testing
+
+All of the X integration's pure logic is unit-tested with `fetch` stubbed — no
+network, no real token, no server. Run the whole suite with `npm test`
+(also gates CI); the X/buzz pieces are:
+
+| Suite | Covers |
+| :--- | :--- |
+| [`scripts/x-self-test.js`](../scripts/x-self-test.js) | Reconnect **backoff** policy per failure type (409/429/5xx/network); **rule** generation (one tagged rule per nation, length cap, context filter); the **counts poller** (live-window scoping, normalization, momentum/`computeTrend`, surge-on-jump, the daily-cap circuit breaker); the **stream** reader (NDJSON parse, keep-alive skip, split-line reassembly, the stall watchdog, non-OK status + rate-limit capture); and **`postWeight`** engagement bounds. |
+| [`scripts/buzz-self-test.js`](../scripts/buzz-self-test.js) | The buzz engine's signal interface (`ingest` weighting, `surge` clamping, `setSignals` atomic replace), spike decay over `tick()`, the external-signal glow floor, and the `snapshot()` shape/ranking the globe consumes. |
+| [`scripts/smoke-test.js`](../scripts/smoke-test.js) | Boots the server and asserts `/`, `/api/data.json`, and `/api/buzz.json` serve correctly. |
+
+Stubbing pattern for the network paths:
+
+```js
+// counts: stub fetch to return a per-minute series, inject a fixed live context
+global.fetch = async () => ({ ok: true, headers: { get: () => null },
+  json: async () => ({ meta: { total_tweet_count: 130 }, data: [{ tweet_count: 10 }, { tweet_count: 110 }] }) });
+createCountsPoller({ engine, context: () => ({ codes: ['BRA'], phase: 'live' }) });
+
+// stream: a reader that never yields trips the stall watchdog
+await streamPosts(() => {}, { stallMs: 40 }); // rejects with err.stall === true
+```
+
+---
+
 ## Reference
 
 **Filtered Stream**

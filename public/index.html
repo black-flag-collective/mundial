@@ -58,7 +58,7 @@
   .bz-board::-webkit-scrollbar { width: 5px; }
   .bz-board::-webkit-scrollbar-thumb { background: var(--mun-surface-4); border-radius: 3px; }
   .mday-scroll::-webkit-scrollbar { width: 5px; }
-  .mday-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+  .mday-scroll::-webkit-scrollbar-thumb { background: var(--mun-surface-active); border-radius: 3px; }
   .bk-wrap::-webkit-scrollbar { height: 6px; }
   .bk-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
   @media (max-width: 760px) {
@@ -109,7 +109,7 @@
     </div>
   </nav>
 
-  <section style="position: relative; width: 100%; overflow: hidden; height: 100vh; background: #04101c;">
+  <section style="position: relative; width: 100%; overflow: hidden; height: 100vh; background: var(--mun-bg);">
 
     <div data-anim="zoom" style="position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 92px), radial-gradient(120% 95% at 50% 18%, rgba(58,130,190,0.26), transparent 62%), linear-gradient(158deg, rgba(6,23,38,0.55) 0%, rgba(10,44,76,0.32) 54%, rgba(7,28,48,0.66) 100%);"></div>
 
@@ -120,8 +120,8 @@
     <sc-if value="{{ isLegendView }}" hint-placeholder-val="{{ false }}">
       <div class="legend-backing" style="position: absolute; bottom: -60px; left: -60px; width: 440px; height: 470px; z-index: 54; pointer-events: none; background: radial-gradient(closest-side at 47% 44%, rgba(4,16,28,0.94), rgba(4,16,28,0.66) 56%, rgba(4,16,28,0) 78%);"></div>
       <div class="legend-cap" style="position: absolute; bottom: 30px; left: 36px; z-index: 61; width: min(34vh, 300px); display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; pointer-events: none;">
-        <span style="font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.01em;">{{ legendTitle }}</span>
-        <span style="font-size: 11px; color: rgba(255,255,255,0.5);">{{ legendHint }}</span>
+        <span style="font-size: 13px; font-weight: 600; color: var(--mun-fg); letter-spacing: 0.01em;">{{ legendTitle }}</span>
+        <span style="font-size: 11px; color: var(--mun-fg-subtle);">{{ legendHint }}</span>
       </div>
     </sc-if>
 
@@ -129,14 +129,14 @@
     <sc-if value="{{ isMatchday }}" hint-placeholder-val="{{ false }}">
 
       <div class="md-kicker" style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
-        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: #fff; line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: var(--mun-fg); line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
           <sc-if value="{{ dayIsToday }}" hint-placeholder-val="{{ false }}">
-            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #04101c; background: {{ accent }}; padding: 5px 12px; border-radius: 999px;">TODAY</span>
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--mun-bg); background: {{ accent }}; padding: 5px 12px; border-radius: var(--mun-radius-pill);">TODAY</span>
           </sc-if>
         </div>
-        <span style="font-size: 13px; color: rgba(255,255,255,0.55);">{{ dayCount }} matches</span>
+        <span style="font-size: 13px; color: var(--mun-fg-subtle);">{{ dayCount }} matches</span>
       </div>
 
       <!-- featured match -->
@@ -146,7 +146,7 @@
 
       <!-- day slate (right) -->
       <div class="md-slate" style="position: absolute; top: 104px; right: 44px; bottom: 132px; z-index: 50; width: 388px; display: flex; flex-direction: column; gap: 10px;">
-        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5);">{{ dayShort }} &middot; All Fixtures</span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mun-fg-subtle);">{{ dayShort }} &middot; All Fixtures</span>
         <div class="mday-scroll" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px;">
           <sc-for list="{{ dayList }}" as="m" hint-placeholder-count="4">
             <x-import component-from-global-scope="MundialUI.MatchCard" group="{{ m.group }}" state="{{ m.state }}" status="{{ m.status }}" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" selected="{{ m.selected }}" onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" hint-size="360px,96px"></x-import>
@@ -165,14 +165,14 @@
     <sc-if value="{{ isStandings }}" hint-placeholder-val="{{ false }}">
       <div class="pane-standings" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: row; gap: 36px; padding: 92px 48px 36px; box-sizing: border-box;">
         <div class="standings-rail" style="width: 290px; flex: none; display: flex; flex-direction: column; gap: 6px;">
-          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
-          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: #fff; line-height: 1;">Standings</span>
-          <span class="rail-desc" style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 12px; max-width: 230px; line-height: 1.55;">Live group tables across all 12 groups. Hover a team to trace it on the globe below.</span>
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: var(--mun-fg); line-height: 1;">Standings</span>
+          <span class="rail-desc" style="font-size: 13px; color: var(--mun-fg-subtle); margin-top: 12px; max-width: 230px; line-height: 1.55;">Live group tables across all 12 groups. Hover a team to trace it on the globe below.</span>
         </div>
         <div class="standings-main" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
           <div class="standings-head" style="display: flex; align-items: center; justify-content: flex-end; gap: 18px;">
-            <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.7);"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{ accent }};"></span>Advances to Round of 32</span>
-            <span style="font-size: 12px; color: rgba(255,255,255,0.45);">{{ dataUpdated }}</span>
+            <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--mun-fg-muted);"><span style="width: 9px; height: 9px; border-radius: var(--mun-radius-flag); background: {{ accent }};"></span>Advances to Round of 32</span>
+            <span style="font-size: 12px; color: var(--mun-fg-faint);">{{ dataUpdated }}</span>
           </div>
           <div class="standings-grid" style="flex: 1; min-height: 0; overflow-y: auto; margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 18px; align-content: start;">
           <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
@@ -187,9 +187,9 @@
     <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
       <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 22px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
-          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: #fff; line-height: 1;">Projected Bracket</span>
-          <span style="font-size: 12px; color: rgba(255,255,255,0.45);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--mun-fg); line-height: 1;">Projected Bracket</span>
+          <span style="font-size: 12px; color: var(--mun-fg-faint);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
         </div>
         <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
           <div ref="{{ bracketInnerRef }}" class="bk-inner" style="display: flex; align-items: stretch; gap: 9px; height: 100%;">
@@ -257,19 +257,47 @@
         <div class="bz-head" style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; flex: none;">
           <span style="display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle);">
             <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>
-            Live Buzz
+            {{ buzzEyebrow }}
           </span>
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: var(--mun-fg-display); line-height: 1;">Who the world is watching</span>
-          <span style="font-size: 13px; color: var(--mun-fg-subtle);">Top nations by chatter right now &middot; {{ buzzSource }}</span>
+          <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--mun-fg-subtle);">Top nations by chatter right now &middot; {{ buzzSource }}<span onClick="{{ toggleBuzzInfo }}" title="How this works" style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: var(--mun-radius-pill); border: 1px solid var(--mun-border-strong); color: var(--mun-fg-subtle); font-size: 10px; font-weight: 700; cursor: pointer;">i</span></span>
+          <sc-if value="{{ buzzInfoOpen }}" hint-placeholder-val="{{ false }}">
+            <span style="max-width: 560px; margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: var(--mun-fg-muted); background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); padding: 11px 15px;">{{ buzzHowText }}</span>
+          </sc-if>
         </div>
 
         <sc-if value="{{ buzzReady }}" hint-placeholder-val="{{ true }}">
           <div class="bz-board" style="width: 100%; max-width: 720px; margin-top: 22px; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--mun-fg-faint); padding-bottom: 4px;">
-              <span style="color: var(--mun-accent); font-weight: 600;">{{ buzzLiveCount }}</span> nations buzzing &middot; updated {{ buzzUpdated }}
+              <span style="color: var(--mun-accent); font-weight: 600;">{{ buzzLiveCount }}</span> nations buzzing &middot; updated {{ buzzUpdated }} &middot; <span style="color: var(--mun-fg-subtle);">tap a nation to see its X feed</span>
             </div>
+
+            <sc-if value="{{ xInspectShow }}" hint-placeholder-val="{{ false }}">
+              <div style="background: var(--mun-surface-3); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 13px 15px; display: flex; flex-direction: column; gap: 9px;">
+                <div style="display: flex; align-items: center; gap: 9px;">
+                  <img src="{{ xSelFlag }}" alt="" style="width: 24px; height: 16px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                  <span style="font-size: 13px; font-weight: 700; color: var(--mun-fg);">{{ xSelCode }}</span>
+                  <span style="font-size: 12px; color: var(--mun-fg-muted); flex: 1; text-align: left;">what we&rsquo;re pulling from X</span>
+                  <span onClick="{{ closeXInspect }}" title="Close" style="font-size: 16px; line-height: 1; color: var(--mun-fg-subtle); cursor: pointer; padding: 0 4px;">&times;</span>
+                </div>
+                <sc-if value="{{ xInspectActive }}" hint-placeholder-val="{{ true }}">
+                  <div style="display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                    <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
+                    <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
+                    <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelName }} isn&rsquo;t in today&rsquo;s matches, so we&rsquo;re not querying X for it right now — we only poll the nations playing today to keep cost bounded. Its bar is ambient interest.</div>
+                </sc-if>
+                <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">Live X polling is paused right now, so this is the simulated demo signal. When the feed is active you&rsquo;ll see the exact X query and post volume for {{ xSelName }} here.</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
             <sc-for list="{{ buzzLeader }}" as="r" hint-placeholder-count="12">
-              <div class="{{ r.rowClass }}" onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 26px 30px 1fr 40px; align-items: center; gap: 12px; padding: 11px 16px; background: {{ r.rowBg }}; border: 1px solid {{ r.rowBorder }}; border-radius: var(--mun-radius-md); cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: var(--mun-surface-3);">
+              <div class="{{ r.rowClass }}" onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onSelect }}" style="display: grid; grid-template-columns: 26px 30px 1fr 40px; align-items: center; gap: 12px; padding: 11px 16px; background: {{ r.rowBg }}; border: 1px solid {{ r.rowBorder }}; border-radius: var(--mun-radius-md); cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: var(--mun-surface-3);">
                 <span style="font-size: 13px; font-weight: 700; text-align: center; color: {{ r.rankColor }};">{{ r.rank }}</span>
                 <img src="{{ r.flag }}" alt="" style="width: 30px; height: 20px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
                 <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px;">
@@ -316,14 +344,14 @@
     <sc-if value="{{ isGlobe }}" hint-placeholder-val="{{ true }}">
 
       <div data-anim="rise" data-delay="220" style="position: absolute; top: 120px; left: 0; right: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 0 20px; pointer-events: none;">
-        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; white-space: nowrap; color: rgba(255,255,255,0.55);">FIFA World Cup 26</span>
-        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.3rem, 2.6vw, 2rem); color: rgba(255,255,255,0.9);">{{ kicker }}</span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; white-space: nowrap; color: var(--mun-fg-subtle);">FIFA World Cup 26</span>
+        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.3rem, 2.6vw, 2rem); color: var(--mun-fg-display);">{{ kicker }}</span>
       </div>
 
       <div class="globe-hint" style="position: absolute; bottom: 13%; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
-        <div data-anim="fade" data-delay="900" style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 999px; animation: hintPulse 2.6s ease-in-out infinite;">
-          <span style="width: 18px; height: 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.7); display: inline-block;"></span>
-          <span style="font-size: 13px; color: rgba(255,255,255,0.85); white-space: nowrap;">Hover any nation to trace its road through the group stage</span>
+        <div data-anim="fade" data-delay="900" style="display: flex; align-items: center; gap: 10px; background: var(--mun-surface-3); border: 1px solid var(--mun-surface-nav); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 8px 16px; border-radius: var(--mun-radius-pill); animation: hintPulse 2.6s ease-in-out infinite;">
+          <span style="width: 18px; height: 18px; border-radius: var(--mun-radius-pill); border: 1px solid var(--mun-fg-muted); display: inline-block;"></span>
+          <span style="font-size: 13px; color: var(--mun-fg-strong); white-space: nowrap;">Hover any nation to trace its road through the group stage</span>
         </div>
       </div>
 
@@ -348,10 +376,10 @@
       <div ref="{{ countryRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
         <span style="font-size: clamp(13px, 1.4vw, 17px); font-weight: 600; letter-spacing: 0.36em; text-transform: uppercase; color: {{ confedColor }}; text-align: center; max-width: 80vw;">{{ countryName }}</span>
         <img src="{{ countryFlag }}" alt="" style="width: 64px; height: 43px; border-radius: 5px; object-fit: cover; box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.22);">
-        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; letter-spacing: -0.04em; color: rgba(236,245,252,0.95); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ countryCode }}</span>
+        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; letter-spacing: -0.04em; color: var(--mun-fg-display); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ countryCode }}</span>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px;">Group {{ groupLabel }}</span>
-          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: {{ confedColor }}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); padding: 6px 14px; border-radius: 999px;">{{ confedLabel }}</span>
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--mun-fg); background: var(--mun-surface-4); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: var(--mun-radius-pill);">Group {{ groupLabel }}</span>
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: {{ confedColor }}; background: var(--mun-surface-2); border: 1px solid var(--mun-border); padding: 6px 14px; border-radius: var(--mun-radius-pill);">{{ confedLabel }}</span>
           <sc-if value="{{ hasHoverBuzz }}" hint-placeholder-val="{{ false }}">
             <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--mun-accent); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); padding: 6px 14px; border-radius: var(--mun-radius-pill);"><span class="bz-livedot" style="width: 7px; height: 7px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>Buzz {{ hoverBuzzRank }} &middot; {{ hoverBuzzScore }}</span>
           </sc-if>
@@ -361,8 +389,8 @@
 
     <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
       <div style="position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
-        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: rgba(236,245,252,0.92); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
-        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: rgba(255,255,255,0.72); text-align: center;">One trophy. One summer across North America.</span>
+        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: var(--mun-fg-display); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
+        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: var(--mun-fg-muted); text-align: center;">One trophy. One summer across North America.</span>
       </div>
     </sc-if>
 
@@ -384,14 +412,14 @@
     <sc-if value="{{ hovered }}" hint-placeholder-val="{{ false }}">
       <div style="position: absolute; bottom: 56px; right: 48px; z-index: 50; width: 340px; display: flex; flex-direction: column; gap: 14px;">
         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: {{ confedColor }};">Group {{ groupLabel }} &middot; Fixtures</span>
-        <div style="display: flex; flex-direction: column; gap: 1px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); border-radius: 16px; overflow: hidden; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+        <div style="display: flex; flex-direction: column; gap: 1px; background: var(--mun-surface-2); border: 1px solid var(--mun-border); border-radius: var(--mun-radius-lg); overflow: hidden; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
           <sc-for list="{{ matches }}" as="m" hint-placeholder-count="3">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; background: rgba(255,255,255,0.015);">
               <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
-                <span style="display: flex; align-items: center; gap: 7px; font-size: 15px; color: #fff; font-weight: 600; white-space: nowrap;"><img src="{{ m.oppFlag }}" alt="" style="width: 22px; height: 15px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);">vs <span style="color: {{ confedColor }};">{{ m.oppCode }}</span> &middot; {{ m.oppName }}</span>
-                <span style="font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.venue }}</span>
+                <span style="display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--mun-fg); font-weight: 600; white-space: nowrap;"><img src="{{ m.oppFlag }}" alt="" style="width: 22px; height: 15px; border-radius: var(--mun-radius-flag); object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);">vs <span style="color: {{ confedColor }};">{{ m.oppCode }}</span> &middot; {{ m.oppName }}</span>
+                <span style="font-size: 12px; color: var(--mun-fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.venue }}</span>
               </div>
-              <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); white-space: nowrap;">{{ m.date }}</span>
+              <span style="font-size: 13px; font-weight: 600; color: var(--mun-fg-strong); white-space: nowrap;">{{ m.date }}</span>
             </div>
           </sc-for>
         </div>
@@ -401,11 +429,11 @@
     <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
       <div class="globe-cta" data-anim="fade" data-delay="820" style="position: absolute; bottom: 56px; right: 48px; z-index: 50; max-width: 300px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; text-align: right;">
         <div style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 26px; color: #fff; line-height: 1;">Jun 11 &ndash; Jul 19, 2026</span>
-          <span style="font-size: 14px; color: rgba(255,255,255,0.8);">104 matches &middot; 16 host cities &middot; 12 groups</span>
-          <span style="font-size: 13px; color: rgba(255,255,255,0.55);">Opening match: Mexico v South Africa</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 26px; color: var(--mun-fg); line-height: 1;">Jun 11 &ndash; Jul 19, 2026</span>
+          <span style="font-size: 14px; color: var(--mun-fg-strong);">104 matches &middot; 16 host cities &middot; 12 groups</span>
+          <span style="font-size: 13px; color: var(--mun-fg-subtle);">Opening match: Mexico v South Africa</span>
         </div>
-        <button style="background: {{ accent }}; color: #fff; font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; font-family: var(--mun-font-sans); white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
+        <button style="background: {{ accent }}; color: var(--mun-fg); font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: var(--mun-radius-pill); cursor: pointer; font-family: var(--mun-font-sans); white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
       </div>
     </sc-if>
 
@@ -753,6 +781,7 @@ class Component extends DCLogic {
     this.playEntrance();
     this._loadLiveData();
     this._loadBuzz();
+    this._loadXHealth();
     // Cycle the idle-globe "Buzzing now" chip through the current top 3.
     // Honour reduced-motion: hold on the leader instead of cycling.
     this._reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -813,6 +842,21 @@ class Component extends DCLogic {
     poll();
   }
 
+  // Poll our own X telemetry endpoint so the Buzz view can show, per nation, the
+  // exact query we send to X and the post-count volume it returned. Cheap (our
+  // server; no X calls) — drives the "what we're grabbing from X" panel.
+  _loadXHealth() {
+    const poll = () => {
+      if (this._buzzStopped) return;
+      fetch('/api/x/health')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) { this.xHealth = d; if (this.currentView() === 'buzz') this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); } })
+        .catch(() => {})
+        .finally(() => { if (!this._buzzStopped) this._xHealthTimer = setTimeout(poll, 30000); });
+    };
+    poll();
+  }
+
   _loadLiveData() {
     fetch('/api/data.json')
       .then(r => r.ok ? r.json() : null)
@@ -846,6 +890,7 @@ class Component extends DCLogic {
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
     if (this._chipTimer) clearInterval(this._chipTimer);
     if (this._toastTimer) clearTimeout(this._toastTimer);
+    if (this._xHealthTimer) clearTimeout(this._xHealthTimer);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
     this._buzzTimer = null;
@@ -1645,7 +1690,8 @@ class Component extends DCLogic {
       rowBg: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-soft)' : 'var(--mun-surface-2)',
       rowBorder: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-border)' : 'var(--mun-border-soft)',
       onEnter: () => this.setLegendTeam(r.code),
-      onLeave: () => this.clearLegend()
+      onLeave: () => this.clearLegend(),
+      onSelect: () => this.setState({ buzzFocusCode: r.code })  // click → select + reveal its X detail
     }));
     // The idle-globe chip cycles through the current top 3 (timer bumps buzzChipIdx).
     const chipN = Math.min(3, buzzLeader.length);
@@ -1661,7 +1707,21 @@ class Component extends DCLogic {
     const buzzReady = buzzStatus === 'live' && buzzTop.length > 0;
     const buzzUpdated = bm.updatedAt ? new Date(bm.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const buzzWindow = bm.window || 'recent';
-    const buzzSource = bm.source === 'counts' ? 'X post volume' : (bm.source || 'live signal');
+    // Honest source: 'counts' (set by the server when the X poller is live + uncapped)
+    // means in-play nations are driven by real X post volume; otherwise it's the demo sim.
+    const buzzIsLive = bm.source === 'counts';
+    const xh = this.xHealth || {};
+    const xWindowMin = xh.windowMin || 10;
+    const buzzSource = buzzIsLive ? ('real X post volume · last ' + xWindowMin + ' min') : 'simulated demo signal';
+    const buzzHowText = buzzIsLive
+      ? ('Every few minutes we ask the X (Twitter) API how many recent posts mention each nation playing today — only the volume, never the post text — and rank them live. Nations not in today’s matches show ambient interest. No post content is fetched or stored, so it stays cheap (a few hundred requests/day, hard-capped).')
+      : ('Live mode pulls real post volume from the X (Twitter) API for the nations playing today. Right now it’s showing the free simulated signal (X polling is paused or off) — it switches to live automatically when the feed is active.');
+    // "What we're grabbing from X" for the selected nation (board click sets buzzFocusCode).
+    const xSel = this.state.buzzFocusCode || null;
+    const xPer = (xh.perTeam && xSel) ? xh.perTeam[xSel] : null;
+    const xInspectShow = isBuzz && !!xSel;
+    const xInspectActive = !!xPer;
+    const xSelName = xSel ? (this.byCode[xSel] ? this.byCode[xSel].name : xSel) : '';
 
     // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
     const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
@@ -1752,6 +1812,23 @@ class Component extends DCLogic {
       buzzUpdated: buzzUpdated,
       buzzWindow: buzzWindow,
       buzzSource: buzzSource,
+      buzzIsLive: buzzIsLive,
+      buzzSimulated: !buzzIsLive,
+      buzzEyebrow: buzzIsLive ? 'Live from X' : 'Buzz · simulated',
+      buzzHowText: buzzHowText,
+      buzzInfoOpen: !!this.state.buzzInfoOpen,
+      toggleBuzzInfo: () => this.setState({ buzzInfoOpen: !this.state.buzzInfoOpen }),
+      xInspectShow: xInspectShow,
+      xInspectActive: xInspectActive,
+      xInspectInactive: xInspectShow && !xInspectActive && buzzIsLive,
+      xInspectSim: xInspectShow && !buzzIsLive,
+      xSelName: xSelName,
+      xSelCode: xSel || '',
+      xSelFlag: xSel ? this.flagUrl(xSel) : '',
+      xSelQuery: xPer ? xPer.query : '',
+      xSelCount: xPer ? String(xPer.count) : '0',
+      xSelWindow: String(xWindowMin),
+      closeXInspect: () => this.setState({ buzzFocusCode: null }),
       retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,
       legendTitle: isBracket ? 'Knockout path' : 'Group locator',

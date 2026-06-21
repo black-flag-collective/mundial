@@ -135,6 +135,15 @@ function createCountsPoller({ engine, log = console } = {}) {
     for (const code of codes) signals[code] = counts[code] > 0 ? Math.sqrt(counts[code] / max) : 0;
     engine.setSignals(signals);
 
+    // Per-team transparency for the UI: the exact query we send to X and the
+    // post-count volume it returned (no post bodies — counts endpoint only).
+    const perTeam = {};
+    for (const code of codes) {
+      const rule = ruleForTeam(code);
+      perTeam[code] = { query: rule ? rule.value : '', count: counts[code], signal: Math.round((signals[code] || 0) * 100) / 100 };
+    }
+    stats.perTeam = perTeam;
+
     stats.lastPollMs = Date.now();
     const top = codes.reduce((a, b) => (counts[b] >= counts[a] ? b : a), codes[0]);
     stats.lastEvent = `polled ${codes.length} team(s) · hottest ${top} (${counts[top]})`;

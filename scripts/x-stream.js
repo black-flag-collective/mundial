@@ -12,6 +12,12 @@
 
 const STREAM_URL = 'https://api.x.com/2/tweets/search/stream';
 
+// A healthy stream sends a blank keep-alive line roughly every 20s, so a longer
+// silence means a half-open/dead connection that will never error on its own.
+// The watchdog (below) aborts the read after this long without bytes so the
+// supervisor reconnects instead of hanging forever. Tunable via X_STREAM_STALL_MS.
+const DEFAULT_STALL_MS = 30_000;
+
 // Hydrate each Post with what the buzz feed / UI needs, in one request.
 const PARAMS = new URLSearchParams({
   'tweet.fields': 'created_at,lang,public_metrics,entities',
@@ -22,12 +28,14 @@ const PARAMS = new URLSearchParams({
 /**
  * Open the stream and call `onPost(payload)` for every matched Post, where
  * payload = { data, includes, matching_rules }. Resolves when the server
- * closes the connection; rejects on a non-OK HTTP status (with `.status`).
- * Pass an AbortSignal to stop.
+ * closes the connection; rejects on a non-OK HTTP status (with `.status`) or
+ * when the connection stalls (no bytes for `stallMs`; error has `.stall`).
+ * Pass an AbortSignal via `signal` to stop; `stallMs` overrides the watchdog.
  */
-async function streamPosts(onPost, { signal, onOpen } = {}) {
+async function streamPosts(onPost, { signal, onOpen, stallMs } = {}) {
   const token = process.env.X_BEARER_TOKEN;
   if (!token) throw new Error('X_BEARER_TOKEN is not set');
+  const STALL_MS = stallMs || Number(process.env.X_STREAM_STALL_MS) || DEFAULT_STALL_MS;
 
   const res = await fetch(`${STREAM_URL}?${PARAMS}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -54,8 +62,30 @@ async function streamPosts(onPost, { signal, onOpen } = {}) {
   const decoder = new TextDecoder();
   let buf = '';
 
+  // Stall watchdog: race each read against a silence timer. Any bytes (including
+  // a blank keep-alive) reset it; STALL_MS of total silence aborts the read so
+  // the supervisor can reconnect rather than block on a dead socket forever.
   for (;;) {
-    const { value, done } = await reader.read();
+    let stallTimer;
+    const stalled = new Promise((_, reject) => {
+      stallTimer = setTimeout(
+        () => reject(Object.assign(new Error(`stream stalled — no data for ${STALL_MS}ms`), { stall: true })),
+        STALL_MS
+      );
+    });
+
+    let value, done;
+    try {
+      ({ value, done } = await Promise.race([reader.read(), stalled]));
+    } catch (err) {
+      // Stall (or external abort): drop the connection so X's single slot frees,
+      // then propagate so runForever() backs off and reconnects.
+      try { await reader.cancel(); } catch { /* already torn down */ }
+      throw err;
+    } finally {
+      clearTimeout(stallTimer);
+    }
+
     if (done) break; // server closed — caller decides whether to reconnect
     buf += decoder.decode(value, { stream: true });
 

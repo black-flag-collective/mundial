@@ -1,8 +1,7 @@
-# Mundial (mundial-buzz) — Session Handoff
+# Mundial (mundial-buzz) — Architecture & Operations
 
-**Last updated:** 2026-06-19
 **Repo:** https://github.com/black-flag-collective/mundial-buzz
-**Target URL:** https://mundial-buzz.fly.dev (Fly.io)
+**Live:** https://mundial-buzz.fly.dev (Fly.io)
 
 > **User-facing feature tour:** see [`docs/FEATURES.md`](docs/FEATURES.md) for
 > what each of the five views does and how the Buzz layer ties to the globe.
@@ -15,10 +14,9 @@
 
 ## What this is
 
-A FIFA World Cup 2026 tracker, built from a Claude Design export ("Mundial").
-Single-page app in **Design Component (`.dc.html`) format** — a self-contained
-React runtime — wrapped in an Express server that keeps match data live via a
-Claude web-search agent.
+A FIFA World Cup 2026 tracker. Single-page app in **Design Component
+(`.dc.html`) format** — a self-contained React runtime — wrapped in an Express
+server that keeps match data live via a Claude web-search agent.
 
 Four views: **Globe** (Three.js 3D explorer of all 48 nations), **Matchday**
 (day-by-day results with a timeline slider), **Standings** (computed group
@@ -27,13 +25,6 @@ tables), **Bracket** (projected knockout).
 The Globe and Matchday views also carry a **live "buzz" layer** — a shader
 wave-field that ripples across the map to show how loud each country is on
 social right now (see the Buzz layer section below).
-
----
-
-## Current status: ✅ code complete, ✅ pushed to GitHub, ⏳ not yet deployed
-
-The repo is on GitHub. Remaining work is **one-time Fly.io setup** (see below) —
-no code changes needed to go live.
 
 ---
 
@@ -159,7 +150,10 @@ unmount).
 
 ---
 
-## TO FINISH DEPLOYMENT (one-time, run locally with flyctl)
+## Deployment
+
+Full instructions are in [`DEPLOY.md`](DEPLOY.md). One-time Fly.io setup, run
+locally with [flyctl](https://fly.io/docs/flyctl/install/):
 
 ```bash
 fly auth login
@@ -171,20 +165,13 @@ Then GitHub → Settings → Secrets and variables → Actions, and add:
 - `ANTHROPIC_API_KEY` — `sk-ant-...` (enables the scheduled "Update match data"
   workflow that fetches results and commits them back to the repo).
 
-Next push (or Actions → Run workflow) deploys to mundial-buzz.fly.dev.
-
-First deploy can also be done by hand: `fly deploy` from repo root.
+After that, every push to `main` (or **Actions → Run workflow**) deploys to
+mundial-buzz.fly.dev. A first deploy can also be done by hand with `fly deploy`.
 
 ---
 
-## Environment notes / gotchas
+## Operational notes
 
-- **This was a design-export workspace, not repo-connected** — so the original
-  container had no GitHub creds and a network policy that blocked Fly's API
-  (`api.fly.io` → 403). Code was moved to GitHub via a git bundle.
-- **For future sessions: create the Claude Code environment CONNECTED to the
-  `mundial-buzz` GitHub repo** so pushes work natively (no tokens/bundles).
-  Platform blocks raw PATs as env vars by design.
 - Fly deploys run in GitHub Actions (full network), so the container never needs
   to reach Fly directly.
 - App still works without `ANTHROPIC_API_KEY` — it just won't auto-refresh scores.
@@ -196,14 +183,13 @@ First deploy can also be done by hand: `fly deploy` from repo root.
   score written in-process was silently lost. The scheduled Action commits
   `matches.json` to the repo, which persists it and triggers a redeploy.
 
-## Possible next steps (not started)
+## Roadmap
 
-- First live deploy + smoke-test mundial-buzz.fly.dev.
 - Tune updater cadence / prompt once real tournament data flows in.
 - Consider a real football API as a fallback/cross-check to the Claude agent.
 
-### Buzz layer — for tomorrow
-- **Swap the simulated source for the real X API adapter** (the main goal). Feed
+### Buzz layer
+- **Swap the simulated source for the real X API adapter.** Feed
   per-country tweet volume into `tick()` per the "source-agnostic" note above.
   Decide tier first: pay-per-use polling (cheap, near-realtime) vs Pro filtered
   stream (true realtime, $5k/mo). Keep `/api/buzz.json` shape unchanged.

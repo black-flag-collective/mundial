@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-21T15:13:26.974Z",
+  "updatedAt": "2026-06-21T17:39:39.706Z",
   "days": [
     {
       "dow": "Thursday",
@@ -473,22 +473,20 @@
         "g": "G",
         "a": "BEL",
         "b": "IRN",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
         "ko": "2026-06-21T19:00:00Z",
-        "time": "3:00 PM ET",
         "venue": "SoFi Stadium, Inglewood"
       },
       {
         "g": "G",
         "a": "NZL",
         "b": "EGY",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 2,
+        "bs": 2,
+        "st": "FT",
         "ko": "2026-06-22T01:00:00Z",
-        "time": "6:00 PM ET",
         "venue": "BC Place, Vancouver"
       },
       {
@@ -506,11 +504,10 @@
         "g": "H",
         "a": "URU",
         "b": "CPV",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
         "ko": "2026-06-21T22:00:00Z",
-        "time": "9:00 PM ET",
         "venue": "Hard Rock Stadium, Miami Gardens"
       }
     ],

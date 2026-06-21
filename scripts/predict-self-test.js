@@ -6,7 +6,7 @@
  */
 
 const assert = require('node:assert');
-const { createOracle, buildContext, summarizeResults, signatureOf, parsePrediction } = require('./predict');
+const { createOracle, buildContext, fieldCodes, summarizeResults, signatureOf, parsePrediction } = require('./predict');
 
 let passed = 0;
 const checks = [];
@@ -61,6 +61,16 @@ check('predict: parsePrediction reads JSON and rejects junk', () => {
   const p = parsePrediction('noise {"champion":"arg","championName":"Argentina"} trailing');
   assert.strictEqual(p.champion, 'ARG', 'uppercased, extracted from surrounding text');
   assert.strictEqual(p.championName, 'Argentina');
+});
+check('predict: parsePrediction rejects a champion outside the field', () => {
+  const field = ['BRA', 'ARG', 'FRA'];
+  assert.ok(parsePrediction('{"champion":"BRA"}', field), 'in-field pick accepted');
+  assert.strictEqual(parsePrediction('{"champion":"ITA"}', field), null, 'non-qualified pick rejected');
+  assert.ok(parsePrediction('{"champion":"ITA"}'), 'no field given → not validated (back-compat)');
+});
+check('predict: fieldCodes extracts the tournament field from fixtures', () => {
+  const f = fieldCodes({ dayMatches: [[{ a: 'BRA', b: 'ARG' }], [{ a: 'FRA', b: 'BRA' }]] });
+  assert.deepStrictEqual([...f].sort(), ['ARG', 'BRA', 'FRA'], 'unique codes across all fixtures');
 });
 
 check('predict: signatureOf is stable for the same top-8 buzz set', () => {

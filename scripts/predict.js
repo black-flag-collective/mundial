@@ -31,12 +31,22 @@ const SYSTEM = [
   'actually wins; use buzz and trends only as the "what the world is watching"',
   'angle and narrative color. In "evidence", cite the specific signal behind the',
   'call and be honest about what buzz does and does not mean. Credible, not outlandish.',
+  'champion and runnerUp MUST be FIFA codes from the field listed in the data.',
   'Respond with ONLY a JSON object, no prose, exactly:',
   '{"champion":"<FIFA code>","championName":"<name>","runnerUp":"<FIFA code>",',
   '"finalScore":"<e.g. 2-1>","hotTake":"<one vivid sentence>","evidence":"<one sentence citing the signals>"}',
 ].join(' ');
 
 const DEFAULT_MODEL = 'claude-haiku-4-5';
+
+/** The set of FIFA codes actually in this tournament's field (pure). */
+function fieldCodes(matches) {
+  const set = new Set();
+  for (const day of (matches && matches.dayMatches) || []) {
+    for (const m of day || []) { if (m.a) set.add(m.a); if (m.b) set.add(m.b); }
+  }
+  return [...set];
+}
 
 /** Compact per-team record from finished matches (pure). */
 function summarizeResults(matches) {
@@ -79,6 +89,7 @@ function buildContext({ matches, buzz, trends, liveCodes = [], realActive = fals
     ? `Real X post volume now (last ~10m, nations in a live match): ${realRows.join(', ')}`
     : 'Real X post volume: none right now (no live match or feed off) — the figures below are MODELED, not measured.';
   return [
+    `Field — choose champion and runner-up ONLY from these FIFA codes: ${fieldCodes(matches).join(', ') || 'n/a'}`,
     'BUZZ = social attention on X (how much each nation is talked about), NOT team strength.',
     realLine,
     `Modeled attention index (0-100; popularity + match-day, NOT live volume): ${modeledRows.join(', ') || 'n/a'}`,
@@ -94,16 +105,23 @@ function signatureOf(buzz) {
   return `${new Date().toISOString().slice(0, 10)}|${top}`;
 }
 
-/** Parse the model's JSON reply defensively → object or null (pure). */
-function parsePrediction(text) {
+/**
+ * Parse the model's JSON reply defensively → object or null (pure). When
+ * `validCodes` is given, the champion must be one of them (the actual field) —
+ * so a hallucinated or non-qualified pick is rejected rather than rendered as a
+ * broken flag.
+ */
+function parsePrediction(text, validCodes) {
   if (!text) return null;
   const m = String(text).match(/\{[\s\S]*\}/);
   if (!m) return null;
   let o;
   try { o = JSON.parse(m[0]); } catch { return null; }
   if (!o || !o.champion) return null;
+  const champion = String(o.champion).toUpperCase().slice(0, 4);
+  if (validCodes && validCodes.length && !validCodes.includes(champion)) return null;
   return {
-    champion: String(o.champion).toUpperCase().slice(0, 4),
+    champion,
     championName: String(o.championName || o.champion),
     runnerUp: o.runnerUp ? String(o.runnerUp).toUpperCase().slice(0, 4) : '',
     finalScore: String(o.finalScore || ''),
@@ -131,7 +149,7 @@ function createOracle({ client, log = console } = {}) {
   let cache = null; // { at, sig, value }
   const lastByIp = new Map();
 
-  async function predict({ context, signature, ip = 'anon', now = Date.now() } = {}) {
+  async function predict({ context, signature, ip = 'anon', validCodes, now = Date.now() } = {}) {
     if (!client) { const e = new Error('Oracle unavailable (no API key)'); e.status = 503; throw e; }
     if (utcDay() !== day) { day = utcDay(); stats.callsToday = 0; stats.capped = false; }
 
@@ -166,7 +184,7 @@ function createOracle({ client, log = console } = {}) {
     stats.callsToday++;
     stats.lastCallMs = now;
     const text = (resp && Array.isArray(resp.content)) ? resp.content.map((b) => b.text || '').join('') : '';
-    const prediction = parsePrediction(text);
+    const prediction = parsePrediction(text, validCodes);
     if (!prediction) { const e = new Error('Oracle returned an unreadable prediction'); e.status = 502; throw e; }
     cache = { at: now, sig: signature, value: prediction };
     return { prediction, cached: false, generatedAt: new Date(now).toISOString() };
@@ -175,4 +193,4 @@ function createOracle({ client, log = console } = {}) {
   return { predict, stats: () => ({ ...stats }) };
 }
 
-module.exports = { createOracle, buildContext, summarizeResults, signatureOf, parsePrediction, SYSTEM, DEFAULT_MODEL };
+module.exports = { createOracle, buildContext, fieldCodes, summarizeResults, signatureOf, parsePrediction, SYSTEM, DEFAULT_MODEL };

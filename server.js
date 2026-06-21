@@ -100,7 +100,7 @@ app.get('/api/predict', async (req, res) => {
     const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot(), liveCodes, realActive });
     const signature = signatureOf(buzzSnap);
     const ip = (req.headers['x-forwarded-for'] || req.ip || 'anon').split(',')[0].trim();
-    const out = await oracle.predict({ context, signature, ip });
+    const out = await oracle.predict({ context, signature, ip, validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
   } catch (err) {
     res.status(err.status || 500).json({ available: true, error: err.message });
@@ -117,7 +117,7 @@ const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
 const { createCountsPoller, resolveBuzzMode } = require('./scripts/buzz-counts');
 const { createTrendsPoller } = require('./scripts/x-trends');
-const { createOracle, buildContext, signatureOf } = require('./scripts/predict');
+const { createOracle, buildContext, signatureOf, fieldCodes } = require('./scripts/predict');
 
 // X Trends (what's trending per location) runs alongside whichever buzz source —
 // it's a separate, per-location read, billed independently and very cheaply.

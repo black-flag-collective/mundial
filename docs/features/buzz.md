@@ -25,8 +25,10 @@ generating the most chatter right now, ranked by a **buzz score**.
 - **🔮 Ask the Oracle** — when the prediction feature is enabled (server has an
   Anthropic key), a button under the header asks the **Buzz Oracle** for a
   data-grounded call: the projected champion + final, a one-line take, and the
-  buzz/form evidence behind it. It's an on-demand, cost-bounded AI call (cheap
-  model, server-cached, rate-limited) — see [`HANDOFF.md`](../../HANDOFF.md).
+  buzz/form evidence behind it. **Share it** with one tap (native share sheet on
+  mobile, copy-to-clipboard elsewhere) — the shared text carries the
+  mundial.buzz link. It's an on-demand, cost-bounded AI call (cheap model,
+  server-cached, rate-limited) — see [`HANDOFF.md`](../../HANDOFF.md).
 - **Tap any row** to open the **inspect panel** — "what we're pulling from X"
   for that nation. When the live feed is active it shows the exact recent-counts
   query, the post volume + a per-minute **sparkline**, the **peak / current**

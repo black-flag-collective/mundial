@@ -320,6 +320,14 @@
                 <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">Live X polling is paused right now, so this is the simulated demo signal. When the feed is active you&rsquo;ll see the exact X query and post volume for {{ xSelName }} here.</div>
                 </sc-if>
+                <sc-if value="{{ xSelHasTrends }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mun-accent);">&#128293; Trending</span>
+                    <sc-for list="{{ xSelTrends }}" as="t" hint-placeholder-count="4">
+                      <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--mun-fg-muted); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-pill); padding: 2px 9px;">{{ t.name }}<span style="color: var(--mun-fg-faint); font-size: 11px;">{{ t.count }}</span></span>
+                    </sc-for>
+                  </div>
+                </sc-if>
               </div>
             </sc-if>
 
@@ -1873,6 +1881,26 @@ class Component extends DCLogic {
     // For a selected nation that isn't being polled live, explain *when* its
     // match is (kicks off later / played earlier / not today) from kickoff data.
     const xSelInactiveText = xSel ? this.buzzMatchNote(xSel) : '';
+    // The selected nation's own trending topics (the "why" behind its TRENDING
+    // badge) — pulled from the trends data already on the page, no extra cost.
+    let xSelTrends = [];
+    if (xSel && this.trendsData) {
+      const nm = (this.byCode[xSel] ? this.byCode[xSel].name : '').toLowerCase();
+      const tag = '#' + xSel.toLowerCase();
+      const seen = {};
+      for (const loc of this.trendsData.locations || []) {
+        for (const t of loc.trends || []) {
+          const s = (t.name || '').toLowerCase();
+          if ((s.includes(tag) || (nm && s.includes(nm))) && !seen[t.name]) {
+            seen[t.name] = true;
+            xSelTrends.push({ name: t.name, _c: t.postCount || 0 });
+          }
+        }
+      }
+      xSelTrends = xSelTrends.sort((a, b) => b._c - a._c).slice(0, 4)
+        .map((t) => ({ name: t.name, count: t._c ? this.compactNum(t._c) : '' }));
+    }
+    const xSelHasTrends = xSelTrends.length > 0;
     // Extra detail mined from the same counts response (no extra X cost): the
     // peak + current per-minute rate, and a sparkline of the per-minute series.
     const xMinutes = (xPer && Array.isArray(xPer.minutes)) ? xPer.minutes : [];
@@ -2009,6 +2037,8 @@ class Component extends DCLogic {
       xInspectActive: xInspectActive,
       xInspectInactive: xInspectShow && !xInspectActive && buzzIsLive,
       xInspectSim: xInspectShow && !buzzIsLive,
+      xSelHasTrends: xSelHasTrends,
+      xSelTrends: xSelTrends,
       xSelName: xSelName,
       xSelInactiveText: xSelInactiveText,
       xSelCode: xSel || '',

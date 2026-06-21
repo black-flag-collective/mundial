@@ -137,6 +137,20 @@ class BuzzEngine {
     if (this.state[conceder]) this.state[conceder].spike = clamp01(this.state[conceder].spike + 0.55);
   }
 
+  /**
+   * Feed a real-time external signal for a country — e.g. one matching X Post
+   * from the filtered stream (server.js → scripts/x-stream-runner.js). Each
+   * call nudges the spike; tick() decays it, so sustained volume keeps a
+   * country lit and a burst (goal, controversy) flares it. Source-agnostic by
+   * design — see the header note on wiring in the X API. `weight` lets a louder
+   * signal (high engagement) count for more than a single post.
+   */
+  ingest(code, weight = 1) {
+    const s = this.state[code];
+    if (!s) return;
+    s.spike = clamp01(s.spike + 0.03 * weight);
+  }
+
   async tick() {
     // Re-entrancy guard: setInterval can fire again before an awaited tick
     // resolves; skip overlapping runs so _lastScores / goal spikes stay consistent.

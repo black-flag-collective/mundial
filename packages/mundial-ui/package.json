@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Mundial design system — the World Cup 2026 tracker's UI as a reusable React component library.",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "private": true,
   "files": ["dist"],
   "main": "./dist/mundial-ui.js",

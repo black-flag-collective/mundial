@@ -1,5 +1,10 @@
 node_modules/
+
+# Local env files — never commit secrets. Only .env.example is tracked.
 .env
+.env.*
+!.env.example
+
 *.log
 .DS_Store
 

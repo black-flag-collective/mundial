@@ -458,6 +458,9 @@ class Component extends DCLogic {
     this.mouse = { x: -1, y: -1, has: false };
     this.hoverIdx = -1;
     this.idleLon = -70;
+    this.idleLat = 6;
+    this.dragging = false; this.dragMoved = false;
+    this.lastPX = 0; this.lastPY = 0; this.velLon = 0; this.velLat = 0;
     this.glReady = false;
     this.focusS = 0.12;
     this.camZ = 439;
@@ -769,7 +772,7 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
-    this.onMove = (e) => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.has = true; this.pickHover(); };
+    this.onMove = (e) => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.has = true; if (!this.dragging) this.pickHover(); };
     window.addEventListener('mousemove', this.onMove);
     this.onResize = () => { this.resize(); this.scaleBracket(); this.forceUpdate(); };
     window.addEventListener('resize', this.onResize);
@@ -824,6 +827,13 @@ class Component extends DCLogic {
   componentWillUnmount() {
     window.removeEventListener('mousemove', this.onMove);
     window.removeEventListener('resize', this.onResize);
+    if (this.renderer && this.renderer.domElement && this.onGlobeDown) {
+      const el = this.renderer.domElement;
+      el.removeEventListener('pointerdown', this.onGlobeDown);
+      el.removeEventListener('pointermove', this.onGlobeDrag);
+      el.removeEventListener('pointerup', this.onGlobeUp);
+      el.removeEventListener('pointercancel', this.onGlobeUp);
+    }
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
@@ -956,7 +966,39 @@ class Component extends DCLogic {
     this.sphere = sphere;
     this.mount = mount;
     this.R = R;
-    this.globe.quaternion.copy(this.faceQuat(6, this.idleLon));
+    this.globe.quaternion.copy(this.faceQuat(this.idleLat, this.idleLon));
+
+    // ---- drag-to-spin ("marble"): mouse drag / touch swipe rotates the globe
+    // freely, overriding auto-rotate and suppressing snap while in motion. ----
+    this.onGlobeDown = (e) => {
+      this.dragging = true; this.dragMoved = false;
+      this.lastPX = e.clientX; this.lastPY = e.clientY;
+      this.velLon = 0; this.velLat = 0;
+      this.hoverIdx = -1;
+      renderer.domElement.style.cursor = 'grabbing';
+      try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
+    };
+    this.onGlobeDrag = (e) => {
+      if (!this.dragging) return;
+      const dx = e.clientX - this.lastPX, dy = e.clientY - this.lastPY;
+      if (Math.abs(dx) + Math.abs(dy) > 2) this.dragMoved = true;
+      this.lastPX = e.clientX; this.lastPY = e.clientY;
+      this.velLon = -dx * 0.3; this.velLat = dy * 0.3;
+      this.idleLon += this.velLon;
+      this.idleLat = Math.max(-78, Math.min(78, this.idleLat + this.velLat));
+    };
+    this.onGlobeUp = (e) => {
+      this.dragging = false;
+      renderer.domElement.style.cursor = 'grab';
+      try { renderer.domElement.releasePointerCapture(e.pointerId); } catch (err) {}
+    };
+    renderer.domElement.style.cursor = 'grab';
+    renderer.domElement.style.touchAction = 'none'; // let us own swipe gestures on mobile
+    renderer.domElement.addEventListener('pointerdown', this.onGlobeDown);
+    renderer.domElement.addEventListener('pointermove', this.onGlobeDrag);
+    renderer.domElement.addEventListener('pointerup', this.onGlobeUp);
+    renderer.domElement.addEventListener('pointercancel', this.onGlobeUp);
+
     this.glReady = true;
     this.applyViewMarkers();
     this.rebuildArcs();
@@ -1189,7 +1231,10 @@ class Component extends DCLogic {
             const d = wp.distanceTo(p);
             if (d < bestD) { bestD = d; best = this.hitMeshes[i].userData.idx; }
           }
-          newHover = best;
+          // Snap only when the cursor is actually near a nation ("close enough"),
+          // so spinning across open ocean navigates freely instead of yanking
+          // to whatever country happens to be nearest.
+          if (best >= 0 && bestD < 24) newHover = best;
         }
       }
     }
@@ -1378,17 +1423,31 @@ class Component extends DCLogic {
     if (this.arcGroup) this.arcGroup.visible = false;
     const autoRotate = this.props.autoRotate ?? true;
     let target, focusT;
-    if (this.hoverIdx >= 0) {
+    const coasting = !this.dragging && (Math.abs(this.velLon) > 0.02 || Math.abs(this.velLat) > 0.02);
+    if (this.dragging || coasting) {
+      // Free-spin marble: drag steers directly; release coasts with inertia.
+      // No snap while in motion — the user is navigating.
+      if (!this.dragging) {
+        this.idleLon += this.velLon;
+        this.idleLat = Math.max(-78, Math.min(78, this.idleLat + this.velLat));
+        this.velLon *= 0.94; this.velLat *= 0.94;
+        if (Math.abs(this.velLon) < 0.02) this.velLon = 0;
+        if (Math.abs(this.velLat) < 0.02) this.velLat = 0;
+      }
+      target = this.faceQuat(this.idleLat, this.idleLon);
+      focusT = 0.12;
+    } else if (this.hoverIdx >= 0) {
+      // Settled near a nation → snap + zoom to center it, same as before.
       const c = this.countries[this.hoverIdx];
       target = this.faceQuat(c.lat, c.lon);
-      this.idleLon = c.lon;
+      this.idleLon = c.lon; this.idleLat = c.lat;
       focusT = 0.5;
     } else {
       if (autoRotate) this.idleLon += 0.12;
-      target = this.faceQuat(6, this.idleLon);
+      target = this.faceQuat(this.idleLat, this.idleLon);
       focusT = 0.12;
     }
-    this.globe.quaternion.slerp(target, 0.08);
+    this.globe.quaternion.slerp(target, this.dragging ? 0.45 : 0.08);
     this.focusS += (focusT - this.focusS) * 0.05;
     this.camera.position.z = 439 - this.focusS * 101;
 

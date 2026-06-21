@@ -48,8 +48,8 @@
   --mun-radius-flag: 2px;
 
   /* Typography */
-  --mun-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --mun-font-display: 'Playfair Display', Georgia, serif;
+  --mun-font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mun-font-display: "IBM Plex Serif", Georgia, serif;
   --mun-tracking-tight: -0.02em;
   --mun-tracking-eyebrow: 0.34em;
 

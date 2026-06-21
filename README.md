@@ -1,3 +1,29 @@
+# mundial.buzz
+
+A live companion to the **FIFA World Cup 2026** (Canada · Mexico · USA,
+Jun 11 – Jul 19) — a 3D globe of all 48 nations paired with day-by-day results,
+computed group tables, a projected knockout bracket, and a real-time "buzz"
+layer showing which countries the world is watching right now.
+
+Everything is one page with five views. The globe stays mounted behind every
+view, so moving between them feels continuous.
+
+| | View | What it answers | Docs |
+|---|------|-----------------|------|
+| 🔥 | **Buzz** | Who's loudest right now? | [buzz.md](docs/features/buzz.md) |
+| 🌍 | **Globe** | Where is everyone, and how's the energy? | [globe.md](docs/features/globe.md) |
+| 📅 | **Matchday** | What happened / is happening today? | [matchday.md](docs/features/matchday.md) |
+| 📊 | **Standings** | Who's advancing? | [standings.md](docs/features/standings.md) |
+| 🏆 | **Bracket** | How might the knockouts play out? | [bracket.md](docs/features/bracket.md) |
+
+**Feature tour:** in-app at **`/features`** ([source](public/features/index.html)) ·
+[`docs/FEATURES.md`](docs/FEATURES.md) ·
+**Operator/dev docs:** [`HANDOFF.md`](HANDOFF.md),
+[`docs/DATA-PIPELINE.md`](docs/DATA-PIPELINE.md),
+[`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md)
+
+---
+
 # CODING AGENTS: READ THIS FIRST
 
 This is a **handoff bundle** from Claude Design (claude.ai/design).

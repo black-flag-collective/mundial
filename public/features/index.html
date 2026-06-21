@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mundial.buzz — Feature Guide</title>
+<meta name="description" content="A live companion to the FIFA World Cup 2026: a 3D globe of all 48 nations with results, group tables, a projected bracket, and a real-time buzz layer.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+  :root{
+    --bg:#04101c; --bg2:#071a2c; --panel:rgba(255,255,255,0.04);
+    --panel-strong:rgba(255,255,255,0.07); --border:rgba(255,255,255,0.10);
+    --border-soft:rgba(255,255,255,0.07); --accent:#e8702a; --accent-soft:rgba(232,112,42,0.14);
+    --accent-border:rgba(232,112,42,0.4); --blue:#3a82be;
+    --fg:#ecf5fc; --fg-muted:rgba(236,245,252,0.72); --fg-subtle:rgba(236,245,252,0.5);
+    --fg-faint:rgba(236,245,252,0.38);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --display:Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; background:var(--bg);}
+  .wrap{
+    font-family:var(--sans); color:var(--fg); line-height:1.6;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(58,130,190,0.22), transparent 60%),
+      radial-gradient(90% 60% at 80% 100%, rgba(232,112,42,0.10), transparent 55%),
+      linear-gradient(160deg,#04101c 0%,#071a2c 55%,#051322 100%);
+    min-height:100vh; padding:0 0 80px;
+  }
+  .inner{max-width:1080px; margin:0 auto; padding:0 20px;}
+
+  .topbar{max-width:1080px; margin:0 auto; padding:20px; display:flex; justify-content:space-between; align-items:center; gap:16px;}
+  .back{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--fg-muted);
+    text-decoration:none; background:var(--panel-strong); border:1px solid var(--border); border-radius:999px; padding:7px 15px; transition:color .15s, border-color .15s;}
+  .back:hover{color:#fff; border-color:var(--accent-border);}
+  .brand{font-size:13px; font-weight:700; letter-spacing:0.02em; color:var(--fg-faint);}
+
+  /* hero */
+  .hero{text-align:center; padding:44px 20px 36px;}
+  .eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:12px; font-weight:600;
+    letter-spacing:0.34em; text-transform:uppercase; color:var(--fg-subtle); margin-bottom:18px;}
+  .dot{width:8px; height:8px; border-radius:999px; background:var(--accent);
+    box-shadow:0 0 0 0 var(--accent-soft); animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,112,42,0.5);opacity:1}50%{box-shadow:0 0 0 6px transparent;opacity:0.55}}
+  .hero h1{font-family:var(--display); font-style:italic; font-weight:400;
+    font-size:clamp(2.4rem,6vw,4rem); line-height:1.02; margin:0 0 16px;}
+  .hero p{max-width:620px; margin:0 auto; color:var(--fg-muted); font-size:clamp(15px,1.6vw,17px);}
+  .meta{margin-top:22px; font-size:13px; color:var(--fg-faint); letter-spacing:0.02em;}
+
+  /* nav pills */
+  .pills{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:28px auto 0;}
+  .pill{font-size:13px; font-weight:600; color:var(--fg-muted); background:var(--panel-strong);
+    border:1px solid var(--border); border-radius:999px; padding:7px 16px;}
+  .pill.on{color:#fff; background:var(--accent); border-color:transparent;}
+
+  /* section heading */
+  .sec-head{margin:64px 0 8px; font-size:12px; font-weight:600; letter-spacing:0.28em;
+    text-transform:uppercase; color:var(--fg-subtle);}
+
+  /* feature cards */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:18px;}
+  .card{background:var(--panel); border:1px solid var(--border-soft); border-radius:18px;
+    padding:24px; display:flex; flex-direction:column; gap:14px;}
+  .card-head{display:flex; align-items:center; gap:12px;}
+  .ico{font-size:24px; width:44px; height:44px; flex:none; display:grid; place-items:center;
+    border-radius:12px; background:var(--accent-soft); border:1px solid var(--accent-border);}
+  .card h3{margin:0; font-size:18px; font-weight:700;}
+  .card .tag{font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent);}
+  .card .lede{font-size:14px; color:var(--fg-muted); margin:0;}
+  .card ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:7px;}
+  .card li{font-size:13.5px; color:var(--fg-muted);}
+  .card li b{color:var(--fg);}
+  .surge{display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:700;
+    letter-spacing:0.08em; color:var(--accent); background:var(--accent-soft);
+    border:1px solid var(--accent-border); border-radius:999px; padding:1px 8px; vertical-align:middle;}
+
+  /* connect block */
+  .connect{margin-top:18px; background:linear-gradient(135deg,rgba(232,112,42,0.10),rgba(58,130,190,0.08));
+    border:1px solid var(--border); border-radius:18px; padding:28px;}
+  .connect h3{margin:0 0 6px; font-family:var(--display); font-style:italic; font-weight:400; font-size:1.7rem;}
+  .connect .sub{margin:0 0 18px; color:var(--fg-muted); font-size:14px;}
+  .flow{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;}
+  .flow div{background:rgba(0,0,0,0.18); border:1px solid var(--border-soft); border-radius:12px; padding:16px;}
+  .flow .lbl{font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:6px;}
+  .flow p{margin:0; font-size:13.5px; color:var(--fg-muted);}
+  .note{margin-top:16px; font-size:13px; color:var(--fg-subtle);}
+  .note b{color:var(--fg);}
+
+  /* live block */
+  .live{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;}
+  .live .card .lede{font-size:13.5px;}
+  .privacy{margin-top:16px; background:var(--accent-soft); border:1px solid var(--accent-border);
+    border-radius:14px; padding:16px 20px; font-size:13.5px; color:var(--fg);}
+  .privacy b{color:var(--accent);}
+
+  /* table */
+  .tbl-wrap{overflow-x:auto; margin-top:18px; border:1px solid var(--border-soft); border-radius:14px;}
+  table{width:100%; border-collapse:collapse; min-width:560px;}
+  th,td{text-align:left; padding:13px 16px; font-size:13.5px; border-bottom:1px solid var(--border-soft);}
+  th{font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--fg-subtle); background:rgba(0,0,0,0.2);}
+  tr:last-child td{border-bottom:none;}
+  td:first-child{font-weight:700; color:var(--fg); white-space:nowrap;}
+  td{color:var(--fg-muted);}
+
+  .foot{margin-top:56px; text-align:center; font-size:12px; color:var(--fg-faint);}
+  .foot a{color:var(--fg-subtle); text-decoration:none;}
+  .foot a:hover{color:var(--accent);}
+  @media(max-width:640px){ .live{grid-template-columns:1fr;} }
+  @media (prefers-reduced-motion: reduce){ .dot{animation:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="back" href="/">&larr; Open the app</a>
+    <span class="brand">mundial.buzz</span>
+  </div>
+
+  <div class="inner">
+
+    <div class="hero">
+      <span class="eyebrow"><span class="dot"></span>Live · FIFA World Cup 2026</span>
+      <h1>mundial.buzz</h1>
+      <p>A live companion to the World Cup across Canada, Mexico &amp; the USA — pairing a
+        3D globe of all 48 nations with results, group tables, a projected bracket, and a
+        real-time read on who the world is watching.</p>
+      <div class="meta">Jun 11 – Jul 19, 2026 &nbsp;·&nbsp; 104 matches &nbsp;·&nbsp; 16 host cities &nbsp;·&nbsp; 12 groups</div>
+      <div class="pills">
+        <span class="pill on">Buzz</span><span class="pill">Globe</span><span class="pill">Matchday</span><span class="pill">Standings</span><span class="pill">Bracket</span>
+      </div>
+      <div class="meta" style="margin-top:14px;">One page, five views. The globe stays mounted behind every view, so moving between them feels continuous.</div>
+    </div>
+
+    <div class="sec-head">The five views</div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head"><div class="ico">🔥</div><div><div class="tag">Live attention</div><h3>Buzz</h3></div></div>
+        <p class="lede">"Who the world is watching" — a leaderboard of the nations generating the most chatter right now, ranked by a live buzz score.</p>
+        <ul>
+          <li><b>Live count &amp; timestamp</b> — refreshed every few seconds.</li>
+          <li>Each row: rank, flag, FIFA code, name, an intensity bar, and the score.</li>
+          <li><span class="surge">▲ SURGING</span> marks a sharp spike — a goal, a result, a viral moment.</li>
+          <li><b>Click a row</b> to jump to the Globe with that nation spotlighted.</li>
+          <li>Graceful states for loading, "all quiet," and a lost-signal retry.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="ico">🌍</div><div><div class="tag">48 nations · 3D</div><h3>Globe</h3></div></div>
+        <p class="lede">An interactive globe of Earth with every qualified nation marked, and the live buzz rippling across its surface.</p>
+        <ul>
+          <li><b>Drag to spin</b>; it idles with a gentle rotation on its own.</li>
+          <li><b>Hover a nation</b> for its group, confederation, live buzz rank, and group-stage road.</li>
+          <li>A confederation-coloured <b>wave field</b> brightens where buzz concentrates.</li>
+          <li>The <b>"Buzzing now" chip</b> names the leader and cycles the top nations — click to open the board.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="ico">📅</div><div><div class="tag">Day by day</div><h3>Matchday</h3></div></div>
+        <p class="lede">A timeline of the tournament, one day at a time, with live scores.</p>
+        <ul>
+          <li><b>Date slider</b> scrubs through every matchday; <b>TODAY</b> is highlighted automatically.</li>
+          <li><b>Featured match</b> center-stage with score/status (Final, Live, or kickoff) and venue.</li>
+          <li><b>Fixtures slate</b> lists the day's matches — click to feature, hover to trace on the globe.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="ico">📊</div><div><div class="tag">12 groups</div><h3>Standings</h3></div></div>
+        <p class="lede">Live group tables, computed directly from match results — never hand-entered.</p>
+        <ul>
+          <li>All 12 groups, marking the top two <b>advancing to the Round of 32</b>.</li>
+          <li><b>Hover a team</b> to trace it on the globe below.</li>
+          <li>A timestamp shows how fresh the underlying data is.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="ico">🏆</div><div><div class="tag">Knockout</div><h3>Bracket</h3></div></div>
+        <p class="lede">A full projected knockout bracket, Round of 32 through the Final.</p>
+        <ul>
+          <li>Seeded from group favourites; later winners <b>projected by world ranking</b> until real results replace them.</li>
+          <li><b>Hover a matchup</b> to highlight both nations on the globe.</li>
+          <li>Knockout window: <b>Jun 28 – Jul 19</b>.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="sec-head">How Buzz and the Globe connect</div>
+    <div class="connect">
+      <h3>The pulses you see <em>are</em> the live buzz</h3>
+      <p class="sub">The buzz layer isn't a separate gimmick — the globe and the board are two views of one signal, wired both ways.</p>
+      <div class="flow">
+        <div><span class="lbl">Globe → Board</span><p>The wave-field pulse, the spotlight's "Buzz rank · score," and the cycling "Buzzing now" chip all surface the same live signal. Tap to open the board.</p></div>
+        <div><span class="lbl">Board → Globe</span><p>Click a leaderboard row and the Globe opens focused on that nation; the camera settles on it and its row scrolls back into view.</p></div>
+        <div><span class="lbl">Surge toast</span><p>When a nation surges while you're on the Globe, a small ▲ "…is surging" toast slides in up top — so a spike reads across both views. Rate-limited, never spammy.</p></div>
+      </div>
+      <p class="note"><b>Reduced motion:</b> if your system requests it, the chip stops cycling, the surge toast is suppressed, and scrolling jumps instead of animating. The data stays just as live.</p>
+    </div>
+
+    <div class="sec-head">How the site stays live</div>
+    <div class="live">
+      <div class="card">
+        <div class="card-head"><div class="ico">⚽</div><div><h3>Match data</h3></div></div>
+        <p class="lede">Scores, schedule, standings, and bracket refresh from a backend pipeline. As results land, Matchday updates and Standings &amp; Bracket re-derive from those scores. Confirmed finals are never overwritten.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="ico">📡</div><div><h3>Buzz feed</h3></div></div>
+        <p class="lede">Polled every ~4 seconds. It can be driven by real activity from the X (Twitter) API — per-nation post volume mapped onto each country's score and spikes — or by a built-in simulated source. The on-screen experience is identical either way.</p>
+      </div>
+    </div>
+    <div class="privacy"><b>Privacy:</b> the buzz layer only ever stores aggregate intensity per country. No post text, authors, or account IDs are kept or shown.</div>
+
+    <div class="sec-head">Quick reference</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>View</th><th>What it answers</th><th>Key interaction</th></tr></thead>
+        <tbody>
+          <tr><td>Buzz</td><td>Who's loudest right now?</td><td>Click a row → spotlight on Globe</td></tr>
+          <tr><td>Globe</td><td>Where is everyone, and how's the energy?</td><td>Hover a nation; click the "Buzzing now" chip</td></tr>
+          <tr><td>Matchday</td><td>What happened / is happening today?</td><td>Scrub the date slider; click a fixture</td></tr>
+          <tr><td>Standings</td><td>Who's advancing?</td><td>Hover a team to trace it on the globe</td></tr>
+          <tr><td>Bracket</td><td>How might the knockouts play out?</td><td>Hover a matchup to highlight both nations</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot"><a href="/">mundial.buzz</a> · FIFA World Cup 2026 companion</div>
+
+  </div>
+</div>
+</body>
+</html>

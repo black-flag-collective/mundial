@@ -42,9 +42,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="./ds-base.js"></script>
 <style>
   html, body { margin: 0; padding: 0; }
-  body { font-family: 'Inter', sans-serif; }
+  body { font-family: var(--mun-font-sans, 'IBM Plex Sans', system-ui, sans-serif); background: var(--mun-bg, #04101c); }
   @keyframes hintPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
   .mday-scroll::-webkit-scrollbar { width: 5px; }
   .mday-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
@@ -69,21 +70,15 @@
   }
 </style>
 </helmet>
-<div ref="{{ rootRef }}" style="min-height: 100vh; background: #04101c; letter-spacing: -0.02em; font-family: 'Inter', sans-serif;">
+<div ref="{{ rootRef }}" class="mun-root" style="min-height: 100vh;">
 
   <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;">
-    <div class="nav-brand" style="display: flex; align-items: center; gap: 10px;">
-      <svg width="26" height="26" viewBox="0 0 256 256" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z"></path>
-      </svg>
-      <span style="color: #fff; font-size: 24px; font-family: 'Playfair Display', serif; font-style: italic; line-height: 1;">Mundial</span>
+    <div class="nav-brand" style="display: flex; align-items: center;">
+      <x-import component-from-global-scope="MundialUI.Brand" size="{{ brandSize }}" hint-size="140px,30px"></x-import>
     </div>
 
-    <div class="nav-pills" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.16); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.28); border-radius: 999px; padding: 8px;">
-      <button onClick="{{ showGlobe }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ globePillBg }}; color: {{ globePillColor }};">Globe</button>
-      <button onClick="{{ showMatchday }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ matchdayPillBg }}; color: {{ matchdayPillColor }};">Matchday</button>
-      <button onClick="{{ showStandings }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ standingsPillBg }}; color: {{ standingsPillColor }};">Standings</button>
-      <button onClick="{{ showBracket }}" style="border: none; cursor: pointer; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s; background: {{ bracketPillBg }}; color: {{ bracketPillColor }};">Bracket</button>
+    <div class="nav-pills" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
+      <x-import component-from-global-scope="MundialUI.NavPills" items="{{ navItems }}" value="{{ navValue }}" onChange="{{ navOnChange }}" hint-size="330px,44px"></x-import>
     </div>
   </nav>
 
@@ -1658,6 +1653,10 @@ class Component extends DCLogic {
       showMatchday: () => this.setView('matchday'),
       showStandings: () => this.setView('standings'),
       showBracket: () => this.setView('bracket'),
+      brandSize: 26,
+      navItems: [{ id: 'globe', label: 'Globe' }, { id: 'matchday', label: 'Matchday' }, { id: 'standings', label: 'Standings' }, { id: 'bracket', label: 'Bracket' }],
+      navValue: this.currentView(),
+      navOnChange: (id) => this.setView(id),
       onSliderDown: this.onSliderDown,
       onSliderMove: this.onSliderMove,
       onSliderUp: this.onSliderUp,

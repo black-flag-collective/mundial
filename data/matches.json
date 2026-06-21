@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-21T17:39:39.706Z",
+  "updatedAt": "2026-06-21T18:26:27.169Z",
   "days": [
     {
       "dow": "Thursday",
@@ -493,11 +493,10 @@
         "g": "H",
         "a": "ESP",
         "b": "KSA",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 1,
+        "bs": 0,
+        "st": "FT",
         "ko": "2026-06-21T16:00:00Z",
-        "time": "12:00 PM ET",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       },
       {

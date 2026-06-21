@@ -36,16 +36,23 @@ check('predict: summarizeResults tallies only finished matches', () => {
   assert.ok(!rec.ESP, 'upcoming match not counted');
 });
 
-check('predict: buildContext is compact and includes buzz, form, WC trends only', () => {
-  const ctx = buildContext({
+check('predict: buildContext honestly separates real vs modeled buzz', () => {
+  const args = {
     matches: { dayMatches: [[{ a: 'BRA', b: 'ARG', as: 3, bs: 0, st: 'FT' }]] },
-    buzz: { buzz: [{ code: 'BRA', score: 1 }, { code: 'ARG', score: 0.5 }] },
+    buzz: { buzz: [{ code: 'BRA', score: 1 }, { code: 'ARG', score: 0.5 }, { code: 'FRA', score: 0.4 }] },
     trends: { locations: [{ trends: [{ name: '#BRA', wc: true }, { name: 'Taylor Swift', wc: false }] }] },
-  });
-  assert.ok(ctx.includes('BRA'));
-  assert.ok(ctx.includes('#BRA'), 'WC trend included');
-  assert.ok(!ctx.includes('Taylor'), 'non-WC trend excluded');
-  assert.ok(/\dW-\dD-\dL/.test(ctx), 'form line present');
+  };
+  // BRA is in a live match → real X volume; others are modeled.
+  const live = buildContext({ ...args, liveCodes: ['BRA'], realActive: true });
+  assert.ok(/Real X post volume now[^\n]*BRA/.test(live), 'live nation shown as real volume');
+  assert.ok(/Modeled attention index[^\n]*(ARG|FRA)/.test(live), 'others shown as modeled');
+  assert.ok(/NOT team strength/.test(live), 'buzz framed as attention, not strength');
+  assert.ok(/\dW-\dD-\dL/.test(live), 'form line present');
+  assert.ok(live.includes('#BRA') && !live.includes('Taylor'), 'WC trends only');
+  // No live match → everything is explicitly modeled.
+  const sim = buildContext({ ...args, liveCodes: [], realActive: false });
+  assert.ok(/Real X post volume: none right now/.test(sim), 'no-live state is labelled MODELED');
+  assert.ok(/MODELED, not measured/.test(sim));
 });
 
 check('predict: parsePrediction reads JSON and rejects junk', () => {

@@ -19,10 +19,18 @@
 
 const SYSTEM = [
   'You are the Buzz Oracle, a measured, data-grounded football analyst for a 2026',
-  'FIFA World Cup tracker. You are given live signals: global social "buzz" volume',
-  'per nation, trending topics on X, and results so far. Predict the tournament',
-  'winner and a plausible final, grounded in the data you are given — cite the',
-  'evidence (buzz rank, form, trends). Be confident but credible, not outlandish.',
+  'FIFA World Cup tracker. You are given three kinds of signal:',
+  '(1) "Buzz" = how much a nation is being TALKED ABOUT on X right now — social',
+  'attention/volume, NOT a measure of team quality. It is REAL measured X post',
+  'volume only for nations currently in a live match; for everyone else it is a',
+  'MODELED estimate from fan-base size and match-day state, so treat it as',
+  'interest, not evidence of strength.',
+  '(2) Results/form so far — the hard data.',
+  '(3) Trending topics on X.',
+  'Predict the champion and a plausible final. Weight RESULTS/FORM most for who',
+  'actually wins; use buzz and trends only as the "what the world is watching"',
+  'angle and narrative color. In "evidence", cite the specific signal behind the',
+  'call and be honest about what buzz does and does not mean. Credible, not outlandish.',
   'Respond with ONLY a JSON object, no prose, exactly:',
   '{"champion":"<FIFA code>","championName":"<name>","runnerUp":"<FIFA code>",',
   '"finalScore":"<e.g. 2-1>","hotTake":"<one vivid sentence>","evidence":"<one sentence citing the signals>"}',
@@ -45,10 +53,19 @@ function summarizeResults(matches) {
   return rec;
 }
 
-/** Build the compact user-content string fed to the model (pure, small). */
-function buildContext({ matches, buzz, trends } = {}) {
-  const buzzTop = ((buzz && buzz.buzz) || []).slice(0, 10)
-    .map((b) => `${b.code}(${Math.round((b.score || 0) * 100)})`).join(', ');
+/**
+ * Build the compact user-content string fed to the model (pure, small). The buzz
+ * is split honestly: `liveCodes` (when `realActive`) are nations whose match is
+ * live and therefore carry REAL X post volume; everyone else is the MODELED
+ * attention estimate (popularity + match-day), clearly labelled as such.
+ */
+function buildContext({ matches, buzz, trends, liveCodes = [], realActive = false } = {}) {
+  const rows = (buzz && buzz.buzz) || [];
+  const score = (b) => Math.round((b.score || 0) * 100);
+  const liveSet = new Set(realActive ? liveCodes : []);
+  const realRows = rows.filter((b) => liveSet.has(b.code)).map((b) => `${b.code} ${score(b)}`);
+  const modeledRows = rows.filter((b) => !liveSet.has(b.code)).slice(0, 8).map((b) => `${b.code} ${score(b)}`);
+
   const rec = summarizeResults(matches);
   const form = Object.keys(rec)
     .sort((a, b) => (rec[b].w * 3 + rec[b].d) - (rec[a].w * 3 + rec[a].d))
@@ -57,9 +74,15 @@ function buildContext({ matches, buzz, trends } = {}) {
   const trendNames = []
     .concat(...(((trends && trends.locations) || []).map((l) => (l.trends || []).filter((t) => t.wc).map((t) => t.name))))
     .filter((v, i, a) => a.indexOf(v) === i).slice(0, 8).join(', ');
+
+  const realLine = realRows.length
+    ? `Real X post volume now (last ~10m, nations in a live match): ${realRows.join(', ')}`
+    : 'Real X post volume: none right now (no live match or feed off) — the figures below are MODELED, not measured.';
   return [
-    `Live buzz (top, 0-100): ${buzzTop || 'n/a'}`,
-    `Form so far: ${form || 'no results yet'}`,
+    'BUZZ = social attention on X (how much each nation is talked about), NOT team strength.',
+    realLine,
+    `Modeled attention index (0-100; popularity + match-day, NOT live volume): ${modeledRows.join(', ') || 'n/a'}`,
+    `Results/form so far (hard data): ${form || 'no results yet'}`,
     `Trending on X: ${trendNames || 'n/a'}`,
     'Predict the champion and final now.',
   ].join('\n');

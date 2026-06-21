@@ -92,7 +92,12 @@ app.get('/api/predict', async (req, res) => {
   try {
     const matches = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
     const buzzSnap = buzz.snapshot();
-    const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot() });
+    // Which nations carry REAL X volume right now (live match + counts uncapped),
+    // so the Oracle's context honestly separates measured from modeled buzz.
+    const cs = countsPoller ? countsPoller.stats() : null;
+    const realActive = !!(cs && cs.enabled && !cs.capped && (cs.activeTeams || []).length > 0);
+    const liveCodes = realActive ? cs.activeTeams : [];
+    const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot(), liveCodes, realActive });
     const signature = signatureOf(buzzSnap);
     const ip = (req.headers['x-forwarded-for'] || req.ip || 'anon').split(',')[0].trim();
     const out = await oracle.predict({ context, signature, ip });

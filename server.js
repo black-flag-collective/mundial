@@ -61,6 +61,11 @@ app.get('/api/buzz.json', (req, res) => {
 const { runForever } = require('./scripts/x-stream-runner');
 const { RULES_URL } = require('./scripts/x-rules');
 
+// Aborting this on shutdown drops the X connection promptly so the single
+// allowed stream slot is released before a redeploy's new machine connects
+// (prevents the rolling-deploy 409/429 connection churn).
+const xStreamController = new AbortController();
+
 const sseClients = new Set();
 const recentPosts = []; // small ring buffer so new SSE clients get instant context
 const RECENT_MAX = 50;
@@ -212,7 +217,7 @@ app.get('/api/data.json', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Mundial server running on port ${PORT}`);
 
   // Start the buzz engine (no API key required — simulated/goal-derived source).
@@ -223,6 +228,7 @@ app.listen(PORT, () => {
   // Fly machines — the stream allows only one concurrent connection).
   if (process.env.X_STREAM_DISABLED !== '1') {
     runForever(onXPost, {
+      signal: xStreamController.signal,
       onStatus: (state, info) => {
         if (state === 'connected') {
           xStats.streamConnected = true;
@@ -248,6 +254,24 @@ app.listen(PORT, () => {
     }
   }
 });
+
+// Graceful shutdown: Fly sends SIGTERM/SIGINT on redeploy or machine stop. Drop
+// the X stream first so its single connection slot is freed before a new
+// machine connects (otherwise the overlap throws 409 and burns the connection
+// rate limit), close SSE clients, then exit. A short timer force-exits if the
+// HTTP server is slow to drain.
+let shuttingDown = false;
+function shutdown(sig) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[server] ${sig} received — releasing X stream and shutting down`);
+  try { xStreamController.abort(); } catch { /* already aborted */ }
+  for (const res of sseClients) { try { res.end(); } catch { /* client gone */ } }
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 4000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // NOTE: Match data is refreshed by the "Update match data" GitHub Action
 // (.github/workflows/update-data.yml), which runs scripts/update-data.js on a

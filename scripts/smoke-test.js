@@ -52,7 +52,7 @@ async function run() {
   const root = path.join(__dirname, '..');
   const server = spawn('node', ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT: String(PORT), ANTHROPIC_API_KEY: '' },
+    env: { ...process.env, PORT: String(PORT), ANTHROPIC_API_KEY: '', RATE_LIMIT_MAX: '30' },
     stdio: 'inherit'
   });
 
@@ -133,6 +133,15 @@ async function run() {
     const notFound = await get('/api/nope-does-not-exist');
     check('unknown route → generic 404, no framework/stack leak',
       notFound.status === 404 && /not found/.test(notFound.body) && !/Cannot GET|\bat \//.test(notFound.body));
+
+    // Rate limit (test server runs with RATE_LIMIT_MAX=30): a burst to a dynamic
+    // /api endpoint should eventually 429, while /api/predict stays exempt.
+    let got429 = false;
+    for (let i = 0; i < 45 && !got429; i++) {
+      if ((await get('/api/buzz.json')).status === 429) got429 = true;
+    }
+    check('rate limit kicks in on an /api burst (429)', got429);
+    check('/api/predict is exempt from the global limit', (await get('/api/predict')).status === 200);
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

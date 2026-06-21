@@ -26,21 +26,26 @@ function backoff(prev, status) {
  * called per matched Post. Pass { signal } (AbortSignal) to stop; { log } to
  * override the logger. Returns immediately (resolved) if no token is set.
  */
-async function runForever(onPost, { signal, log = console } = {}) {
+async function runForever(onPost, { signal, log = console, onStatus } = {}) {
+  const status = (state, info) => { if (typeof onStatus === 'function') onStatus(state, info); };
+
   if (!process.env.X_BEARER_TOKEN) {
     log.warn('[x-stream] X_BEARER_TOKEN not set — live X stream disabled');
+    status('disabled');
     return;
   }
 
   let delay = 0;
   while (!(signal && signal.aborted)) {
     try {
-      await streamPosts(onPost, { signal });
+      await streamPosts(onPost, { signal, onOpen: () => status('connected') });
       delay = 0; // clean server-side close — reset backoff before reconnecting
+      status('closed');
       log.warn('[x-stream] stream closed by server; reconnecting');
     } catch (e) {
       if (signal && signal.aborted) return;
       delay = backoff(delay, e.status);
+      status('reconnecting', { status: e.status, message: e.message, retryMs: delay });
       log.warn(`[x-stream] down (${e.status || e.message}); retry in ${Math.round(delay / 1000)}s`);
     }
     if (delay) await sleep(delay);

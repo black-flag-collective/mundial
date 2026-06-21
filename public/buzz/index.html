@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mundial — X Buzz Stream Monitor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="X Buzz Stream Monitor" description="Live dashboard for the X API filtered-stream integration: status tiles, live post feed + retry log, and a Globe where matched-nation flags fire off the planet. Synced from claude.ai/design; wired to /api/buzz/stream + /api/x/health." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#04101c}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  @keyframes mun-rise{0%{opacity:0;transform:translate(-50%,12px) scale(.55)}14%{opacity:1}68%{opacity:1}100%{opacity:0;transform:translate(-50%,-168px) scale(1.08)}}
+  @keyframes mun-blip{0%,100%{opacity:.45}50%{opacity:1}}
+</style>
+</helmet>
+<div class="mun-root" style="height:100vh;width:100%;overflow:hidden;padding:24px 26px 26px;display:flex;flex-direction:column;gap:18px;font-family:var(--mun-font-sans)">
+
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;flex:none">
+    <div style="display:flex;align-items:center;gap:18px">
+      <x-import component-from-global-scope="MundialUI.Brand" size="{{ brandSize }}" hint-size="150px,42px"></x-import>
+      <div style="width:1px;height:36px;background:var(--mun-border)"></div>
+      <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:var(--mun-tracking-eyebrow);text-transform:uppercase;color:var(--mun-fg-faint)">X API · Filtered Stream</div>
+        <div style="font-family:var(--mun-font-display);font-style:italic;font-size:27px;color:var(--mun-fg-display);line-height:1.1;margin-top:3px">Buzz Stream Monitor</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;padding:9px 17px;border-radius:var(--mun-radius-pill);background:{{ connBg }};border:1px solid {{ connBorder }}">
+      <span style="width:9px;height:9px;border-radius:50%;background:{{ connDot }};box-shadow:0 0 11px {{ connDot }};animation:mun-blip 1.4s ease-in-out infinite"></span>
+      <span style="font-size:13px;font-weight:700;letter-spacing:.06em;color:{{ connDot }}">{{ connText }}</span>
+      <span style="font-size:12px;color:var(--mun-fg-subtle)">{{ connSub }}</span>
+    </div>
+  </header>
+
+  <section style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;flex:none">
+    <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="5">
+      <div style="background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-height:104px">
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mun-fg-faint)">{{ t.label }}</div>
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <span style="font-size:25px;font-weight:700;color:{{ t.tone }};line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap">{{ t.value }}</span>
+          <span style="font-size:12px;color:var(--mun-fg-subtle)">{{ t.unit }}</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--mun-fg-subtle);margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sub }}</div>
+        <sc-if value="{{ t.hasBar }}" hint-placeholder-val="{{ true }}">
+          <div style="height:4px;border-radius:3px;background:var(--mun-surface-3);overflow:hidden">
+            <div style="height:100%;width:{{ t.barPct }};background:{{ t.barColor }};border-radius:3px;transition:width .5s ease"></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </section>
+
+  <main style="display:grid;grid-template-columns:minmax(360px,2fr) 3fr;gap:18px;flex:1;min-height:0">
+
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0;background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-lg);padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <x-import component-from-global-scope="MundialUI.NavPills" items="{{ navItems }}" value="{{ tab }}" onChange="{{ setTab }}" hint-size="230px,40px"></x-import>
+        <div style="font-size:11px;color:var(--mun-fg-faint);font-variant-numeric:tabular-nums;white-space:nowrap">{{ feedCount }} in ring buffer</div>
+      </div>
+
+      <sc-if value="{{ showBuzz }}" hint-placeholder-val="{{ true }}">
+        <div style="overflow-y:auto;display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;padding-right:4px">
+          <sc-for list="{{ feed }}" as="a" hint-placeholder-count="6">
+            <article style="background:var(--mun-surface-2);border:1px solid var(--mun-border-soft);border-radius:var(--mun-radius-card);padding:12px 13px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="width:31px;height:31px;border-radius:50%;background:{{ a.hue }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#04101c;flex:none">{{ a.initials }}</span>
+                <div style="min-width:0;flex:1">
+                  <div style="font-size:13px;font-weight:600;color:var(--mun-fg-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.author }}</div>
+                  <div style="font-size:11.5px;color:var(--mun-fg-faint)">{{ a.handle }} · {{ a.agoText }}</div>
+                </div>
+                <span style="display:flex;align-items:center;gap:6px;padding:3px 8px;border-radius:var(--mun-radius-pill);background:var(--mun-surface-3);flex:none">
+                  <img src="{{ a.flagSrc }}" alt="{{ a.code }}" style="width:18px;height:12px;border-radius:2px;object-fit:cover;box-shadow:var(--mun-shadow-flag)" />
+                  <span style="font-size:11px;font-weight:700;color:var(--mun-fg-strong)">{{ a.code }}</span>
+                </span>
+              </div>
+              <div style="font-size:13.5px;line-height:1.45;color:var(--mun-fg-muted);text-wrap:pretty">{{ a.text }}</div>
+              <div style="display:flex;align-items:center;gap:13px;font-size:11px;color:var(--mun-fg-faint);font-variant-numeric:tabular-nums">
+                <span style="font-family:ui-monospace,monospace;color:var(--mun-confed-conmebol)">tag:{{ a.tag }}</span>
+                <span>♥ {{ a.likes }}</span>
+                <span>⇄ {{ a.reposts }}</span>
+                <span style="margin-left:auto;color:var(--mun-fg-dim)">+{{ a.latency }}s</span>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showLog }}" hint-placeholder-val="{{ true }}">
+        <div style="overflow-y:auto;flex:1;min-height:0;font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;line-height:1.75;padding-right:4px">
+          <sc-for list="{{ log }}" as="l" hint-placeholder-count="12">
+            <div style="display:flex;gap:10px;white-space:pre-wrap">
+              <span style="color:var(--mun-fg-dim);flex:none">{{ l.time }}</span>
+              <span style="color:{{ l.color }}">{{ l.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;flex-direction:column;min-height:0;background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-lg);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--mun-border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mun-fg-faint)">Maps into</span>
+          <span style="font-size:13px;font-weight:600;color:var(--mun-fg-strong)">Globe · live nation buzz</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--mun-fg-subtle)">matching_rules tag → nation marker + flag burst</div>
+      </div>
+      <div style="position:relative;flex:1;min-height:0">
+        <x-import component-from-global-scope="MundialUI.Globe" nations="{{ nations }}" arcs="{{ noArcs }}" focus-code="{{ focusCode }}" auto-rotate="{{ true }}" hint-size="100%,100%"></x-import>
+        <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">{{ flagLayer }}</div>
+        <sc-if value="{{ hasActive }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;left:18px;bottom:18px;width:262px;max-width:60%;background:rgba(4,16,28,.62);backdrop-filter:blur(var(--mun-blur));-webkit-backdrop-filter:blur(var(--mun-blur));border:1px solid {{ activeBorder }};border-radius:var(--mun-radius-md);padding:13px 14px;pointer-events:none;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mun-accent)">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--mun-accent);box-shadow:0 0 8px var(--mun-accent)"></span>
+              Now firing · {{ activeCount }} posts/min
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <img src="{{ activeFlag }}" alt="{{ activeCode }}" style="width:50px;height:34px;border-radius:3px;object-fit:cover;box-shadow:var(--mun-shadow-flag);flex:none" />
+              <div style="min-width:0;flex:1">
+                <div style="font-size:11px;font-weight:600;letter-spacing:.03em;color:{{ activeColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ activeConfLabel }} · Group {{ activeGroup }}</div>
+                <div style="font-family:var(--mun-font-display);font-style:italic;font-size:21px;color:var(--mun-fg-display);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ activeName }}</div>
+              </div>
+              <div style="font-size:25px;font-weight:800;letter-spacing:-.02em;color:var(--mun-fg-display);flex:none">{{ activeCode }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:800},&quot;flagBurst&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;autoFocus&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+// X Buzz Stream Monitor — live edition.
+// Markup + render layer are the claude.ai/design original; the data layer below
+// was swapped from the design-time simulation to the real backend:
+//   • posts   ← GET /api/buzz/stream  (Server-Sent Events; see server.js)
+//   • stats   ← GET /api/x/health     (throughput/rate-limit/rules/conn)
+// Each post's matching_rules tag is the FIFA code, so it maps 1:1 to a nation.
+class Component extends DCLogic {
+  state = {
+    ready: false, nations: [], tab: 'buzz',
+    feed: [], log: [], flags: [], stamps: [],
+    lastPullMs: Date.now(), totalPosts: 0, peak: 0,
+    rateRemaining: 450, rateCap: 450, rateResetMs: Date.now() + 15 * 60000,
+    activeRules: null, conn: 'connecting', errorCount: 0, lastEvent: 'connecting…',
+    focusCode: null, activeCode: null, startMs: Date.now(), now: Date.now(),
+  };
+
+  CONF = { AFC:'#ff7fb0', CAF:'#ffd35c', CONCACAF:'#ff8a5c', CONMEBOL:'#5fe0a0', OFC:'#5fd4e0', UEFA:'#6ea8ff' };
+  _fid = 0; _timers = []; _es = null;
+
+  componentDidMount() {
+    const t = setInterval(() => {
+      const M = window.MundialUI;
+      if (M && M.TEAMS && M.flagUrl) {
+        clearInterval(t);
+        this.M = M;
+        this.setState({ ready: true, nations: M.TEAMS });
+        this.connectLive();
+      }
+    }, 120);
+    this._timers.push(() => clearInterval(t));
+  }
+  componentWillUnmount() { this._timers.forEach(f => f()); if (this._es) this._es.close(); }
+  _t(fn, ms) { const id = setTimeout(fn, ms); this._timers.push(() => clearTimeout(id)); return id; }
+
+  // ── helpers (unchanged from the synced design) ──
+  clock() { const d = new Date(); const p = n => String(n).padStart(2, '0'); return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  hueFor(code) { let h = 0; for (const c of String(code)) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 68% 66%)`; }
+  initials(n) { return (String(n)[0] + (String(n)[1] || '')).toUpperCase(); }
+  fmtReset(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's'; }
+  pushLog(text, color) { this.setState(s => ({ log: [{ time: this.clock(), text, color }, ...s.log].slice(0, 90) })); }
+
+  makeFlag(nat) {
+    const color = this.CONF[nat.confed] || '#fff';
+    return { id: ++this._fid, code: nat.code, src: this.M.flagUrl(nat.code),
+      left: 50 + Math.max(-1, Math.min(1, nat.lon / 180)) * 34,
+      dur: 2.2 + Math.random() * 0.8, color };
+  }
+
+  // ── live data layer ──
+  connectLive() {
+    // 1s display ticker: throughput window + rate reset + peak.
+    const c = setInterval(() => {
+      this.setState(s => {
+        const now = Date.now();
+        const stamps = s.stamps.filter(x => now - x < 60000);
+        const peak = Math.max(s.peak, stamps.length);
+        return { now, stamps, peak };
+      });
+    }, 1000);
+    this._timers.push(() => clearInterval(c));
+
+    // Live posts over Server-Sent Events.
+    try {
+      const es = new EventSource('/api/buzz/stream');
+      this._es = es;
+      es.onmessage = (e) => {
+        let msg; try { msg = JSON.parse(e.data); } catch { return; }
+        if (msg && msg.id != null && typeof msg.text === 'string') this.onLivePost(msg);
+      };
+      es.onerror = () => this.setState({ lastEvent: 'SSE interrupted · browser retrying' });
+    } catch (e) {
+      this.pushLog('EventSource unavailable: ' + e.message, '#ff8a5c');
+    }
+
+    // Backend stats: rate limit, active rules, app↔X connection, reconnects.
+    const poll = async () => {
+      try {
+        const r = await fetch('/api/x/health', { cache: 'no-store' });
+        if (!r.ok) return;
+        const h = await r.json();
+        this.setState(s => ({
+          rateRemaining: h.rateRemaining != null ? h.rateRemaining : s.rateRemaining,
+          rateCap: h.rateCap != null ? h.rateCap : s.rateCap,
+          rateResetMs: h.rateResetMs != null ? h.rateResetMs : s.rateResetMs,
+          activeRules: h.activeRules != null ? h.activeRules : s.activeRules,
+          errorCount: h.reconnects != null ? h.reconnects : s.errorCount,
+          conn: h.streamConnected === true ? 'live' : (h.tokenConfigured === false ? 'no token' : 'reconnecting'),
+          lastEvent: h.lastEvent || s.lastEvent,
+        }));
+      } catch { /* leave last-known values */ }
+    };
+    poll();
+    const p = setInterval(poll, 5000);
+    this._timers.push(() => clearInterval(p));
+  }
+
+  onLivePost(msg) {
+    const M = this.M; if (!M) return;
+    const code = (msg.tags && msg.tags[0]) || null;
+    const nat = code ? this.state.nations.find(n => n.code === code) : null;
+    const author = (msg.author && msg.author.name) || 'unknown';
+    const handle = (msg.author && msg.author.handle) ? ('@' + String(msg.author.handle).replace(/^@/, '')) : '@unknown';
+    const m = msg.metrics || {};
+    const likes = m.like_count || 0;
+    const reposts = m.retweet_count || 0;
+    const now = Date.now();
+    const tsMs = msg.createdAt ? (Date.parse(msg.createdAt) || now) : now;
+    const latency = Math.max(0, (now - tsMs) / 1000).toFixed(1);
+    const codeLabel = code || '—';
+
+    const post = {
+      id: msg.id, code: codeLabel, name: nat ? nat.name : codeLabel,
+      group: nat ? nat.group : '', confed: nat ? nat.confed : '',
+      author, handle, text: msg.text, likes, reposts, latency, tsMs,
+      flagSrc: nat ? M.flagUrl(nat.code) : '', hue: this.hueFor(codeLabel),
+      initials: this.initials(author), tag: codeLabel,
+    };
+    const flag = (this.props.flagBurst !== false && nat) ? this.makeFlag(nat) : null;
+
+    this.setState(s => ({
+      feed: [post, ...s.feed].slice(0, 36),
+      stamps: [...s.stamps, now],
+      totalPosts: s.totalPosts + 1,
+      lastPullMs: now,
+      log: [{ time: this.clock(), text: `200 · matched ${codeLabel} · ${handle}`, color: 'rgba(95,224,160,.82)' }, ...s.log].slice(0, 90),
+      flags: flag ? [...s.flags, flag] : s.flags,
+      focusCode: (nat && this.props.autoFocus !== false) ? nat.code : s.focusCode,
+      activeCode: nat ? nat.code : s.activeCode,
+    }));
+    if (flag) this._t(() => this.setState(s => ({ flags: s.flags.filter(x => x.id !== flag.id) })), flag.dur * 1000 + 140);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const ppm = s.stamps.length;
+    const agoSec = Math.max(0, Math.round((s.now - s.lastPullMs) / 1000));
+    const ratePct = Math.round((s.rateRemaining / s.rateCap) * 100);
+    const rateColor = ratePct > 50 ? 'var(--mun-confed-conmebol)' : ratePct > 18 ? 'var(--mun-confed-caf)' : '#ff8a5c';
+    const conn = s.conn;
+    const live = conn === 'live';
+    const connText = live ? 'LIVE' : conn === 'no token' ? 'NO TOKEN' : conn === 'connecting' ? 'CONNECTING' : 'RECONNECTING';
+    const connDot = live ? '#5fe0a0' : conn === 'no token' ? 'var(--mun-fg-dim)' : '#ff8a5c';
+    const upS = Math.round((s.now - s.startMs) / 1000);
+    const connSub = live ? `up ${Math.floor(upS / 60)}m ${String(upS % 60).padStart(2, '0')}s` : (s.lastEvent || 'waiting…');
+
+    const active = s.activeCode ? s.nations.find(n => n.code === s.activeCode) : null;
+    const activeCount = active ? s.feed.filter(p => p.code === active.code && s.now - p.tsMs < 60000).length : 0;
+    const rulesVal = s.activeRules == null ? '—' : String(s.activeRules);
+
+    const tiles = [
+      { label: 'Throughput', value: String(ppm), unit: 'posts/min', sub: `${s.totalPosts} total · peak ${s.peak}/min`, tone: 'var(--mun-accent)', hasBar: false },
+      { label: 'Last post', value: ppm === 0 ? '—' : (agoSec < 1 ? 'now' : agoSec + 's'), unit: ppm === 0 ? '' : (agoSec < 1 ? '' : 'ago'), sub: 'GET /2/tweets/search/stream', tone: 'var(--mun-fg-display)', hasBar: false },
+      { label: 'Rate limit', value: String(s.rateRemaining), unit: '/ ' + s.rateCap, sub: 'rules · resets in ' + this.fmtReset(s.rateResetMs - s.now), tone: rateColor, hasBar: true, barPct: ratePct + '%', barColor: rateColor },
+      { label: 'Active rules', value: rulesVal, unit: 'rules', sub: 'one per nation · tag = FIFA code', tone: 'var(--mun-fg-display)', hasBar: false },
+      { label: 'Reconnects', value: String(s.errorCount), unit: s.errorCount === 1 ? 'event' : 'events', sub: s.lastEvent, tone: s.errorCount ? '#ff8a5c' : 'var(--mun-fg-display)', hasBar: false },
+    ];
+
+    const flagLayer = React.createElement(React.Fragment, null, s.flags.map(f =>
+      React.createElement('div', { key: f.id, style: {
+        position: 'absolute', left: f.left + '%', bottom: '7%', transform: 'translateX(-50%)',
+        display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px',
+        borderRadius: '999px', background: 'rgba(4,16,28,.72)', border: '1px solid ' + f.color,
+        boxShadow: '0 0 16px ' + f.color, animation: `mun-rise ${f.dur}s ease-out forwards`,
+      } },
+        React.createElement('img', { src: f.src, alt: f.code, style: { width: '21px', height: '14px', borderRadius: '2px', objectFit: 'cover' } }),
+        React.createElement('span', { style: { fontSize: '12px', fontWeight: 700, color: '#fff' } }, f.code)
+      )
+    ));
+
+    return {
+      ready: s.ready, brandSize: 30, nations: s.nations, noArcs: [], focusCode: s.focusCode || undefined,
+      connText, connDot, connSub,
+      connBg: live ? 'rgba(95,224,160,.12)' : 'rgba(255,138,92,.14)',
+      connBorder: live ? 'rgba(95,224,160,.4)' : 'rgba(255,138,92,.5)',
+      tiles,
+      navItems: [{ id: 'buzz', label: 'Buzz feed' }, { id: 'log', label: 'Stream log' }],
+      tab: s.tab, setTab: id => this.setState({ tab: id }),
+      showBuzz: s.tab === 'buzz', showLog: s.tab === 'log',
+      feed: s.feed.map(p => ({ ...p, agoText: Math.max(0, Math.round((s.now - p.tsMs) / 1000)) + 's ago', likes: p.likes.toLocaleString(), reposts: p.reposts.toLocaleString() })),
+      feedCount: s.feed.length,
+      log: s.log,
+      flagLayer,
+      hasActive: !!active,
+      activeName: active ? active.name : '', activeCode: active ? active.code : '',
+      activeGroup: active ? active.group : '',
+      activeFlag: active ? this.M.flagUrl(active.code) : '',
+      activeConfLabel: active ? active.confed : '',
+      activeColor: active ? (this.CONF[active.confed] || 'var(--mun-fg-muted)') : 'var(--mun-fg-muted)',
+      activeBorder: active ? (this.CONF[active.confed] || 'var(--mun-border)') : 'var(--mun-border)',
+      activeCount,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -59,10 +59,64 @@ app.get('/api/buzz.json', (req, res) => {
 // Runs only when X_BEARER_TOKEN is set; otherwise this is inert and the app's
 // simulated buzz is unchanged. See docs/X-API-REALTIME.md.
 const { runForever } = require('./scripts/x-stream-runner');
+const { RULES_URL } = require('./scripts/x-rules');
 
 const sseClients = new Set();
 const recentPosts = []; // small ring buffer so new SSE clients get instant context
 const RECENT_MAX = 50;
+
+// Live X-stream telemetry, surfaced at GET /api/x/health for the Buzz Monitor.
+const xStats = {
+  tokenConfigured: !!process.env.X_BEARER_TOKEN,
+  streamConnected: false,
+  lastEvent: process.env.X_BEARER_TOKEN ? 'starting…' : 'no token',
+  reconnects: 0,
+  totalPosts: 0,
+  postTimestamps: [], // ms; trimmed to the last 60s on read
+  lastPullMs: null,
+  activeRules: null,
+  rateRemaining: null,
+  rateCap: null,
+  rateResetMs: null,
+};
+
+// Periodically read the rules endpoint for the active-rule count + rate-limit
+// headers (the rules API is metered separately from the stream connection).
+async function refreshRulesStats() {
+  if (!process.env.X_BEARER_TOKEN) return;
+  try {
+    const r = await fetch(RULES_URL, { headers: { Authorization: `Bearer ${process.env.X_BEARER_TOKEN}` } });
+    const rem = r.headers.get('x-rate-limit-remaining');
+    const lim = r.headers.get('x-rate-limit-limit');
+    const reset = r.headers.get('x-rate-limit-reset');
+    if (rem != null) xStats.rateRemaining = Number(rem);
+    if (lim != null) xStats.rateCap = Number(lim);
+    if (reset != null) xStats.rateResetMs = Number(reset) * 1000;
+    const body = await r.json().catch(() => ({}));
+    xStats.activeRules = Array.isArray(body.data) ? body.data.length : 0;
+  } catch (err) {
+    console.error('[x-stream] rules stats refresh failed:', err.message);
+  }
+}
+
+app.get('/api/x/health', (req, res) => {
+  const now = Date.now();
+  xStats.postTimestamps = xStats.postTimestamps.filter((t) => now - t < 60000);
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    tokenConfigured: xStats.tokenConfigured,
+    streamConnected: xStats.streamConnected,
+    lastEvent: xStats.lastEvent,
+    reconnects: xStats.reconnects,
+    throughputPerMin: xStats.postTimestamps.length,
+    totalPosts: xStats.totalPosts,
+    lastPullMs: xStats.lastPullMs,
+    activeRules: xStats.activeRules,
+    rateRemaining: xStats.rateRemaining,
+    rateCap: xStats.rateCap,
+    rateResetMs: xStats.rateResetMs,
+  });
+});
 
 app.get('/api/buzz/stream', (req, res) => {
   res.set({
@@ -87,6 +141,12 @@ app.get('/api/buzz/stream', (req, res) => {
 function onXPost(payload) {
   const post = payload && payload.data;
   if (!post) return;
+
+  const ts = Date.now();
+  xStats.totalPosts++;
+  xStats.lastPullMs = ts;
+  xStats.postTimestamps.push(ts);
+  if (xStats.postTimestamps.length > 5000) xStats.postTimestamps.shift();
 
   const tags = (payload.matching_rules || []).map((r) => r.tag).filter(Boolean);
   for (const code of tags) buzz.ingest(code); // tag === FIFA code (see x-build-rules.js)
@@ -162,7 +222,30 @@ app.listen(PORT, () => {
   // X_BEARER_TOKEN, and X_STREAM_DISABLED=1 forces it off (e.g. on secondary
   // Fly machines — the stream allows only one concurrent connection).
   if (process.env.X_STREAM_DISABLED !== '1') {
-    runForever(onXPost).catch((err) => console.error('[x-stream] fatal:', err.message));
+    runForever(onXPost, {
+      onStatus: (state, info) => {
+        if (state === 'connected') {
+          xStats.streamConnected = true;
+          xStats.lastEvent = 'connected · 200 OK';
+        } else if (state === 'reconnecting') {
+          xStats.streamConnected = false;
+          xStats.reconnects++;
+          xStats.lastEvent = `${info && info.status ? 'HTTP ' + info.status : 'stream down'} · backing off`;
+        } else if (state === 'closed') {
+          xStats.streamConnected = false;
+          xStats.lastEvent = 'stream closed · reconnecting';
+        } else if (state === 'disabled') {
+          xStats.streamConnected = false;
+          xStats.lastEvent = 'no token';
+        }
+      },
+    }).catch((err) => console.error('[x-stream] fatal:', err.message));
+
+    // Active-rule count + rate-limit headers, refreshed periodically.
+    if (process.env.X_BEARER_TOKEN) {
+      refreshRulesStats();
+      setInterval(refreshRulesStats, 60000);
+    }
   }
 });
 

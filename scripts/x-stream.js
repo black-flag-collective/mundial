@@ -25,7 +25,7 @@ const PARAMS = new URLSearchParams({
  * closes the connection; rejects on a non-OK HTTP status (with `.status`).
  * Pass an AbortSignal to stop.
  */
-async function streamPosts(onPost, { signal } = {}) {
+async function streamPosts(onPost, { signal, onOpen } = {}) {
   const token = process.env.X_BEARER_TOKEN;
   if (!token) throw new Error('X_BEARER_TOKEN is not set');
 
@@ -40,6 +40,8 @@ async function streamPosts(onPost, { signal } = {}) {
       status: res.status,
     });
   }
+
+  if (typeof onOpen === 'function') onOpen();
 
   // Body is newline-delimited JSON. Buffer across chunks; a line may split.
   const reader = res.body.getReader();

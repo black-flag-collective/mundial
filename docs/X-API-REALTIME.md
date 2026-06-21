@@ -21,7 +21,19 @@ This integration is implemented — files, not just examples:
 | [`scripts/x-stream.js`](../scripts/x-stream.js) | `streamPosts(onPost)` — one persistent connection, hydrated Posts, keep-alive aware. |
 | [`scripts/x-stream-runner.js`](../scripts/x-stream-runner.js) | `runForever(onPost)` — reconnect with status-tuned backoff; no-ops without a token. |
 | [`scripts/buzz-engine.js`](../scripts/buzz-engine.js) | `ingest(code, weight)` feeds per-country X volume into the existing buzz state. |
-| [`server.js`](../server.js) | Starts the stream on boot, feeds the buzz engine, and relays Posts to browsers at **`GET /api/buzz/stream`** (SSE). |
+| [`server.js`](../server.js) | Starts the stream on boot, feeds the buzz engine, relays Posts at **`GET /api/buzz/stream`** (SSE), and exposes telemetry at **`GET /api/x/health`**. |
+| [`public/buzz/`](../public/buzz/) | **Buzz Stream Monitor** page at **`/buzz`** — synced from claude.ai/design, wired to the SSE feed + `/api/x/health` (status tiles, live feed, Globe flag-bursts by matched nation). |
+
+### Monitor page (`/buzz`)
+
+Synced back from the claude.ai/design "Mundial UI" project (the agent built it as a
+`templates/x-buzz-debug/` Design Component). It's a self-contained DC page on the
+same runtime as the main app (`support.js` + the vendored `MundialUI` bundle under
+`public/buzz/_ds/`), with its data layer rewired from the design-time simulation to
+the live backend: posts ← `/api/buzz/stream`, stats ← `/api/x/health`. With no token
+it renders a truthful **NO TOKEN / 0 posts** empty state. `GET /api/x/health` returns
+`{ tokenConfigured, streamConnected, throughputPerMin, totalPosts, reconnects,
+activeRules, rateRemaining, rateCap, rateResetMs, lastEvent }`.
 
 **To turn it on:** set the `X_BEARER_TOKEN` secret and install rules once
 (`node scripts/x-rules.js replace`). Without the token everything is inert and

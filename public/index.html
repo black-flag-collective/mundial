@@ -50,6 +50,9 @@
   @keyframes bzSpin { to { transform: rotate(360deg); } }
   .bz-livedot { animation: bzLive 1.6s ease-in-out infinite; }
   .bz-spin { animation: bzSpin 0.8s linear infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .bz-livedot, .bz-spin, [style*="hintPulse"] { animation: none !important; }
+  }
   .bz-board::-webkit-scrollbar { width: 5px; }
   .bz-board::-webkit-scrollbar-thumb { background: var(--mun-surface-4); border-radius: 3px; }
   .mday-scroll::-webkit-scrollbar { width: 5px; }
@@ -735,7 +738,10 @@ class Component extends DCLogic {
     this._loadLiveData();
     this._loadBuzz();
     // Cycle the idle-globe "Buzzing now" chip through the current top 3.
+    // Honour reduced-motion: hold on the leader instead of cycling.
+    this._reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     this._chipTimer = setInterval(() => {
+      if (this._reduceMotion) return;
       if (this.currentView() === 'globe' && this.state.hoverIdx < 0) {
         this.setState({ buzzChipIdx: ((this.state.buzzChipIdx || 0) + 1) % 3 });
       }
@@ -1432,20 +1438,26 @@ class Component extends DCLogic {
     this.focusS += (focusT - this.focusS) * 0.05;
     this.camera.position.z = 439 - this.focusS * 101;
 
+    // The chip's current nation gets a soft, breathing highlight (only when idle —
+    // not while hovering/dragging/board-focusing), so the chip and globe stay synced.
+    const chipLit = (!boardFocus && this.hoverIdx < 0 && !this.dragging && !coasting) ? this._chipCode : null;
+    const chipBreath = 0.5 + 0.5 * Math.sin(t * 1.6);
     for (let i = 0; i < this.markers.length; i++) {
       const m = this.markers[i];
       const code = this.countries[m.idx].code;
       const isH = m.idx === this.hoverIdx || code === boardFocus;
+      const isChip = !isH && code === chipLit;
       // Markers carry the live buzz: size/brightness track score, and a spike
       // gives a brief flare — the same signal as the blooms and the leaderboard.
       const d = this.buzzDisp[code] || { score: 0, spike: 0 };
       const bz = Math.min(d.score + d.spike, 1);
       const flare = Math.min(d.spike, 1);
       const pulse = 1 + Math.sin(t + m.idx) * 0.12;
+      const chipBoost = isChip ? (0.9 + chipBreath * 0.7) : 0;
       const dim = boardFocus && !isH;
-      m.ring.scale.setScalar((isH ? 2.1 : (0.7 + bz * 1.4 + flare * 1.1)) * pulse);
-      m.ring.material.opacity = isH ? 0.6 : (dim ? 0.05 : (0.16 + bz * 0.46 + flare * 0.3));
-      m.dot.scale.setScalar(isH ? 1.7 : (0.6 + bz * 0.9 + flare * 0.7));
+      m.ring.scale.setScalar((isH ? 2.1 : (0.7 + bz * 1.4 + flare * 1.1 + chipBoost)) * pulse);
+      m.ring.material.opacity = isH ? 0.6 : (dim ? 0.05 : (0.16 + bz * 0.46 + flare * 0.3 + (isChip ? 0.22 + chipBreath * 0.18 : 0)));
+      m.dot.scale.setScalar(isH ? 1.7 : (0.6 + bz * 0.9 + flare * 0.7 + chipBoost * 0.5));
     }
     this.renderer.render(this.scene, this.camera);
   }
@@ -1572,6 +1584,9 @@ class Component extends DCLogic {
     // The idle-globe chip cycles through the current top 3 (timer bumps buzzChipIdx).
     const chipN = Math.min(3, buzzLeader.length);
     const buzzChip = chipN ? buzzLeader[(this.state.buzzChipIdx || 0) % chipN] : null;
+    // Expose the chip's nation to the render loop so its globe marker lights up in
+    // sync — the eye connects "chip says KSA" with the lit dot on the globe.
+    this._chipCode = buzzChip ? buzzChip.code : null;
     const buzzStatus = bm.status || 'loading';
     const buzzLoading = buzzStatus === 'loading';
     const buzzError = buzzStatus === 'error';

@@ -47,31 +47,59 @@ design; jump to [Quick start](#quick-start) to run it.
 The filtered stream is billed **per post pulled** — during live matches with 48
 broad rules that ran ~$5/min. The buzz engine only needs per-country *volume*,
 not post bodies, so the cost-effective path asks X **how many** posts match
-instead of pulling them:
+instead of pulling them — and only while a match is actually being played:
 
 - **Counts, not stream** — [`scripts/buzz-counts.js`](../scripts/buzz-counts.js)
   polls `GET /2/tweets/counts/recent` per team (volume only; no bodies) and feeds
   it to the engine via `setSignals()`.
-- **Scoped** — only the teams in **today's** matches (`data/matches.json`); nothing
-  when there are no matches.
+- **Live-window scoped** — driven by each fixture's absolute `ko` kickoff time,
+  we poll only teams whose match is live (kickoff → +`MATCH_MIN`) plus a short
+  post-match cooldown. **No live match → zero requests** (match state is read
+  from disk for free), so a quiet tournament hour costs nothing.
+- **Adaptive cadence** — fast (`LIVE_INTERVAL`, ~90s) while a match is live so
+  the globe pulses in near-real-time; a slow, request-free re-check
+  (`IDLE_INTERVAL`, ~10m) otherwise, just to notice the next kickoff.
+- **Momentum, for free** — the counts response is per-minute, so each poll also
+  yields a rising/falling **trend** per country and fires a **surge** (spike)
+  on a sharp minute-over-minute jump — the goal-reaction pop — with no extra
+  requests. Surfaced as `trend` per nation in `/api/buzz.json`.
 - **Hard daily cap** — a request budget with a circuit breaker that pauses polling
   (buzz fades back to the free simulation) when hit.
 
-Enable + tune (all off by default):
+Enable + tune (all off by default — turn on with `X_BUZZ_MODE=counts`):
 
 | Env | Default | Meaning |
 | :-- | :-- | :-- |
 | `X_BUZZ_MODE=counts` | _(unset → simulation/stream)_ | turn counts mode on |
-| `X_COUNTS_INTERVAL_MS` | `300000` (5m) | poll cadence |
+| `X_COUNTS_LIVE_INTERVAL_MS` | `90000` (90s) | poll cadence while a match is live |
+| `X_COUNTS_IDLE_INTERVAL_MS` | `600000` (10m) | request-free re-check when idle |
 | `X_COUNTS_WINDOW_MIN` | `10` | recent-volume window per poll |
+| `X_COUNTS_MATCH_MIN` | `150` | minutes after kickoff a match stays "live" |
+| `X_COUNTS_WARMUP_MIN` | `0` | pre-kickoff hype window (off by default) |
+| `X_COUNTS_COOLDOWN_MIN` | `30` | post-match reaction window |
 | `X_COUNTS_DAILY_CAP` | `2000` | max requests/UTC-day (circuit breaker) |
 
-`GET /api/x/health` reports `{mode:"counts", activeTeams, requestsToday, dailyCap,
-capped, intervalMs, windowMin, rateRemaining, lastEvent, …}`. The **`/buzz`** page
-in this mode is a free-spin **marble globe** (no auto-focus; markers pulse harder
-where buzz is hotter) beside a **nation leaderboard** — no per-post feed, so no
-per-post cost. Counts mode supersedes the firehose stream; the stream path only
-runs when `X_BUZZ_MODE` isn't `counts` and `X_STREAM_DISABLED` isn't `1`.
+### What it costs
+
+Because spend is scoped to live windows, the bill tracks the schedule, not the
+clock. Per live match: 2 teams × (~150 min ÷ 90 s) ≈ **200 requests**. A busy
+group-stage day (4 matches) ≈ **800 requests/day**, comfortably under the 2,000
+default cap; a whole 104-match tournament ≈ **20–25k requests**. At the
+pay-per-use counts price (~$0.005/request) that's a few dollars on a peak day and
+on the order of **~$100 for the entire World Cup** — and **$0 on days with no
+matches**. Tighten further by raising `X_COUNTS_LIVE_INTERVAL_MS` or lowering the
+cap; the circuit breaker guarantees you can't blow past the cap even if the
+schedule data is wrong.
+
+`GET /api/x/health` reports `{mode:"counts", phase, activeTeams, requestsToday,
+dailyCap, capped, liveIntervalMs, idleIntervalMs, windowMin, nextPollMs, perTeam,
+rateRemaining, lastEvent, …}` — `phase` is `live`/`warmup`/`cooldown`/`idle` and
+`perTeam[code]` carries the exact query, post count, normalized signal, and
+trend. The **`/buzz`** page in this mode is a free-spin **marble globe** (no
+auto-focus; markers pulse harder where buzz is hotter) beside a **nation
+leaderboard** — no per-post feed, so no per-post cost. Counts mode supersedes the
+firehose stream; the stream path only runs when `X_BUZZ_MODE` isn't `counts` and
+`X_STREAM_DISABLED` isn't `1`.
 
 ---
 

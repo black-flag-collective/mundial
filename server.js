@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { createRateLimiter, clientIp } = require('./scripts/rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,21 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Generous per-IP rate limit on the dynamic /api endpoints. Tuned so a normal
+// browser tab's polling (~20 req/min) is nowhere near the cap, but a single IP
+// hammering an endpoint is throttled. Static assets and /healthz aren't limited
+// (cheap, and Fly's health checks hit /healthz often); /api/predict is excluded
+// because it already self-limits (per-IP interval + cache + daily cap).
+const apiLimiter = createRateLimiter({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60_000,
+  max: Number(process.env.RATE_LIMIT_MAX) || 1200,
+});
+app.use('/api', (req, res, next) => {
+  if (req.path === '/predict') return next();
+  return apiLimiter.middleware(req, res, next);
+});
+setInterval(apiLimiter.prune, 60_000).unref();
 
 // Lightweight liveness probe for Fly health checks / uptime monitors.
 // Kept above static so it never touches the filesystem.
@@ -116,8 +132,7 @@ app.get('/api/predict', async (req, res) => {
     const liveCodes = realActive ? cs.activeTeams : [];
     const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot(), liveCodes, realActive });
     const signature = signatureOf(buzzSnap);
-    const ip = (req.headers['x-forwarded-for'] || req.ip || 'anon').split(',')[0].trim();
-    const out = await oracle.predict({ context, signature, ip, validCodes: fieldCodes(matches) });
+    const out = await oracle.predict({ context, signature, ip: clientIp(req), validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
   } catch (err) {
     // Known states (rate-limit 429, capped/unconfigured 503, unreadable 502)

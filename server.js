@@ -120,7 +120,12 @@ app.get('/api/predict', async (req, res) => {
     const out = await oracle.predict({ context, signature, ip, validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
   } catch (err) {
-    res.status(err.status || 500).json({ available: true, error: err.message });
+    // Known states (rate-limit 429, capped/unconfigured 503, unreadable 502)
+    // carry user-safe messages; anything else is an unexpected 500 — log the
+    // detail server-side, return a generic message so internals don't leak.
+    const status = err.status || 500;
+    if (status === 500) console.error('[oracle] predict failed:', err.message);
+    res.status(status).json({ available: true, error: status === 500 ? 'the Oracle is unavailable right now' : err.message });
   }
 });
 
@@ -171,6 +176,7 @@ const countsPoller = BUZZ_MODE === 'counts' ? createCountsPoller({ engine: buzz 
 const sseClients = new Set();
 const recentPosts = []; // small ring buffer so new SSE clients get instant context
 const RECENT_MAX = 50;
+const SSE_MAX = Number(process.env.SSE_MAX_CLIENTS) || 200; // cap concurrent streams
 
 // Live X-stream telemetry, surfaced at GET /api/x/health for the Buzz Monitor.
 const xStats = {
@@ -240,6 +246,12 @@ app.get('/api/x/health', (req, res) => {
 });
 
 app.get('/api/buzz/stream', (req, res) => {
+  // Cap concurrent streams so a client can't open thousands and exhaust sockets/
+  // memory. Beyond the cap, ask them to retry shortly.
+  if (sseClients.size >= SSE_MAX) {
+    res.set('Retry-After', '30').status(503).json({ error: 'too many live connections, try again shortly' });
+    return;
+  }
   res.set({
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -251,11 +263,10 @@ app.get('/api/buzz/stream', (req, res) => {
   for (const post of recentPosts) res.write(`data: ${JSON.stringify(post)}\n\n`);
 
   sseClients.add(res);
-  const ping = setInterval(() => res.write(': ping\n\n'), 20000);
-  req.on('close', () => {
-    clearInterval(ping);
-    sseClients.delete(res);
-  });
+  const cleanup = () => { clearInterval(ping); sseClients.delete(res); };
+  // Keep-alive ping; if the socket is already gone the write throws — clean up.
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch { cleanup(); } }, 20000);
+  req.on('close', cleanup);
 });
 
 // Per matched Post: feed the buzz engine by country, then fan out to SSE clients.

@@ -85,6 +85,11 @@ async function run() {
     check('data.json has dayMatches[]', Array.isArray(json?.dayMatches));
     check('days and dayMatches align', Array.isArray(json?.days) && Array.isArray(json?.dayMatches) && json.days.length === json.dayMatches.length);
     check('exactly one day flagged today', Array.isArray(json?.days) && json.days.filter(d => d.today).length === 1);
+    // The read-through cache must not be corrupted by the per-request `today`
+    // mutation: a second request still returns exactly one today-flagged day.
+    const data2 = JSON.parse((await get('/api/data.json')).body);
+    check('cached data.json stays correct across requests (one today)',
+      Array.isArray(data2.days) && data2.days.filter(d => d.today).length === 1);
 
     // Data-integrity: a fixture (team-pair) must appear on exactly one day. This
     // catches the class of bug where the updater scheduled the same match twice

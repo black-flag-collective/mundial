@@ -13,6 +13,22 @@ app.disable('x-powered-by');
 // Ensure data directory exists
 fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
 
+// Read-through cache for the match data, keyed by file mtime. matches.json only
+// changes on redeploy (a fresh process), so within a process it's effectively
+// static — this avoids a sync read + JSON.parse on every /api/data.json and
+// /api/predict request. Throws on a missing/unreadable file so callers can 503.
+// IMPORTANT: callers must NOT mutate the returned object (it's shared).
+let _matchesCache = null;
+let _matchesMtime = -1;
+function readMatches() {
+  const mtime = fs.statSync(DATA_PATH).mtimeMs;
+  if (_matchesCache === null || mtime !== _matchesMtime) {
+    _matchesCache = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+    _matchesMtime = mtime;
+  }
+  return _matchesCache;
+}
+
 // Baseline security headers on every response. Proportionate for a public,
 // read-only site: stop MIME-sniffing and clickjacking, trim the referrer, deny
 // unused device APIs, and pin HTTPS. (No strict CSP — the app is an inline-heavy
@@ -123,7 +139,7 @@ app.get('/api/predict', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!oracleClient) return res.status(200).json({ available: false });
   try {
-    const matches = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+    const matches = readMatches(); // read-only here; safe to share the cache
     const buzzSnap = buzz.snapshot();
     // Which nations carry REAL X volume right now (live match + counts uncapped),
     // so the Oracle's context honestly separates measured from modeled buzz.
@@ -335,28 +351,25 @@ function onXPost(payload) {
 
 app.get('/api/data.json', (req, res) => {
   try {
-    const raw = fs.readFileSync(DATA_PATH, 'utf8');
+    const data = readMatches();
 
-    const data = JSON.parse(raw);
-
-    // Dynamically mark today on every request so the slider always opens
-    // on the current match day without needing to update the data file.
-    const now = new Date();
-    const todayShort = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // Dynamically mark today on every request so the slider always opens on the
+    // current match day. Build a fresh days array — do NOT mutate the cached
+    // object (it's shared across requests).
+    const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     let foundToday = false;
-    data.days.forEach(d => {
-      d.today = (d.short === todayShort);
-      if (d.today) foundToday = true;
+    const days = (data.days || []).map(d => {
+      const today = d.short === todayShort;
+      if (today) foundToday = true;
+      return { ...d, today };
     });
-    // If no match day for today, mark the last known day
-    if (!foundToday && data.days.length) {
-      data.days[data.days.length - 1].today = true;
-    }
+    // If no match day for today, mark the last known day.
+    if (!foundToday && days.length) days[days.length - 1].today = true;
 
     // Short TTL: data refreshes at most every ~30 min and the `today` flag only
     // flips at midnight, so a 60s cache cuts load without serving stale scores.
     res.set('Cache-Control', 'public, max-age=60');
-    res.json(data);
+    res.json({ ...data, days });
   } catch (err) {
     console.error('Failed to serve data.json:', err.message);
     res.status(503).json({ error: 'data not available' });

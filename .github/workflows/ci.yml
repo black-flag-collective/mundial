@@ -25,3 +25,29 @@ jobs:
 
       - name: Run smoke test
         run: npm test
+
+  ui-package:
+    name: UI package (typecheck + build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: packages/mundial-ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/mundial-ui
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: packages/mundial-ui
+
+      - name: Build
+        run: npm run build
+        working-directory: packages/mundial-ui

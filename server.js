@@ -5,7 +5,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_PATH = path.join(__dirname, 'data', 'matches.json');
-const INITIAL_DATA_PATH = path.join(__dirname, 'data', 'matches.json');
 
 // Ensure data directory exists
 fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
@@ -220,9 +219,7 @@ function onXPost(payload) {
 
 app.get('/api/data.json', (req, res) => {
   try {
-    const raw = fs.existsSync(DATA_PATH)
-      ? fs.readFileSync(DATA_PATH, 'utf8')
-      : fs.readFileSync(INITIAL_DATA_PATH, 'utf8');
+    const raw = fs.readFileSync(DATA_PATH, 'utf8');
 
     const data = JSON.parse(raw);
 

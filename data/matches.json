@@ -1,130 +1,810 @@
 {
   "updatedAt": "2026-06-21T12:00:00.000Z",
   "days": [
-    { "dow": "Thursday", "short": "Jun 11", "long": "June 11" },
-    { "dow": "Friday", "short": "Jun 12", "long": "June 12" },
-    { "dow": "Saturday", "short": "Jun 13", "long": "June 13" },
-    { "dow": "Sunday", "short": "Jun 14", "long": "June 14" },
-    { "dow": "Monday", "short": "Jun 15", "long": "June 15" },
-    { "dow": "Tuesday", "short": "Jun 16", "long": "June 16" },
-    { "dow": "Wednesday", "short": "Jun 17", "long": "June 17" },
-    { "dow": "Thursday", "short": "Jun 18", "long": "June 18" },
-    { "dow": "Friday", "short": "Jun 19", "long": "June 19" },
-    { "dow": "Saturday", "short": "Jun 20", "long": "June 20" },
-    { "dow": "Sunday", "short": "Jun 21", "long": "June 21" },
-    { "dow": "Monday", "short": "Jun 22", "long": "June 22" },
-    { "dow": "Tuesday", "short": "Jun 23", "long": "June 23" },
-    { "dow": "Wednesday", "short": "Jun 24", "long": "June 24" },
-    { "dow": "Thursday", "short": "Jun 25", "long": "June 25" },
-    { "dow": "Friday", "short": "Jun 26", "long": "June 26" },
-    { "dow": "Saturday", "short": "Jun 27", "long": "June 27" }
+    {
+      "dow": "Thursday",
+      "short": "Jun 11",
+      "long": "June 11"
+    },
+    {
+      "dow": "Friday",
+      "short": "Jun 12",
+      "long": "June 12"
+    },
+    {
+      "dow": "Saturday",
+      "short": "Jun 13",
+      "long": "June 13"
+    },
+    {
+      "dow": "Sunday",
+      "short": "Jun 14",
+      "long": "June 14"
+    },
+    {
+      "dow": "Monday",
+      "short": "Jun 15",
+      "long": "June 15"
+    },
+    {
+      "dow": "Tuesday",
+      "short": "Jun 16",
+      "long": "June 16"
+    },
+    {
+      "dow": "Wednesday",
+      "short": "Jun 17",
+      "long": "June 17"
+    },
+    {
+      "dow": "Thursday",
+      "short": "Jun 18",
+      "long": "June 18"
+    },
+    {
+      "dow": "Friday",
+      "short": "Jun 19",
+      "long": "June 19"
+    },
+    {
+      "dow": "Saturday",
+      "short": "Jun 20",
+      "long": "June 20"
+    },
+    {
+      "dow": "Sunday",
+      "short": "Jun 21",
+      "long": "June 21"
+    },
+    {
+      "dow": "Monday",
+      "short": "Jun 22",
+      "long": "June 22"
+    },
+    {
+      "dow": "Tuesday",
+      "short": "Jun 23",
+      "long": "June 23"
+    },
+    {
+      "dow": "Wednesday",
+      "short": "Jun 24",
+      "long": "June 24"
+    },
+    {
+      "dow": "Thursday",
+      "short": "Jun 25",
+      "long": "June 25"
+    },
+    {
+      "dow": "Friday",
+      "short": "Jun 26",
+      "long": "June 26"
+    },
+    {
+      "dow": "Saturday",
+      "short": "Jun 27",
+      "long": "June 27"
+    }
   ],
   "dayMatches": [
     [
-      { "g": "A", "a": "MEX", "b": "RSA", "as": 2, "bs": 0, "st": "FT", "venue": "Estadio Azteca, Mexico City" },
-      { "g": "A", "a": "KOR", "b": "CZE", "as": 2, "bs": 1, "st": "FT", "venue": "Estadio Akron, Zapopan" }
+      {
+        "g": "A",
+        "a": "MEX",
+        "b": "RSA",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Estadio Azteca, Mexico City"
+      },
+      {
+        "g": "A",
+        "a": "KOR",
+        "b": "CZE",
+        "as": 2,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Estadio Akron, Zapopan"
+      }
     ],
     [
-      { "g": "B", "a": "CAN", "b": "BIH", "as": 1, "bs": 1, "st": "FT", "venue": "BMO Field, Toronto" },
-      { "g": "D", "a": "USA", "b": "PAR", "as": 4, "bs": 1, "st": "FT", "venue": "SoFi Stadium, Inglewood" }
+      {
+        "g": "B",
+        "a": "CAN",
+        "b": "BIH",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "BMO Field, Toronto"
+      },
+      {
+        "g": "D",
+        "a": "USA",
+        "b": "PAR",
+        "as": 4,
+        "bs": 1,
+        "st": "FT",
+        "venue": "SoFi Stadium, Inglewood"
+      }
     ],
     [
-      { "g": "B", "a": "QAT", "b": "SUI", "as": 1, "bs": 1, "st": "FT", "venue": "Levi's Stadium, Santa Clara" },
-      { "g": "C", "a": "BRA", "b": "MAR", "as": 1, "bs": 1, "st": "FT", "venue": "MetLife Stadium, East Rutherford" },
-      { "g": "C", "a": "HAI", "b": "SCO", "as": 0, "bs": 1, "st": "FT", "venue": "Gillette Stadium, Foxborough" },
-      { "g": "D", "a": "AUS", "b": "TUR", "as": 2, "bs": 0, "st": "FT", "venue": "BC Place, Vancouver" }
+      {
+        "g": "B",
+        "a": "QAT",
+        "b": "SUI",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Levi's Stadium, Santa Clara"
+      },
+      {
+        "g": "C",
+        "a": "BRA",
+        "b": "MAR",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "MetLife Stadium, East Rutherford"
+      },
+      {
+        "g": "C",
+        "a": "HAI",
+        "b": "SCO",
+        "as": 0,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Gillette Stadium, Foxborough"
+      },
+      {
+        "g": "D",
+        "a": "AUS",
+        "b": "TUR",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
+        "venue": "BC Place, Vancouver"
+      }
     ],
     [
-      { "g": "E", "a": "GER", "b": "CUW", "as": 7, "bs": 1, "st": "FT", "venue": "NRG Stadium, Houston" },
-      { "g": "F", "a": "NED", "b": "JPN", "as": 2, "bs": 2, "st": "FT", "venue": "AT&T Stadium, Arlington" },
-      { "g": "E", "a": "CIV", "b": "ECU", "as": 1, "bs": 0, "st": "FT", "venue": "Lincoln Financial Field, Philadelphia" },
-      { "g": "F", "a": "SWE", "b": "TUN", "as": 5, "bs": 1, "st": "FT", "venue": "Estadio BBVA, Guadalupe" }
+      {
+        "g": "E",
+        "a": "GER",
+        "b": "CUW",
+        "as": 7,
+        "bs": 1,
+        "st": "FT",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "F",
+        "a": "NED",
+        "b": "JPN",
+        "as": 2,
+        "bs": 2,
+        "st": "FT",
+        "venue": "AT&T Stadium, Arlington"
+      },
+      {
+        "g": "E",
+        "a": "CIV",
+        "b": "ECU",
+        "as": 1,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Lincoln Financial Field, Philadelphia"
+      },
+      {
+        "g": "F",
+        "a": "SWE",
+        "b": "TUN",
+        "as": 5,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Estadio BBVA, Guadalupe"
+      }
     ],
     [
-      { "g": "H", "a": "ESP", "b": "CPV", "as": 0, "bs": 0, "st": "FT", "venue": "Mercedes-Benz Stadium, Atlanta" },
-      { "g": "G", "a": "BEL", "b": "EGY", "as": 1, "bs": 1, "st": "FT", "venue": "Lumen Field, Seattle" },
-      { "g": "H", "a": "KSA", "b": "URU", "as": 1, "bs": 1, "st": "FT", "venue": "Hard Rock Stadium, Miami Gardens" },
-      { "g": "G", "a": "IRN", "b": "NZL", "as": 2, "bs": 2, "st": "FT", "venue": "SoFi Stadium, Inglewood" }
+      {
+        "g": "H",
+        "a": "ESP",
+        "b": "CPV",
+        "as": 0,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      },
+      {
+        "g": "G",
+        "a": "BEL",
+        "b": "EGY",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Lumen Field, Seattle"
+      },
+      {
+        "g": "H",
+        "a": "KSA",
+        "b": "URU",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Hard Rock Stadium, Miami Gardens"
+      },
+      {
+        "g": "G",
+        "a": "IRN",
+        "b": "NZL",
+        "as": 2,
+        "bs": 2,
+        "st": "FT",
+        "venue": "SoFi Stadium, Inglewood"
+      }
     ],
     [
-      { "g": "I", "a": "FRA", "b": "SEN", "as": 3, "bs": 1, "st": "FT", "venue": "MetLife Stadium, East Rutherford" },
-      { "g": "I", "a": "IRQ", "b": "NOR", "as": 1, "bs": 4, "st": "FT", "venue": "Gillette Stadium, Foxborough" },
-      { "g": "J", "a": "ARG", "b": "ALG", "as": 3, "bs": 0, "st": "FT", "venue": "Arrowhead Stadium, Kansas City" },
-      { "g": "J", "a": "AUT", "b": "JOR", "as": 3, "bs": 1, "st": "FT", "venue": "Levi's Stadium, Santa Clara" }
+      {
+        "g": "I",
+        "a": "FRA",
+        "b": "SEN",
+        "as": 3,
+        "bs": 1,
+        "st": "FT",
+        "venue": "MetLife Stadium, East Rutherford"
+      },
+      {
+        "g": "I",
+        "a": "IRQ",
+        "b": "NOR",
+        "as": 1,
+        "bs": 4,
+        "st": "FT",
+        "venue": "Gillette Stadium, Foxborough"
+      },
+      {
+        "g": "J",
+        "a": "ARG",
+        "b": "ALG",
+        "as": 3,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Arrowhead Stadium, Kansas City"
+      },
+      {
+        "g": "J",
+        "a": "AUT",
+        "b": "JOR",
+        "as": 3,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Levi's Stadium, Santa Clara"
+      }
     ],
     [
-      { "g": "K", "a": "POR", "b": "COD", "as": 1, "bs": 1, "st": "FT", "venue": "NRG Stadium, Houston" },
-      { "g": "L", "a": "ENG", "b": "CRO", "as": 4, "bs": 2, "st": "FT", "venue": "AT&T Stadium, Arlington" },
-      { "g": "L", "a": "GHA", "b": "PAN", "as": 1, "bs": 0, "st": "FT", "venue": "BMO Field, Toronto" },
-      { "g": "K", "a": "UZB", "b": "COL", "as": 1, "bs": 3, "st": "FT", "venue": "Estadio Azteca, Mexico City" }
+      {
+        "g": "K",
+        "a": "POR",
+        "b": "COD",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "L",
+        "a": "ENG",
+        "b": "CRO",
+        "as": 4,
+        "bs": 2,
+        "st": "FT",
+        "venue": "AT&T Stadium, Arlington"
+      },
+      {
+        "g": "L",
+        "a": "GHA",
+        "b": "PAN",
+        "as": 1,
+        "bs": 0,
+        "st": "FT",
+        "venue": "BMO Field, Toronto"
+      },
+      {
+        "g": "K",
+        "a": "UZB",
+        "b": "COL",
+        "as": 1,
+        "bs": 3,
+        "st": "FT",
+        "venue": "Estadio Azteca, Mexico City"
+      }
     ],
     [
-      { "g": "A", "a": "CZE", "b": "RSA", "as": 1, "bs": 1, "st": "FT", "venue": "Mercedes-Benz Stadium, Atlanta" },
-      { "g": "A", "a": "MEX", "b": "KOR", "as": 1, "bs": 0, "st": "FT", "venue": "Estadio Akron, Zapopan" },
-      { "g": "B", "a": "SUI", "b": "BIH", "as": 4, "bs": 1, "st": "FT", "venue": "SoFi Stadium, Inglewood" },
-      { "g": "B", "a": "CAN", "b": "QAT", "as": 6, "bs": 0, "st": "FT", "venue": "BC Place, Vancouver" }
+      {
+        "g": "A",
+        "a": "CZE",
+        "b": "RSA",
+        "as": 1,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      },
+      {
+        "g": "A",
+        "a": "MEX",
+        "b": "KOR",
+        "as": 1,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Estadio Akron, Zapopan"
+      },
+      {
+        "g": "B",
+        "a": "SUI",
+        "b": "BIH",
+        "as": 4,
+        "bs": 1,
+        "st": "FT",
+        "venue": "SoFi Stadium, Inglewood"
+      },
+      {
+        "g": "B",
+        "a": "CAN",
+        "b": "QAT",
+        "as": 6,
+        "bs": 0,
+        "st": "FT",
+        "venue": "BC Place, Vancouver"
+      }
     ],
     [
-      { "g": "D", "a": "USA", "b": "AUS", "as": 2, "bs": 0, "st": "FT", "venue": "Lumen Field, Seattle" },
-      { "g": "C", "a": "SCO", "b": "MAR", "as": 0, "bs": 1, "st": "FT", "venue": "Gillette Stadium, Foxborough" },
-      { "g": "C", "a": "BRA", "b": "HAI", "as": 3, "bs": 0, "st": "FT", "venue": "Lincoln Financial Field, Philadelphia" },
-      { "g": "D", "a": "TUR", "b": "PAR", "as": 0, "bs": 1, "st": "FT", "venue": "Levi's Stadium, Santa Clara" }
+      {
+        "g": "D",
+        "a": "USA",
+        "b": "AUS",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Lumen Field, Seattle"
+      },
+      {
+        "g": "C",
+        "a": "SCO",
+        "b": "MAR",
+        "as": 0,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Gillette Stadium, Foxborough"
+      },
+      {
+        "g": "C",
+        "a": "BRA",
+        "b": "HAI",
+        "as": 3,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Lincoln Financial Field, Philadelphia"
+      },
+      {
+        "g": "D",
+        "a": "TUR",
+        "b": "PAR",
+        "as": 0,
+        "bs": 1,
+        "st": "FT",
+        "venue": "Levi's Stadium, Santa Clara"
+      }
     ],
     [
-      { "g": "F", "a": "NED", "b": "SWE", "as": 5, "bs": 1, "st": "FT", "venue": "NRG Stadium, Houston" },
-      { "g": "E", "a": "GER", "b": "CIV", "as": 2, "bs": 1, "st": "FT", "venue": "BMO Field, Toronto" },
-      { "g": "E", "a": "ECU", "b": "CUW", "as": 0, "bs": 0, "st": "FT", "venue": "Arrowhead Stadium, Kansas City" }
+      {
+        "g": "F",
+        "a": "NED",
+        "b": "SWE",
+        "as": 5,
+        "bs": 1,
+        "st": "FT",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "E",
+        "a": "GER",
+        "b": "CIV",
+        "as": 2,
+        "bs": 1,
+        "st": "FT",
+        "venue": "BMO Field, Toronto"
+      },
+      {
+        "g": "E",
+        "a": "ECU",
+        "b": "CUW",
+        "as": 0,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Arrowhead Stadium, Kansas City"
+      },
+      {
+        "g": "F",
+        "a": "TUN",
+        "b": "JPN",
+        "as": 0,
+        "bs": 4,
+        "st": "FT",
+        "venue": "Estadio BBVA, Guadalupe"
+      }
     ],
     [
-      { "g": "F", "a": "TUN", "b": "JPN", "as": null, "bs": null, "st": "UP", "time": "12:00 AM ET", "venue": "Estadio BBVA, Guadalupe" },
-      { "g": "G", "a": "BEL", "b": "IRN", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "SoFi Stadium, Inglewood" },
-      { "g": "G", "a": "NZL", "b": "EGY", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "BC Place, Vancouver" },
-      { "g": "H", "a": "ESP", "b": "KSA", "as": null, "bs": null, "st": "UP", "time": "12:00 PM ET", "venue": "Mercedes-Benz Stadium, Atlanta" },
-      { "g": "H", "a": "URU", "b": "CPV", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Hard Rock Stadium, Miami Gardens" }
+      {
+        "g": "G",
+        "a": "BEL",
+        "b": "IRN",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "SoFi Stadium, Inglewood"
+      },
+      {
+        "g": "G",
+        "a": "NZL",
+        "b": "EGY",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "BC Place, Vancouver"
+      },
+      {
+        "g": "H",
+        "a": "ESP",
+        "b": "KSA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "12:00 PM ET",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      },
+      {
+        "g": "H",
+        "a": "URU",
+        "b": "CPV",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Hard Rock Stadium, Miami Gardens"
+      }
     ],
     [
-      { "g": "I", "a": "FRA", "b": "IRQ", "as": null, "bs": null, "st": "UP", "time": "12:00 PM ET", "venue": "Lincoln Financial Field, Philadelphia" },
-      { "g": "I", "a": "NOR", "b": "SEN", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "MetLife Stadium, East Rutherford" },
-      { "g": "J", "a": "ARG", "b": "AUT", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "AT&T Stadium, Arlington" },
-      { "g": "J", "a": "JOR", "b": "ALG", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "Levi's Stadium, Santa Clara" }
+      {
+        "g": "I",
+        "a": "FRA",
+        "b": "IRQ",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "12:00 PM ET",
+        "venue": "Lincoln Financial Field, Philadelphia"
+      },
+      {
+        "g": "I",
+        "a": "NOR",
+        "b": "SEN",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "MetLife Stadium, East Rutherford"
+      },
+      {
+        "g": "J",
+        "a": "ARG",
+        "b": "AUT",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "AT&T Stadium, Arlington"
+      },
+      {
+        "g": "J",
+        "a": "JOR",
+        "b": "ALG",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Levi's Stadium, Santa Clara"
+      }
     ],
     [
-      { "g": "K", "a": "POR", "b": "UZB", "as": null, "bs": null, "st": "UP", "time": "12:00 PM ET", "venue": "NRG Stadium, Houston" },
-      { "g": "K", "a": "COL", "b": "COD", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Estadio Akron, Zapopan" },
-      { "g": "L", "a": "ENG", "b": "GHA", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Gillette Stadium, Foxborough" },
-      { "g": "L", "a": "PAN", "b": "CRO", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "BMO Field, Toronto" }
+      {
+        "g": "K",
+        "a": "POR",
+        "b": "UZB",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "12:00 PM ET",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "K",
+        "a": "COL",
+        "b": "COD",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Estadio Akron, Zapopan"
+      },
+      {
+        "g": "L",
+        "a": "ENG",
+        "b": "GHA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Gillette Stadium, Foxborough"
+      },
+      {
+        "g": "L",
+        "a": "PAN",
+        "b": "CRO",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "BMO Field, Toronto"
+      }
     ],
     [
-      { "g": "A", "a": "CZE", "b": "MEX", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Estadio Azteca, Mexico City" },
-      { "g": "A", "a": "RSA", "b": "KOR", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Estadio BBVA, Guadalupe" },
-      { "g": "B", "a": "SUI", "b": "CAN", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "BC Place, Vancouver" },
-      { "g": "B", "a": "BIH", "b": "QAT", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "Lumen Field, Seattle" },
-      { "g": "C", "a": "SCO", "b": "BRA", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Hard Rock Stadium, Miami Gardens" },
-      { "g": "C", "a": "MAR", "b": "HAI", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Mercedes-Benz Stadium, Atlanta" }
+      {
+        "g": "A",
+        "a": "CZE",
+        "b": "MEX",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Estadio Azteca, Mexico City"
+      },
+      {
+        "g": "A",
+        "a": "RSA",
+        "b": "KOR",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Estadio BBVA, Guadalupe"
+      },
+      {
+        "g": "B",
+        "a": "SUI",
+        "b": "CAN",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "BC Place, Vancouver"
+      },
+      {
+        "g": "B",
+        "a": "BIH",
+        "b": "QAT",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Lumen Field, Seattle"
+      },
+      {
+        "g": "C",
+        "a": "SCO",
+        "b": "BRA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Hard Rock Stadium, Miami Gardens"
+      },
+      {
+        "g": "C",
+        "a": "MAR",
+        "b": "HAI",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      }
     ],
     [
-      { "g": "E", "a": "CUW", "b": "CIV", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Lincoln Financial Field, Philadelphia" },
-      { "g": "E", "a": "ECU", "b": "GER", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "MetLife Stadium, East Rutherford" },
-      { "g": "F", "a": "JPN", "b": "SWE", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "AT&T Stadium, Arlington" },
-      { "g": "F", "a": "TUN", "b": "NED", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "Arrowhead Stadium, Kansas City" },
-      { "g": "D", "a": "TUR", "b": "USA", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "SoFi Stadium, Inglewood" },
-      { "g": "D", "a": "PAR", "b": "AUS", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Levi's Stadium, Santa Clara" }
+      {
+        "g": "E",
+        "a": "CUW",
+        "b": "CIV",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Lincoln Financial Field, Philadelphia"
+      },
+      {
+        "g": "E",
+        "a": "ECU",
+        "b": "GER",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "MetLife Stadium, East Rutherford"
+      },
+      {
+        "g": "F",
+        "a": "JPN",
+        "b": "SWE",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "AT&T Stadium, Arlington"
+      },
+      {
+        "g": "F",
+        "a": "TUN",
+        "b": "NED",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Arrowhead Stadium, Kansas City"
+      },
+      {
+        "g": "D",
+        "a": "TUR",
+        "b": "USA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "SoFi Stadium, Inglewood"
+      },
+      {
+        "g": "D",
+        "a": "PAR",
+        "b": "AUS",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Levi's Stadium, Santa Clara"
+      }
     ],
     [
-      { "g": "G", "a": "EGY", "b": "IRN", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "Lumen Field, Seattle" },
-      { "g": "G", "a": "NZL", "b": "BEL", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "BC Place, Vancouver" },
-      { "g": "H", "a": "CPV", "b": "KSA", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "NRG Stadium, Houston" },
-      { "g": "H", "a": "URU", "b": "ESP", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Estadio Akron, Zapopan" },
-      { "g": "I", "a": "NOR", "b": "FRA", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "Gillette Stadium, Foxborough" },
-      { "g": "I", "a": "SEN", "b": "IRQ", "as": null, "bs": null, "st": "UP", "time": "9:00 PM ET", "venue": "BMO Field, Toronto" }
+      {
+        "g": "G",
+        "a": "EGY",
+        "b": "IRN",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Lumen Field, Seattle"
+      },
+      {
+        "g": "G",
+        "a": "NZL",
+        "b": "BEL",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "BC Place, Vancouver"
+      },
+      {
+        "g": "H",
+        "a": "CPV",
+        "b": "KSA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "H",
+        "a": "URU",
+        "b": "ESP",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Estadio Akron, Zapopan"
+      },
+      {
+        "g": "I",
+        "a": "NOR",
+        "b": "FRA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "Gillette Stadium, Foxborough"
+      },
+      {
+        "g": "I",
+        "a": "SEN",
+        "b": "IRQ",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "BMO Field, Toronto"
+      }
     ],
     [
-      { "g": "J", "a": "ALG", "b": "AUT", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "Arrowhead Stadium, Kansas City" },
-      { "g": "J", "a": "JOR", "b": "ARG", "as": null, "bs": null, "st": "UP", "time": "3:00 PM ET", "venue": "AT&T Stadium, Arlington" },
-      { "g": "K", "a": "COL", "b": "POR", "as": null, "bs": null, "st": "UP", "time": "7:30 PM ET", "venue": "Hard Rock Stadium, Miami Gardens" },
-      { "g": "K", "a": "COD", "b": "UZB", "as": null, "bs": null, "st": "UP", "time": "7:30 PM ET", "venue": "Mercedes-Benz Stadium, Atlanta" },
-      { "g": "L", "a": "PAN", "b": "ENG", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "MetLife Stadium, East Rutherford" },
-      { "g": "L", "a": "CRO", "b": "GHA", "as": null, "bs": null, "st": "UP", "time": "6:00 PM ET", "venue": "Lincoln Financial Field, Philadelphia" }
+      {
+        "g": "J",
+        "a": "ALG",
+        "b": "AUT",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "Arrowhead Stadium, Kansas City"
+      },
+      {
+        "g": "J",
+        "a": "JOR",
+        "b": "ARG",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "AT&T Stadium, Arlington"
+      },
+      {
+        "g": "K",
+        "a": "COL",
+        "b": "POR",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "7:30 PM ET",
+        "venue": "Hard Rock Stadium, Miami Gardens"
+      },
+      {
+        "g": "K",
+        "a": "COD",
+        "b": "UZB",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "7:30 PM ET",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      },
+      {
+        "g": "L",
+        "a": "PAN",
+        "b": "ENG",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "MetLife Stadium, East Rutherford"
+      },
+      {
+        "g": "L",
+        "a": "CRO",
+        "b": "GHA",
+        "as": null,
+        "bs": null,
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Lincoln Financial Field, Philadelphia"
+      }
     ]
   ]
 }

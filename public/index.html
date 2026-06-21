@@ -335,6 +335,9 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px;">Group {{ groupLabel }}</span>
           <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: {{ confedColor }}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); padding: 6px 14px; border-radius: 999px;">{{ confedLabel }}</span>
+          <sc-if value="{{ hasHoverBuzz }}" hint-placeholder-val="{{ false }}">
+            <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--mun-accent); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); padding: 6px 14px; border-radius: var(--mun-radius-pill);"><span class="bz-livedot" style="width: 7px; height: 7px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>Buzz {{ hoverBuzzRank }} &middot; {{ hoverBuzzScore }}</span>
+          </sc-if>
         </div>
       </div>
     </sc-if>
@@ -343,6 +346,20 @@
       <div style="position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
         <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: rgba(236,245,252,0.92); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
         <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: rgba(255,255,255,0.72); text-align: center;">One trophy. One summer across North America.</span>
+      </div>
+    </sc-if>
+
+    <!-- buzz ↔ globe connector: the pulses you see ARE live buzz; this names the leader and opens the board -->
+    <sc-if value="{{ showBuzzChip }}" hint-placeholder-val="{{ true }}">
+      <div class="globe-buzzchip" style="position: absolute; bottom: calc(13% + 50px); left: 0; right: 0; z-index: 51; display: flex; justify-content: center; padding: 0 16px;">
+        <div onClick="{{ showBuzz }}" title="Open the live buzz board" style="display: flex; align-items: center; gap: 10px; background: var(--mun-surface-3); border: 1px solid var(--mun-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 7px 14px 7px 13px; border-radius: var(--mun-radius-pill); cursor: pointer;">
+          <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent); flex: none;"></span>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">Buzzing now</span>
+          <img src="{{ buzzTop1Flag }}" alt="" style="width: 20px; height: 13px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag); flex: none;">
+          <span style="font-size: 13px; font-weight: 700; color: var(--mun-fg); white-space: nowrap;">{{ buzzTop1Code }}</span>
+          <span style="font-size: 13px; font-weight: 700; color: var(--mun-accent);">{{ buzzTop1Score }}</span>
+          <span style="font-size: 12px; color: var(--mun-fg-faint); white-space: nowrap;">see the board &rarr;</span>
+        </div>
       </div>
     </sc-if>
 
@@ -1277,11 +1294,15 @@ class Component extends DCLogic {
     const focus = new Set(focusCodes || []);
     for (let i = 0; i < this.markers.length; i++) {
       const mk = this.markers[i];
-      const on = focus.has(this.countries[mk.idx].code);
+      const code = this.countries[mk.idx].code;
+      const on = focus.has(code);
       const pulse = 1 + Math.sin(t + mk.idx) * 0.1;
-      mk.ring.scale.setScalar((on ? 2.7 : 0.7) * pulse);
-      mk.ring.material.opacity = on ? 0.72 : (focus.size ? 0.05 : 0.16);
-      mk.dot.scale.setScalar(on ? 2.2 : 0.6);
+      // Unfocused markers grow + brighten with live buzz, so the dots you see line
+      // up with the shader blooms and the Buzz leaderboard ranking (same signal).
+      const bz = this.buzzDisp[code] ? Math.min(this.buzzDisp[code].score + this.buzzDisp[code].spike, 1) : 0;
+      mk.ring.scale.setScalar((on ? 2.7 : (0.6 + bz * 1.5)) * pulse);
+      mk.ring.material.opacity = on ? 0.72 : (focus.size ? 0.05 : (0.12 + bz * 0.5));
+      mk.dot.scale.setScalar(on ? 2.2 : (0.5 + bz * 0.95));
     }
   }
 
@@ -1668,6 +1689,17 @@ class Component extends DCLogic {
       confedColor: conf ? conf.color : '#ffffff',
       matches: c ? this.matchesFor(c.code) : [],
       legend: Object.keys(this.confed).map((k) => ({ label: this.confed[k].label, color: this.confed[k].color })),
+      // buzz ↔ globe: live top buzzer chip (links to the Buzz view) + the hovered nation's buzz standing
+      showBuzz: () => this.setView('buzz'),
+      showBuzzChip: isGlobe && !c && !!(buzzLeader[0]),
+      hasBuzzTop1: !!(buzzLeader[0]),
+      buzzTop1Code: buzzLeader[0] ? buzzLeader[0].code : '',
+      buzzTop1Name: buzzLeader[0] ? buzzLeader[0].name : '',
+      buzzTop1Flag: buzzLeader[0] ? buzzLeader[0].flag : '',
+      buzzTop1Score: buzzLeader[0] ? buzzLeader[0].score : '',
+      hasHoverBuzz: !!(c && this.buzzByCode[c.code] && this.buzzByCode[c.code].score > 0.001),
+      hoverBuzzRank: (c && this.buzzByCode[c.code] && this.buzzByCode[c.code].rank) ? ('#' + this.buzzByCode[c.code].rank) : '',
+      hoverBuzzScore: (c && this.buzzByCode[c.code]) ? String(Math.round((this.buzzByCode[c.code].score || 0) * 100)) : '0',
       // matchday
       dayDow: day.dow,
       dayLong: day.long,

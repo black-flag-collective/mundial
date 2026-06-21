@@ -109,4 +109,18 @@ async function streamPosts(onPost, { signal, onOpen, stallMs } = {}) {
   }
 }
 
-module.exports = { streamPosts, STREAM_URL };
+/**
+ * Turn a matched Post into a buzz-ingest weight. A post with real engagement
+ * (likes + reposts + quotes) should move a country's buzz more than a lone
+ * reply, but one mega-viral post shouldn't instantly max the spike — so the
+ * weight grows with the log of engagement and is bounded to [1, 8].
+ */
+function postWeight(post) {
+  const m = (post && post.public_metrics) || {};
+  const engagement =
+    (m.like_count | 0) + (m.retweet_count | 0) + (m.quote_count | 0) + (m.reply_count | 0);
+  const weight = 1 + Math.log10(1 + engagement); // 0→1, 9→2, 99→3, 999→4 …
+  return Math.max(1, Math.min(8, weight));
+}
+
+module.exports = { streamPosts, STREAM_URL, postWeight };

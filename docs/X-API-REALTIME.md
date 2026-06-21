@@ -32,8 +32,10 @@ same runtime as the main app (`support.js` + the vendored `MundialUI` bundle und
 `public/buzz/_ds/`), with its data layer rewired from the design-time simulation to
 the live backend: posts ← `/api/buzz/stream`, stats ← `/api/x/health`. With no token
 it renders a truthful **NO TOKEN / 0 posts** empty state. `GET /api/x/health` returns
-`{ tokenConfigured, streamConnected, throughputPerMin, totalPosts, reconnects,
-activeRules, rateRemaining, rateCap, rateResetMs, lastEvent }`.
+`{ tokenConfigured, streamConnected, throughputPerMin, totalPosts, topCountries,
+reconnects, activeRules, rateRemaining, rateCap, rateResetMs, lastEvent }`, where
+`topCountries` is the most-seen nations this process (`[{ code, posts }]`) — the
+stream-mode parallel to counts mode's `perTeam`.
 
 **To turn it on:** set the `X_BEARER_TOKEN` secret and install rules once
 (`node scripts/x-rules.js replace`). Without the token everything is inert and
@@ -400,9 +402,13 @@ Filtered Stream allows **one** connection, the server owns it and does two
 things per matched Post — both implemented in `server.js`:
 
 1. **Feeds the buzz engine.** Each Post's `matching_rules[].tag` is a FIFA code,
-   so `buzz.ingest(code)` nudges that country's spike. The engine's existing
-   `tick()` decay means sustained X volume keeps a nation lit and a burst (goal,
-   controversy) flares it — turning the simulated beacon layer into a real one.
+   so `buzz.ingest(code, postWeight(post))` nudges that country's spike. The
+   weight scales with engagement (likes + reposts + quotes + replies) via
+   `postWeight()` — bounded to `[1, 8]` so a viral Post buzzes louder than a lone
+   reply, but one mega-viral Post can't instantly max the spike. The engine's
+   existing `tick()` decay means sustained X volume keeps a nation lit and a
+   burst (goal, controversy) flares it — turning the simulated beacon layer into
+   a real one.
 2. **Relays to browsers over SSE** at `GET /api/buzz/stream`, with a small
    ring buffer so a newly-connected client immediately gets recent Posts.
 

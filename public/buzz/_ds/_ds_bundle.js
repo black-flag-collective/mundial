@@ -68,32 +68,32 @@ var MundialUI = (() => {
   // ds-bundle/.bundle-entry.mjs
   var bundle_entry_exports = {};
   __export(bundle_entry_exports, {
-    BracketColumn: () => Le,
-    BracketMatch: () => _e,
-    Brand: () => we,
-    CONFEDERATIONS: () => Ae,
-    CONFEDERATION_LIST: () => Ce,
-    ChampionCard: () => Re,
-    ConfederationLegend: () => Ge,
-    CountryHero: () => Pe,
-    DayTimeline: () => Be,
-    Eyebrow: () => le,
-    FIFA_TO_ISO: () => me,
-    FeaturedMatch: () => Oe,
-    FixtureList: () => xe,
-    Flag: () => U,
-    Globe: () => Ue,
-    MatchCard: () => Me,
+    BracketColumn: () => ze,
+    BracketMatch: () => Me,
+    Brand: () => Pe,
+    CONFEDERATIONS: () => Oe,
+    CONFEDERATION_LIST: () => Be,
+    ChampionCard: () => Te,
+    ConfederationLegend: () => We,
+    CountryHero: () => Ke,
+    DayTimeline: () => ke,
+    Eyebrow: () => fe,
+    FIFA_TO_ISO: () => Ee,
+    FeaturedMatch: () => De,
+    FixtureList: () => Je,
+    Flag: () => P,
+    Globe: () => Ve,
+    MatchCard: () => Ie,
     MundialRoot: () => MundialRoot,
-    NavPills: () => ye,
-    Pill: () => pe,
-    StandingsTable: () => Se,
-    StatusBadge: () => fe,
-    TEAMS: () => Ee,
-    TEAM_BY_CODE: () => ve,
+    NavPills: () => Ge,
+    Pill: () => be,
+    StandingsTable: () => je,
+    StatusBadge: () => ye,
+    TEAMS: () => Se,
+    TEAM_BY_CODE: () => Ue,
     __dsMainNs: () => mundial_ui_exports,
-    flagUrl: () => ue,
-    teamName: () => Ie
+    flagUrl: () => ve,
+    teamName: () => Ze
   });
   init_define_import_meta_env();
 
@@ -119,30 +119,30 @@ var MundialUI = (() => {
   // packages/mundial-ui/dist/mundial-ui.js
   var mundial_ui_exports = {};
   __export(mundial_ui_exports, {
-    BracketColumn: () => Le,
-    BracketMatch: () => _e,
-    Brand: () => we,
-    CONFEDERATIONS: () => Ae,
-    CONFEDERATION_LIST: () => Ce,
-    ChampionCard: () => Re,
-    ConfederationLegend: () => Ge,
-    CountryHero: () => Pe,
-    DayTimeline: () => Be,
-    Eyebrow: () => le,
-    FIFA_TO_ISO: () => me,
-    FeaturedMatch: () => Oe,
-    FixtureList: () => xe,
-    Flag: () => U,
-    Globe: () => Ue,
-    MatchCard: () => Me,
-    NavPills: () => ye,
-    Pill: () => pe,
-    StandingsTable: () => Se,
-    StatusBadge: () => fe,
-    TEAMS: () => Ee,
-    TEAM_BY_CODE: () => ve,
-    flagUrl: () => ue,
-    teamName: () => Ie
+    BracketColumn: () => ze,
+    BracketMatch: () => Me,
+    Brand: () => Pe,
+    CONFEDERATIONS: () => Oe,
+    CONFEDERATION_LIST: () => Be,
+    ChampionCard: () => Te,
+    ConfederationLegend: () => We,
+    CountryHero: () => Ke,
+    DayTimeline: () => ke,
+    Eyebrow: () => fe,
+    FIFA_TO_ISO: () => Ee,
+    FeaturedMatch: () => De,
+    FixtureList: () => Je,
+    Flag: () => P,
+    Globe: () => Ve,
+    MatchCard: () => Ie,
+    NavPills: () => Ge,
+    Pill: () => be,
+    StandingsTable: () => je,
+    StatusBadge: () => ye,
+    TEAMS: () => Se,
+    TEAM_BY_CODE: () => Ue,
+    flagUrl: () => ve,
+    teamName: () => Ze
   });
   init_define_import_meta_env();
   var import_jsx_runtime = __toESM(require_react_shim(), 1);
@@ -343,7 +343,7 @@ var MundialUI = (() => {
       if (listenerArray !== void 0) {
         event.target = this;
         const array = listenerArray.slice(0);
-        for (let i = 0, l = array.length; i < l; i++) {
+        for (let i = 0, l2 = array.length; i < l2; i++) {
           array[i].call(this, event);
         }
         event.target = null;
@@ -662,11 +662,11 @@ var MundialUI = (() => {
       return this;
     }
     rotateAround(center, angle) {
-      const c2 = Math.cos(angle), s = Math.sin(angle);
+      const c = Math.cos(angle), s = Math.sin(angle);
       const x = this.x - center.x;
       const y = this.y - center.y;
-      this.x = x * c2 - y * s + center.x;
-      this.y = x * s + y * c2 + center.y;
+      this.x = x * c - y * s + center.x;
+      this.y = x * s + y * c + center.y;
       return this;
     }
     random() {
@@ -726,16 +726,16 @@ var MundialUI = (() => {
     }
     copy(m) {
       const te = this.elements;
-      const me2 = m.elements;
-      te[0] = me2[0];
-      te[1] = me2[1];
-      te[2] = me2[2];
-      te[3] = me2[3];
-      te[4] = me2[4];
-      te[5] = me2[5];
-      te[6] = me2[6];
-      te[7] = me2[7];
-      te[8] = me2[8];
+      const me = m.elements;
+      te[0] = me[0];
+      te[1] = me[1];
+      te[2] = me[2];
+      te[3] = me[3];
+      te[4] = me[4];
+      te[5] = me[5];
+      te[6] = me[6];
+      te[7] = me[7];
+      te[8] = me[8];
       return this;
     }
     extractBasis(xAxis, yAxis, zAxis) {
@@ -745,17 +745,17 @@ var MundialUI = (() => {
       return this;
     }
     setFromMatrix4(m) {
-      const me2 = m.elements;
+      const me = m.elements;
       this.set(
-        me2[0],
-        me2[4],
-        me2[8],
-        me2[1],
-        me2[5],
-        me2[9],
-        me2[2],
-        me2[6],
-        me2[10]
+        me[0],
+        me[4],
+        me[8],
+        me[1],
+        me[5],
+        me[9],
+        me[2],
+        me[6],
+        me[10]
       );
       return this;
     }
@@ -766,15 +766,15 @@ var MundialUI = (() => {
       return this.multiplyMatrices(m, this);
     }
     multiplyMatrices(a, b) {
-      const ae = a.elements;
-      const be = b.elements;
+      const ae2 = a.elements;
+      const be2 = b.elements;
       const te = this.elements;
-      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
-      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
-      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
-      const b11 = be[0], b12 = be[3], b13 = be[6];
-      const b21 = be[1], b22 = be[4], b23 = be[7];
-      const b31 = be[2], b32 = be[5], b33 = be[8];
+      const a11 = ae2[0], a12 = ae2[3], a13 = ae2[6];
+      const a21 = ae2[1], a22 = ae2[4], a23 = ae2[7];
+      const a31 = ae2[2], a32 = ae2[5], a33 = ae2[8];
+      const b11 = be2[0], b12 = be2[3], b13 = be2[6];
+      const b21 = be2[1], b22 = be2[4], b23 = be2[7];
+      const b31 = be2[2], b32 = be2[5], b33 = be2[8];
       te[0] = a11 * b11 + a12 * b21 + a13 * b31;
       te[3] = a11 * b12 + a12 * b22 + a13 * b32;
       te[6] = a11 * b13 + a12 * b23 + a13 * b33;
@@ -801,8 +801,8 @@ var MundialUI = (() => {
     }
     determinant() {
       const te = this.elements;
-      const a = te[0], b = te[1], c2 = te[2], d = te[3], e2 = te[4], f = te[5], g = te[6], h = te[7], i = te[8];
-      return a * e2 * i - a * f * h - b * d * i + b * f * g + c2 * d * h - c2 * e2 * g;
+      const a = te[0], b = te[1], c = te[2], d = te[3], e2 = te[4], f = te[5], g = te[6], h = te[7], i = te[8];
+      return a * e2 * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e2 * g;
     }
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
@@ -850,15 +850,15 @@ var MundialUI = (() => {
       return this;
     }
     setUvTransform(tx, ty, sx, sy, rotation, cx, cy) {
-      const c2 = Math.cos(rotation);
+      const c = Math.cos(rotation);
       const s = Math.sin(rotation);
       this.set(
-        sx * c2,
+        sx * c,
         sx * s,
-        -sx * (c2 * cx + s * cy) + cx + tx,
+        -sx * (c * cx + s * cy) + cx + tx,
         -sy * s,
-        sy * c2,
-        -sy * (-s * cx + c2 * cy) + cy + ty,
+        sy * c,
+        -sy * (-s * cx + c * cy) + cy + ty,
         0,
         0,
         1
@@ -908,14 +908,14 @@ var MundialUI = (() => {
       return this;
     }
     makeRotation(theta) {
-      const c2 = Math.cos(theta);
+      const c = Math.cos(theta);
       const s = Math.sin(theta);
       this.set(
-        c2,
+        c,
         -s,
         0,
         s,
-        c2,
+        c,
         0,
         0,
         0,
@@ -940,9 +940,9 @@ var MundialUI = (() => {
     //
     equals(matrix) {
       const te = this.elements;
-      const me2 = matrix.elements;
+      const me = matrix.elements;
       for (let i = 0; i < 9; i++) {
-        if (te[i] !== me2[i]) return false;
+        if (te[i] !== me[i]) return false;
       }
       return true;
     }
@@ -1073,11 +1073,11 @@ var MundialUI = (() => {
       return COLOR_SPACES[colorSpace].transfer;
     }
   };
-  function SRGBToLinear(c2) {
-    return c2 < 0.04045 ? c2 * 0.0773993808 : Math.pow(c2 * 0.9478672986 + 0.0521327014, 2.4);
+  function SRGBToLinear(c) {
+    return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
   }
-  function LinearToSRGB(c2) {
-    return c2 < 31308e-7 ? c2 * 12.92 : 1.055 * Math.pow(c2, 0.41666) - 0.055;
+  function LinearToSRGB(c) {
+    return c < 31308e-7 ? c * 12.92 : 1.055 * Math.pow(c, 0.41666) - 0.055;
   }
   var _canvas;
   var ImageUtils = class {
@@ -1170,7 +1170,7 @@ var MundialUI = (() => {
         let url;
         if (Array.isArray(data)) {
           url = [];
-          for (let i = 0, l = data.length; i < l; i++) {
+          for (let i = 0, l2 = data.length; i < l2; i++) {
             if (data[i].isDataTexture) {
               url.push(serializeImage(data[i].image));
             } else {
@@ -1391,11 +1391,11 @@ var MundialUI = (() => {
   Texture.DEFAULT_MAPPING = UVMapping;
   Texture.DEFAULT_ANISOTROPY = 1;
   var Vector4 = class _Vector4 {
-    constructor(x = 0, y = 0, z2 = 0, w = 1) {
+    constructor(x = 0, y = 0, z = 0, w = 1) {
       _Vector4.prototype.isVector4 = true;
       this.x = x;
       this.y = y;
-      this.z = z2;
+      this.z = z;
       this.w = w;
     }
     get width() {
@@ -1410,10 +1410,10 @@ var MundialUI = (() => {
     set height(value) {
       this.w = value;
     }
-    set(x, y, z2, w) {
+    set(x, y, z, w) {
       this.x = x;
       this.y = y;
-      this.z = z2;
+      this.z = z;
       this.w = w;
       return this;
     }
@@ -1432,8 +1432,8 @@ var MundialUI = (() => {
       this.y = y;
       return this;
     }
-    setZ(z2) {
-      this.z = z2;
+    setZ(z) {
+      this.z = z;
       return this;
     }
     setW(w) {
@@ -1547,33 +1547,33 @@ var MundialUI = (() => {
       return this;
     }
     applyMatrix4(m) {
-      const x = this.x, y = this.y, z2 = this.z, w = this.w;
+      const x = this.x, y = this.y, z = this.z, w = this.w;
       const e2 = m.elements;
-      this.x = e2[0] * x + e2[4] * y + e2[8] * z2 + e2[12] * w;
-      this.y = e2[1] * x + e2[5] * y + e2[9] * z2 + e2[13] * w;
-      this.z = e2[2] * x + e2[6] * y + e2[10] * z2 + e2[14] * w;
-      this.w = e2[3] * x + e2[7] * y + e2[11] * z2 + e2[15] * w;
+      this.x = e2[0] * x + e2[4] * y + e2[8] * z + e2[12] * w;
+      this.y = e2[1] * x + e2[5] * y + e2[9] * z + e2[13] * w;
+      this.z = e2[2] * x + e2[6] * y + e2[10] * z + e2[14] * w;
+      this.w = e2[3] * x + e2[7] * y + e2[11] * z + e2[15] * w;
       return this;
     }
     divideScalar(scalar) {
       return this.multiplyScalar(1 / scalar);
     }
-    setAxisAngleFromQuaternion(q2) {
-      this.w = 2 * Math.acos(q2.w);
-      const s = Math.sqrt(1 - q2.w * q2.w);
+    setAxisAngleFromQuaternion(q) {
+      this.w = 2 * Math.acos(q.w);
+      const s = Math.sqrt(1 - q.w * q.w);
       if (s < 1e-4) {
         this.x = 1;
         this.y = 0;
         this.z = 0;
       } else {
-        this.x = q2.x / s;
-        this.y = q2.y / s;
-        this.z = q2.z / s;
+        this.x = q.x / s;
+        this.y = q.y / s;
+        this.z = q.z / s;
       }
       return this;
     }
     setAxisAngleFromRotationMatrix(m) {
-      let angle, x, y, z2;
+      let angle, x, y, z;
       const epsilon = 0.01, epsilon2 = 0.1, te = m.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10];
       if (Math.abs(m12 - m21) < epsilon && Math.abs(m13 - m31) < epsilon && Math.abs(m23 - m32) < epsilon) {
         if (Math.abs(m12 + m21) < epsilon2 && Math.abs(m13 + m31) < epsilon2 && Math.abs(m23 + m32) < epsilon2 && Math.abs(m11 + m22 + m33 - 3) < epsilon2) {
@@ -1591,34 +1591,34 @@ var MundialUI = (() => {
           if (xx < epsilon) {
             x = 0;
             y = 0.707106781;
-            z2 = 0.707106781;
+            z = 0.707106781;
           } else {
             x = Math.sqrt(xx);
             y = xy / x;
-            z2 = xz / x;
+            z = xz / x;
           }
         } else if (yy > zz) {
           if (yy < epsilon) {
             x = 0.707106781;
             y = 0;
-            z2 = 0.707106781;
+            z = 0.707106781;
           } else {
             y = Math.sqrt(yy);
             x = xy / y;
-            z2 = yz / y;
+            z = yz / y;
           }
         } else {
           if (zz < epsilon) {
             x = 0.707106781;
             y = 0.707106781;
-            z2 = 0;
+            z = 0;
           } else {
-            z2 = Math.sqrt(zz);
-            x = xz / z2;
-            y = yz / z2;
+            z = Math.sqrt(zz);
+            x = xz / z;
+            y = yz / z;
           }
         }
-        this.set(x, y, z2, angle);
+        this.set(x, y, z, angle);
         return this;
       }
       let s = Math.sqrt((m32 - m23) * (m32 - m23) + (m13 - m31) * (m13 - m31) + (m21 - m12) * (m21 - m12));
@@ -1870,11 +1870,11 @@ var MundialUI = (() => {
     }
   };
   var Quaternion = class {
-    constructor(x = 0, y = 0, z2 = 0, w = 1) {
+    constructor(x = 0, y = 0, z = 0, w = 1) {
       this.isQuaternion = true;
       this._x = x;
       this._y = y;
-      this._z = z2;
+      this._z = z;
       this._w = w;
     }
     static slerpFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t) {
@@ -1963,10 +1963,10 @@ var MundialUI = (() => {
       this._w = value;
       this._onChangeCallback();
     }
-    set(x, y, z2, w) {
+    set(x, y, z, w) {
       this._x = x;
       this._y = y;
-      this._z = z2;
+      this._z = z;
       this._w = w;
       this._onChangeCallback();
       return this;
@@ -1983,15 +1983,15 @@ var MundialUI = (() => {
       return this;
     }
     setFromEuler(euler, update = true) {
-      const x = euler._x, y = euler._y, z2 = euler._z, order = euler._order;
+      const x = euler._x, y = euler._y, z = euler._z, order = euler._order;
       const cos = Math.cos;
       const sin = Math.sin;
       const c1 = cos(x / 2);
       const c2 = cos(y / 2);
-      const c3 = cos(z2 / 2);
+      const c3 = cos(z / 2);
       const s1 = sin(x / 2);
       const s2 = sin(y / 2);
-      const s3 = sin(z2 / 2);
+      const s3 = sin(z / 2);
       switch (order) {
         case "XYZ":
           this._x = s1 * c2 * c3 + c1 * s2 * s3;
@@ -2097,14 +2097,14 @@ var MundialUI = (() => {
       }
       return this.normalize();
     }
-    angleTo(q2) {
-      return 2 * Math.acos(Math.abs(clamp(this.dot(q2), -1, 1)));
+    angleTo(q) {
+      return 2 * Math.acos(Math.abs(clamp(this.dot(q), -1, 1)));
     }
-    rotateTowards(q2, step) {
-      const angle = this.angleTo(q2);
+    rotateTowards(q, step) {
+      const angle = this.angleTo(q);
       if (angle === 0) return this;
       const t = Math.min(1, step / angle);
-      this.slerp(q2, t);
+      this.slerp(q, t);
       return this;
     }
     identity() {
@@ -2130,27 +2130,27 @@ var MundialUI = (() => {
       return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
     }
     normalize() {
-      let l = this.length();
-      if (l === 0) {
+      let l2 = this.length();
+      if (l2 === 0) {
         this._x = 0;
         this._y = 0;
         this._z = 0;
         this._w = 1;
       } else {
-        l = 1 / l;
-        this._x = this._x * l;
-        this._y = this._y * l;
-        this._z = this._z * l;
-        this._w = this._w * l;
+        l2 = 1 / l2;
+        this._x = this._x * l2;
+        this._y = this._y * l2;
+        this._z = this._z * l2;
+        this._w = this._w * l2;
       }
       this._onChangeCallback();
       return this;
     }
-    multiply(q2) {
-      return this.multiplyQuaternions(this, q2);
+    multiply(q) {
+      return this.multiplyQuaternions(this, q);
     }
-    premultiply(q2) {
-      return this.multiplyQuaternions(q2, this);
+    premultiply(q) {
+      return this.multiplyQuaternions(q, this);
     }
     multiplyQuaternions(a, b) {
       const qax = a._x, qay = a._y, qaz = a._z, qaw = a._w;
@@ -2165,8 +2165,8 @@ var MundialUI = (() => {
     slerp(qb, t) {
       if (t === 0) return this;
       if (t === 1) return this.copy(qb);
-      const x = this._x, y = this._y, z2 = this._z, w = this._w;
-      let cosHalfTheta = w * qb._w + x * qb._x + y * qb._y + z2 * qb._z;
+      const x = this._x, y = this._y, z = this._z, w = this._w;
+      let cosHalfTheta = w * qb._w + x * qb._x + y * qb._y + z * qb._z;
       if (cosHalfTheta < 0) {
         this._w = -qb._w;
         this._x = -qb._x;
@@ -2180,7 +2180,7 @@ var MundialUI = (() => {
         this._w = w;
         this._x = x;
         this._y = y;
-        this._z = z2;
+        this._z = z;
         return this;
       }
       const sqrSinHalfTheta = 1 - cosHalfTheta * cosHalfTheta;
@@ -2189,7 +2189,7 @@ var MundialUI = (() => {
         this._w = s * w + t * this._w;
         this._x = s * x + t * this._x;
         this._y = s * y + t * this._y;
-        this._z = s * z2 + t * this._z;
+        this._z = s * z + t * this._z;
         this.normalize();
         return this;
       }
@@ -2199,7 +2199,7 @@ var MundialUI = (() => {
       this._w = w * ratioA + this._w * ratioB;
       this._x = x * ratioA + this._x * ratioB;
       this._y = y * ratioA + this._y * ratioB;
-      this._z = z2 * ratioA + this._z * ratioB;
+      this._z = z * ratioA + this._z * ratioB;
       this._onChangeCallback();
       return this;
     }
@@ -2262,17 +2262,17 @@ var MundialUI = (() => {
     }
   };
   var Vector3 = class _Vector3 {
-    constructor(x = 0, y = 0, z2 = 0) {
+    constructor(x = 0, y = 0, z = 0) {
       _Vector3.prototype.isVector3 = true;
       this.x = x;
       this.y = y;
-      this.z = z2;
+      this.z = z;
     }
-    set(x, y, z2) {
-      if (z2 === void 0) z2 = this.z;
+    set(x, y, z) {
+      if (z === void 0) z = this.z;
       this.x = x;
       this.y = y;
-      this.z = z2;
+      this.z = z;
       return this;
     }
     setScalar(scalar) {
@@ -2289,8 +2289,8 @@ var MundialUI = (() => {
       this.y = y;
       return this;
     }
-    setZ(z2) {
-      this.z = z2;
+    setZ(z) {
+      this.z = z;
       return this;
     }
     setComponent(index, value) {
@@ -2397,28 +2397,28 @@ var MundialUI = (() => {
       return this.applyQuaternion(_quaternion$4.setFromAxisAngle(axis, angle));
     }
     applyMatrix3(m) {
-      const x = this.x, y = this.y, z2 = this.z;
+      const x = this.x, y = this.y, z = this.z;
       const e2 = m.elements;
-      this.x = e2[0] * x + e2[3] * y + e2[6] * z2;
-      this.y = e2[1] * x + e2[4] * y + e2[7] * z2;
-      this.z = e2[2] * x + e2[5] * y + e2[8] * z2;
+      this.x = e2[0] * x + e2[3] * y + e2[6] * z;
+      this.y = e2[1] * x + e2[4] * y + e2[7] * z;
+      this.z = e2[2] * x + e2[5] * y + e2[8] * z;
       return this;
     }
     applyNormalMatrix(m) {
       return this.applyMatrix3(m).normalize();
     }
     applyMatrix4(m) {
-      const x = this.x, y = this.y, z2 = this.z;
+      const x = this.x, y = this.y, z = this.z;
       const e2 = m.elements;
-      const w = 1 / (e2[3] * x + e2[7] * y + e2[11] * z2 + e2[15]);
-      this.x = (e2[0] * x + e2[4] * y + e2[8] * z2 + e2[12]) * w;
-      this.y = (e2[1] * x + e2[5] * y + e2[9] * z2 + e2[13]) * w;
-      this.z = (e2[2] * x + e2[6] * y + e2[10] * z2 + e2[14]) * w;
+      const w = 1 / (e2[3] * x + e2[7] * y + e2[11] * z + e2[15]);
+      this.x = (e2[0] * x + e2[4] * y + e2[8] * z + e2[12]) * w;
+      this.y = (e2[1] * x + e2[5] * y + e2[9] * z + e2[13]) * w;
+      this.z = (e2[2] * x + e2[6] * y + e2[10] * z + e2[14]) * w;
       return this;
     }
-    applyQuaternion(q2) {
+    applyQuaternion(q) {
       const vx = this.x, vy = this.y, vz = this.z;
-      const qx = q2.x, qy = q2.y, qz = q2.z, qw = q2.w;
+      const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
       const tx = 2 * (qy * vz - qz * vy);
       const ty = 2 * (qz * vx - qx * vz);
       const tz = 2 * (qx * vy - qy * vx);
@@ -2434,11 +2434,11 @@ var MundialUI = (() => {
       return this.applyMatrix4(camera.projectionMatrixInverse).applyMatrix4(camera.matrixWorld);
     }
     transformDirection(m) {
-      const x = this.x, y = this.y, z2 = this.z;
+      const x = this.x, y = this.y, z = this.z;
       const e2 = m.elements;
-      this.x = e2[0] * x + e2[4] * y + e2[8] * z2;
-      this.y = e2[1] * x + e2[5] * y + e2[9] * z2;
-      this.z = e2[2] * x + e2[6] * y + e2[10] * z2;
+      this.x = e2[0] * x + e2[4] * y + e2[8] * z;
+      this.y = e2[1] * x + e2[5] * y + e2[9] * z;
+      this.z = e2[2] * x + e2[6] * y + e2[10] * z;
       return this.normalize();
     }
     divide(v) {
@@ -2589,8 +2589,8 @@ var MundialUI = (() => {
       this.z = sinPhiRadius * Math.cos(theta);
       return this;
     }
-    setFromCylindrical(c2) {
-      return this.setFromCylindricalCoords(c2.radius, c2.theta, c2.y);
+    setFromCylindrical(c) {
+      return this.setFromCylindricalCoords(c.radius, c.theta, c.y);
     }
     setFromCylindricalCoords(radius, theta, y) {
       this.x = radius * Math.sin(theta);
@@ -2626,10 +2626,10 @@ var MundialUI = (() => {
       this.z = e2._z;
       return this;
     }
-    setFromColor(c2) {
-      this.x = c2.r;
-      this.y = c2.g;
-      this.z = c2.b;
+    setFromColor(c) {
+      this.x = c.r;
+      this.y = c.g;
+      this.z = c.b;
       return this;
     }
     equals(v) {
@@ -2761,7 +2761,7 @@ var MundialUI = (() => {
       if (geometry !== void 0) {
         const positionAttribute = geometry.getAttribute("position");
         if (precise === true && positionAttribute !== void 0 && object.isInstancedMesh !== true) {
-          for (let i = 0, l = positionAttribute.count; i < l; i++) {
+          for (let i = 0, l2 = positionAttribute.count; i < l2; i++) {
             if (object.isMesh === true) {
               object.getVertexPosition(i, _vector$b);
             } else {
@@ -2787,7 +2787,7 @@ var MundialUI = (() => {
         }
       }
       const children = object.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         this.expandByObject(children[i], precise);
       }
       return this;
@@ -3156,7 +3156,7 @@ var MundialUI = (() => {
       const a01 = -this.direction.dot(_segDir);
       const b0 = _diff.dot(this.direction);
       const b1 = -_diff.dot(_segDir);
-      const c2 = _diff.lengthSq();
+      const c = _diff.lengthSq();
       const det = Math.abs(1 - a01 * a01);
       let s0, s1, sqrDist, extDet;
       if (det > 0) {
@@ -3169,36 +3169,36 @@ var MundialUI = (() => {
               const invDet = 1 / det;
               s0 *= invDet;
               s1 *= invDet;
-              sqrDist = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c2;
+              sqrDist = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c;
             } else {
               s1 = segExtent;
               s0 = Math.max(0, -(a01 * s1 + b0));
-              sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c2;
+              sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
             }
           } else {
             s1 = -segExtent;
             s0 = Math.max(0, -(a01 * s1 + b0));
-            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c2;
+            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
           }
         } else {
           if (s1 <= -extDet) {
             s0 = Math.max(0, -(-a01 * segExtent + b0));
             s1 = s0 > 0 ? -segExtent : Math.min(Math.max(-segExtent, -b1), segExtent);
-            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c2;
+            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
           } else if (s1 <= extDet) {
             s0 = 0;
             s1 = Math.min(Math.max(-segExtent, -b1), segExtent);
-            sqrDist = s1 * (s1 + 2 * b1) + c2;
+            sqrDist = s1 * (s1 + 2 * b1) + c;
           } else {
             s0 = Math.max(0, -(a01 * segExtent + b0));
             s1 = s0 > 0 ? segExtent : Math.min(Math.max(-segExtent, -b1), segExtent);
-            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c2;
+            sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
           }
         }
       } else {
         s1 = a01 > 0 ? -segExtent : segExtent;
         s0 = Math.max(0, -(a01 * s1 + b0));
-        sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c2;
+        sqrDist = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
       }
       if (optionalPointOnRay) {
         optionalPointOnRay.copy(this.origin).addScaledVector(this.direction, s0);
@@ -3290,9 +3290,9 @@ var MundialUI = (() => {
     intersectsBox(box) {
       return this.intersectBox(box, _vector$a) !== null;
     }
-    intersectTriangle(a, b, c2, backfaceCulling, target) {
+    intersectTriangle(a, b, c, backfaceCulling, target) {
       _edge1.subVectors(b, a);
-      _edge2.subVectors(c2, a);
+      _edge2.subVectors(c, a);
       _normal$1.crossVectors(_edge1, _edge2);
       let DdN = this.direction.dot(_normal$1);
       let sign;
@@ -3406,46 +3406,46 @@ var MundialUI = (() => {
     }
     copy(m) {
       const te = this.elements;
-      const me2 = m.elements;
-      te[0] = me2[0];
-      te[1] = me2[1];
-      te[2] = me2[2];
-      te[3] = me2[3];
-      te[4] = me2[4];
-      te[5] = me2[5];
-      te[6] = me2[6];
-      te[7] = me2[7];
-      te[8] = me2[8];
-      te[9] = me2[9];
-      te[10] = me2[10];
-      te[11] = me2[11];
-      te[12] = me2[12];
-      te[13] = me2[13];
-      te[14] = me2[14];
-      te[15] = me2[15];
+      const me = m.elements;
+      te[0] = me[0];
+      te[1] = me[1];
+      te[2] = me[2];
+      te[3] = me[3];
+      te[4] = me[4];
+      te[5] = me[5];
+      te[6] = me[6];
+      te[7] = me[7];
+      te[8] = me[8];
+      te[9] = me[9];
+      te[10] = me[10];
+      te[11] = me[11];
+      te[12] = me[12];
+      te[13] = me[13];
+      te[14] = me[14];
+      te[15] = me[15];
       return this;
     }
     copyPosition(m) {
-      const te = this.elements, me2 = m.elements;
-      te[12] = me2[12];
-      te[13] = me2[13];
-      te[14] = me2[14];
+      const te = this.elements, me = m.elements;
+      te[12] = me[12];
+      te[13] = me[13];
+      te[14] = me[14];
       return this;
     }
     setFromMatrix3(m) {
-      const me2 = m.elements;
+      const me = m.elements;
       this.set(
-        me2[0],
-        me2[3],
-        me2[6],
+        me[0],
+        me[3],
+        me[6],
         0,
-        me2[1],
-        me2[4],
-        me2[7],
+        me[1],
+        me[4],
+        me[7],
         0,
-        me2[2],
-        me2[5],
-        me2[8],
+        me[2],
+        me[5],
+        me[8],
         0,
         0,
         0,
@@ -3483,21 +3483,21 @@ var MundialUI = (() => {
     }
     extractRotation(m) {
       const te = this.elements;
-      const me2 = m.elements;
+      const me = m.elements;
       const scaleX = 1 / _v1$5.setFromMatrixColumn(m, 0).length();
       const scaleY = 1 / _v1$5.setFromMatrixColumn(m, 1).length();
       const scaleZ = 1 / _v1$5.setFromMatrixColumn(m, 2).length();
-      te[0] = me2[0] * scaleX;
-      te[1] = me2[1] * scaleX;
-      te[2] = me2[2] * scaleX;
+      te[0] = me[0] * scaleX;
+      te[1] = me[1] * scaleX;
+      te[2] = me[2] * scaleX;
       te[3] = 0;
-      te[4] = me2[4] * scaleY;
-      te[5] = me2[5] * scaleY;
-      te[6] = me2[6] * scaleY;
+      te[4] = me[4] * scaleY;
+      te[5] = me[5] * scaleY;
+      te[6] = me[6] * scaleY;
       te[7] = 0;
-      te[8] = me2[8] * scaleZ;
-      te[9] = me2[9] * scaleZ;
-      te[10] = me2[10] * scaleZ;
+      te[8] = me[8] * scaleZ;
+      te[9] = me[9] * scaleZ;
+      te[10] = me[10] * scaleZ;
       te[11] = 0;
       te[12] = 0;
       te[13] = 0;
@@ -3507,57 +3507,57 @@ var MundialUI = (() => {
     }
     makeRotationFromEuler(euler) {
       const te = this.elements;
-      const x = euler.x, y = euler.y, z2 = euler.z;
+      const x = euler.x, y = euler.y, z = euler.z;
       const a = Math.cos(x), b = Math.sin(x);
-      const c2 = Math.cos(y), d = Math.sin(y);
-      const e2 = Math.cos(z2), f = Math.sin(z2);
+      const c = Math.cos(y), d = Math.sin(y);
+      const e2 = Math.cos(z), f = Math.sin(z);
       if (euler.order === "XYZ") {
-        const ae = a * e2, af = a * f, be = b * e2, bf = b * f;
-        te[0] = c2 * e2;
-        te[4] = -c2 * f;
+        const ae2 = a * e2, af = a * f, be2 = b * e2, bf = b * f;
+        te[0] = c * e2;
+        te[4] = -c * f;
         te[8] = d;
-        te[1] = af + be * d;
-        te[5] = ae - bf * d;
-        te[9] = -b * c2;
-        te[2] = bf - ae * d;
-        te[6] = be + af * d;
-        te[10] = a * c2;
+        te[1] = af + be2 * d;
+        te[5] = ae2 - bf * d;
+        te[9] = -b * c;
+        te[2] = bf - ae2 * d;
+        te[6] = be2 + af * d;
+        te[10] = a * c;
       } else if (euler.order === "YXZ") {
-        const ce2 = c2 * e2, cf = c2 * f, de2 = d * e2, df = d * f;
-        te[0] = ce2 + df * b;
-        te[4] = de2 * b - cf;
+        const ce = c * e2, cf = c * f, de = d * e2, df = d * f;
+        te[0] = ce + df * b;
+        te[4] = de * b - cf;
         te[8] = a * d;
         te[1] = a * f;
         te[5] = a * e2;
         te[9] = -b;
-        te[2] = cf * b - de2;
-        te[6] = df + ce2 * b;
-        te[10] = a * c2;
+        te[2] = cf * b - de;
+        te[6] = df + ce * b;
+        te[10] = a * c;
       } else if (euler.order === "ZXY") {
-        const ce2 = c2 * e2, cf = c2 * f, de2 = d * e2, df = d * f;
-        te[0] = ce2 - df * b;
+        const ce = c * e2, cf = c * f, de = d * e2, df = d * f;
+        te[0] = ce - df * b;
         te[4] = -a * f;
-        te[8] = de2 + cf * b;
-        te[1] = cf + de2 * b;
+        te[8] = de + cf * b;
+        te[1] = cf + de * b;
         te[5] = a * e2;
-        te[9] = df - ce2 * b;
+        te[9] = df - ce * b;
         te[2] = -a * d;
         te[6] = b;
-        te[10] = a * c2;
+        te[10] = a * c;
       } else if (euler.order === "ZYX") {
-        const ae = a * e2, af = a * f, be = b * e2, bf = b * f;
-        te[0] = c2 * e2;
-        te[4] = be * d - af;
-        te[8] = ae * d + bf;
-        te[1] = c2 * f;
-        te[5] = bf * d + ae;
-        te[9] = af * d - be;
+        const ae2 = a * e2, af = a * f, be2 = b * e2, bf = b * f;
+        te[0] = c * e2;
+        te[4] = be2 * d - af;
+        te[8] = ae2 * d + bf;
+        te[1] = c * f;
+        te[5] = bf * d + ae2;
+        te[9] = af * d - be2;
         te[2] = -d;
-        te[6] = b * c2;
-        te[10] = a * c2;
+        te[6] = b * c;
+        te[10] = a * c;
       } else if (euler.order === "YZX") {
-        const ac = a * c2, ad = a * d, bc = b * c2, bd = b * d;
-        te[0] = c2 * e2;
+        const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+        te[0] = c * e2;
         te[4] = bd - ac * f;
         te[8] = bc * f + ad;
         te[1] = f;
@@ -3567,8 +3567,8 @@ var MundialUI = (() => {
         te[6] = ad * f + bc;
         te[10] = ac - bd * f;
       } else if (euler.order === "XZY") {
-        const ac = a * c2, ad = a * d, bc = b * c2, bd = b * d;
-        te[0] = c2 * e2;
+        const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+        te[0] = c * e2;
         te[4] = -f;
         te[8] = d * e2;
         te[1] = ac * f + bd;
@@ -3587,8 +3587,8 @@ var MundialUI = (() => {
       te[15] = 1;
       return this;
     }
-    makeRotationFromQuaternion(q2) {
-      return this.compose(_zero, q2, _one);
+    makeRotationFromQuaternion(q) {
+      return this.compose(_zero, q, _one);
     }
     lookAt(eye, target, up) {
       const te = this.elements;
@@ -3627,17 +3627,17 @@ var MundialUI = (() => {
       return this.multiplyMatrices(m, this);
     }
     multiplyMatrices(a, b) {
-      const ae = a.elements;
-      const be = b.elements;
+      const ae2 = a.elements;
+      const be2 = b.elements;
       const te = this.elements;
-      const a11 = ae[0], a12 = ae[4], a13 = ae[8], a14 = ae[12];
-      const a21 = ae[1], a22 = ae[5], a23 = ae[9], a24 = ae[13];
-      const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
-      const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
-      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
-      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
-      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
-      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+      const a11 = ae2[0], a12 = ae2[4], a13 = ae2[8], a14 = ae2[12];
+      const a21 = ae2[1], a22 = ae2[5], a23 = ae2[9], a24 = ae2[13];
+      const a31 = ae2[2], a32 = ae2[6], a33 = ae2[10], a34 = ae2[14];
+      const a41 = ae2[3], a42 = ae2[7], a43 = ae2[11], a44 = ae2[15];
+      const b11 = be2[0], b12 = be2[4], b13 = be2[8], b14 = be2[12];
+      const b21 = be2[1], b22 = be2[5], b23 = be2[9], b24 = be2[13];
+      const b31 = be2[2], b32 = be2[6], b33 = be2[10], b34 = be2[14];
+      const b41 = be2[3], b42 = be2[7], b43 = be2[11], b44 = be2[15];
       te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
       te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
       te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
@@ -3707,7 +3707,7 @@ var MundialUI = (() => {
       te[14] = tmp2;
       return this;
     }
-    setPosition(x, y, z2) {
+    setPosition(x, y, z) {
       const te = this.elements;
       if (x.isVector3) {
         te[12] = x.x;
@@ -3716,7 +3716,7 @@ var MundialUI = (() => {
       } else {
         te[12] = x;
         te[13] = y;
-        te[14] = z2;
+        te[14] = z;
       }
       return this;
     }
@@ -3745,19 +3745,19 @@ var MundialUI = (() => {
     }
     scale(v) {
       const te = this.elements;
-      const x = v.x, y = v.y, z2 = v.z;
+      const x = v.x, y = v.y, z = v.z;
       te[0] *= x;
       te[4] *= y;
-      te[8] *= z2;
+      te[8] *= z;
       te[1] *= x;
       te[5] *= y;
-      te[9] *= z2;
+      te[9] *= z;
       te[2] *= x;
       te[6] *= y;
-      te[10] *= z2;
+      te[10] *= z;
       te[3] *= x;
       te[7] *= y;
-      te[11] *= z2;
+      te[11] *= z;
       return this;
     }
     getMaxScaleOnAxis() {
@@ -3767,7 +3767,7 @@ var MundialUI = (() => {
       const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
       return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
     }
-    makeTranslation(x, y, z2) {
+    makeTranslation(x, y, z) {
       if (x.isVector3) {
         this.set(
           1,
@@ -3800,7 +3800,7 @@ var MundialUI = (() => {
           0,
           0,
           1,
-          z2,
+          z,
           0,
           0,
           0,
@@ -3810,19 +3810,19 @@ var MundialUI = (() => {
       return this;
     }
     makeRotationX(theta) {
-      const c2 = Math.cos(theta), s = Math.sin(theta);
+      const c = Math.cos(theta), s = Math.sin(theta);
       this.set(
         1,
         0,
         0,
         0,
         0,
-        c2,
+        c,
         -s,
         0,
         0,
         s,
-        c2,
+        c,
         0,
         0,
         0,
@@ -3832,9 +3832,9 @@ var MundialUI = (() => {
       return this;
     }
     makeRotationY(theta) {
-      const c2 = Math.cos(theta), s = Math.sin(theta);
+      const c = Math.cos(theta), s = Math.sin(theta);
       this.set(
-        c2,
+        c,
         0,
         s,
         0,
@@ -3844,7 +3844,7 @@ var MundialUI = (() => {
         0,
         -s,
         0,
-        c2,
+        c,
         0,
         0,
         0,
@@ -3854,14 +3854,14 @@ var MundialUI = (() => {
       return this;
     }
     makeRotationZ(theta) {
-      const c2 = Math.cos(theta), s = Math.sin(theta);
+      const c = Math.cos(theta), s = Math.sin(theta);
       this.set(
-        c2,
+        c,
         -s,
         0,
         0,
         s,
-        c2,
+        c,
         0,
         0,
         0,
@@ -3876,23 +3876,23 @@ var MundialUI = (() => {
       return this;
     }
     makeRotationAxis(axis, angle) {
-      const c2 = Math.cos(angle);
+      const c = Math.cos(angle);
       const s = Math.sin(angle);
-      const t = 1 - c2;
-      const x = axis.x, y = axis.y, z2 = axis.z;
+      const t = 1 - c;
+      const x = axis.x, y = axis.y, z = axis.z;
       const tx = t * x, ty = t * y;
       this.set(
-        tx * x + c2,
-        tx * y - s * z2,
-        tx * z2 + s * y,
+        tx * x + c,
+        tx * y - s * z,
+        tx * z + s * y,
         0,
-        tx * y + s * z2,
-        ty * y + c2,
-        ty * z2 - s * x,
+        tx * y + s * z,
+        ty * y + c,
+        ty * z - s * x,
         0,
-        tx * z2 - s * y,
-        ty * z2 + s * x,
-        t * z2 * z2 + c2,
+        tx * z - s * y,
+        ty * z + s * x,
+        t * z * z + c,
         0,
         0,
         0,
@@ -3901,7 +3901,7 @@ var MundialUI = (() => {
       );
       return this;
     }
-    makeScale(x, y, z2) {
+    makeScale(x, y, z) {
       this.set(
         x,
         0,
@@ -3913,7 +3913,7 @@ var MundialUI = (() => {
         0,
         0,
         0,
-        z2,
+        z,
         0,
         0,
         0,
@@ -3945,11 +3945,11 @@ var MundialUI = (() => {
     }
     compose(position, quaternion, scale) {
       const te = this.elements;
-      const x = quaternion._x, y = quaternion._y, z2 = quaternion._z, w = quaternion._w;
-      const x2 = x + x, y2 = y + y, z22 = z2 + z2;
-      const xx = x * x2, xy = x * y2, xz = x * z22;
-      const yy = y * y2, yz = y * z22, zz = z2 * z22;
-      const wx = w * x2, wy = w * y2, wz = w * z22;
+      const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
+      const x2 = x + x, y2 = y + y, z2 = z + z;
+      const xx = x * x2, xy = x * y2, xz = x * z2;
+      const yy = y * y2, yz = y * z2, zz = z * z2;
+      const wx = w * x2, wy = w * y2, wz = w * z2;
       const sx = scale.x, sy = scale.y, sz = scale.z;
       te[0] = (1 - (yy + zz)) * sx;
       te[1] = (xy + wz) * sx;
@@ -4004,12 +4004,12 @@ var MundialUI = (() => {
       const y = 2 * near / (top - bottom);
       const a = (right + left) / (right - left);
       const b = (top + bottom) / (top - bottom);
-      let c2, d;
+      let c, d;
       if (coordinateSystem === WebGLCoordinateSystem) {
-        c2 = -(far + near) / (far - near);
+        c = -(far + near) / (far - near);
         d = -2 * far * near / (far - near);
       } else if (coordinateSystem === WebGPUCoordinateSystem) {
-        c2 = -far / (far - near);
+        c = -far / (far - near);
         d = -far * near / (far - near);
       } else {
         throw new Error("THREE.Matrix4.makePerspective(): Invalid coordinate system: " + coordinateSystem);
@@ -4024,7 +4024,7 @@ var MundialUI = (() => {
       te[13] = 0;
       te[2] = 0;
       te[6] = 0;
-      te[10] = c2;
+      te[10] = c;
       te[14] = d;
       te[3] = 0;
       te[7] = 0;
@@ -4039,12 +4039,12 @@ var MundialUI = (() => {
       const p = 1 / (far - near);
       const x = (right + left) * w;
       const y = (top + bottom) * h;
-      let z2, zInv;
+      let z, zInv;
       if (coordinateSystem === WebGLCoordinateSystem) {
-        z2 = (far + near) * p;
+        z = (far + near) * p;
         zInv = -2 * p;
       } else if (coordinateSystem === WebGPUCoordinateSystem) {
-        z2 = near * p;
+        z = near * p;
         zInv = -1 * p;
       } else {
         throw new Error("THREE.Matrix4.makeOrthographic(): Invalid coordinate system: " + coordinateSystem);
@@ -4060,7 +4060,7 @@ var MundialUI = (() => {
       te[2] = 0;
       te[6] = 0;
       te[10] = zInv;
-      te[14] = -z2;
+      te[14] = -z;
       te[3] = 0;
       te[7] = 0;
       te[11] = 0;
@@ -4069,9 +4069,9 @@ var MundialUI = (() => {
     }
     equals(matrix) {
       const te = this.elements;
-      const me2 = matrix.elements;
+      const me = matrix.elements;
       for (let i = 0; i < 16; i++) {
-        if (te[i] !== me2[i]) return false;
+        if (te[i] !== me[i]) return false;
       }
       return true;
     }
@@ -4112,11 +4112,11 @@ var MundialUI = (() => {
   var _matrix$1 = /* @__PURE__ */ new Matrix4();
   var _quaternion$3 = /* @__PURE__ */ new Quaternion();
   var Euler = class _Euler {
-    constructor(x = 0, y = 0, z2 = 0, order = _Euler.DEFAULT_ORDER) {
+    constructor(x = 0, y = 0, z = 0, order = _Euler.DEFAULT_ORDER) {
       this.isEuler = true;
       this._x = x;
       this._y = y;
-      this._z = z2;
+      this._z = z;
       this._order = order;
     }
     get x() {
@@ -4147,10 +4147,10 @@ var MundialUI = (() => {
       this._order = value;
       this._onChangeCallback();
     }
-    set(x, y, z2, order = this._order) {
+    set(x, y, z, order = this._order) {
       this._x = x;
       this._y = y;
-      this._z = z2;
+      this._z = z;
       this._order = order;
       this._onChangeCallback();
       return this;
@@ -4239,8 +4239,8 @@ var MundialUI = (() => {
       if (update === true) this._onChangeCallback();
       return this;
     }
-    setFromQuaternion(q2, order, update) {
-      _matrix$1.makeRotationFromQuaternion(q2);
+    setFromQuaternion(q, order, update) {
+      _matrix$1.makeRotationFromQuaternion(q);
       return this.setFromRotationMatrix(_matrix$1, order, update);
     }
     setFromVector3(v, order = this._order) {
@@ -4402,8 +4402,8 @@ var MundialUI = (() => {
       this.matrix.premultiply(matrix);
       this.matrix.decompose(this.position, this.quaternion, this.scale);
     }
-    applyQuaternion(q2) {
-      this.quaternion.premultiply(q2);
+    applyQuaternion(q) {
+      this.quaternion.premultiply(q);
       return this;
     }
     setRotationFromAxisAngle(axis, angle) {
@@ -4415,8 +4415,8 @@ var MundialUI = (() => {
     setRotationFromMatrix(m) {
       this.quaternion.setFromRotationMatrix(m);
     }
-    setRotationFromQuaternion(q2) {
-      this.quaternion.copy(q2);
+    setRotationFromQuaternion(q) {
+      this.quaternion.copy(q);
     }
     rotateOnAxis(axis, angle) {
       _q1.setFromAxisAngle(axis, angle);
@@ -4459,11 +4459,11 @@ var MundialUI = (() => {
       this.updateWorldMatrix(true, false);
       return vector.applyMatrix4(_m1$1.copy(this.matrixWorld).invert());
     }
-    lookAt(x, y, z2) {
+    lookAt(x, y, z) {
       if (x.isVector3) {
         _target.copy(x);
       } else {
-        _target.set(x, y, z2);
+        _target.set(x, y, z);
       }
       const parent = this.parent;
       this.updateWorldMatrix(true, false);
@@ -4548,7 +4548,7 @@ var MundialUI = (() => {
     }
     getObjectByProperty(name, value) {
       if (this[name] === value) return this;
-      for (let i = 0, l = this.children.length; i < l; i++) {
+      for (let i = 0, l2 = this.children.length; i < l2; i++) {
         const child = this.children[i];
         const object = child.getObjectByProperty(name, value);
         if (object !== void 0) {
@@ -4560,7 +4560,7 @@ var MundialUI = (() => {
     getObjectsByProperty(name, value, result = []) {
       if (this[name] === value) result.push(this);
       const children = this.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         children[i].getObjectsByProperty(name, value, result);
       }
       return result;
@@ -4589,7 +4589,7 @@ var MundialUI = (() => {
     traverse(callback) {
       callback(this);
       const children = this.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         children[i].traverse(callback);
       }
     }
@@ -4597,7 +4597,7 @@ var MundialUI = (() => {
       if (this.visible === false) return;
       callback(this);
       const children = this.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         children[i].traverseVisible(callback);
       }
     }
@@ -4624,7 +4624,7 @@ var MundialUI = (() => {
         force = true;
       }
       const children = this.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         const child = children[i];
         if (child.matrixWorldAutoUpdate === true || force === true) {
           child.updateMatrixWorld(force);
@@ -4644,7 +4644,7 @@ var MundialUI = (() => {
       }
       if (updateChildren === true) {
         const children = this.children;
-        for (let i = 0, l = children.length; i < l; i++) {
+        for (let i = 0, l2 = children.length; i < l2; i++) {
           const child = children[i];
           if (child.matrixWorldAutoUpdate === true) {
             child.updateWorldMatrix(false, true);
@@ -4750,7 +4750,7 @@ var MundialUI = (() => {
         if (parameters !== void 0 && parameters.shapes !== void 0) {
           const shapes = parameters.shapes;
           if (Array.isArray(shapes)) {
-            for (let i = 0, l = shapes.length; i < l; i++) {
+            for (let i = 0, l2 = shapes.length; i < l2; i++) {
               const shape = shapes[i];
               serialize(meta.shapes, shape);
             }
@@ -4770,7 +4770,7 @@ var MundialUI = (() => {
       if (this.material !== void 0) {
         if (Array.isArray(this.material)) {
           const uuids = [];
-          for (let i = 0, l = this.material.length; i < l; i++) {
+          for (let i = 0, l2 = this.material.length; i < l2; i++) {
             uuids.push(serialize(meta.materials, this.material[i]));
           }
           object.material = uuids;
@@ -4868,13 +4868,13 @@ var MundialUI = (() => {
   var _vcp = /* @__PURE__ */ new Vector3();
   var warnedGetUV = false;
   var Triangle = class _Triangle {
-    constructor(a = new Vector3(), b = new Vector3(), c2 = new Vector3()) {
+    constructor(a = new Vector3(), b = new Vector3(), c = new Vector3()) {
       this.a = a;
       this.b = b;
-      this.c = c2;
+      this.c = c;
     }
-    static getNormal(a, b, c2, target) {
-      target.subVectors(c2, b);
+    static getNormal(a, b, c, target) {
+      target.subVectors(c, b);
       _v0$1.subVectors(a, b);
       target.cross(_v0$1);
       const targetLengthSq = target.lengthSq();
@@ -4885,8 +4885,8 @@ var MundialUI = (() => {
     }
     // static/instance method to calculate barycentric coordinates
     // based on: http://www.blackpawn.com/texts/pointinpoly/default.html
-    static getBarycoord(point, a, b, c2, target) {
-      _v0$1.subVectors(c2, a);
+    static getBarycoord(point, a, b, c, target) {
+      _v0$1.subVectors(c, a);
       _v1$3.subVectors(b, a);
       _v2$2.subVectors(point, a);
       const dot00 = _v0$1.dot(_v0$1);
@@ -4904,8 +4904,8 @@ var MundialUI = (() => {
       const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
       return target.set(1 - u - v, v, u);
     }
-    static containsPoint(point, a, b, c2) {
-      if (this.getBarycoord(point, a, b, c2, _v3$1) === null) {
+    static containsPoint(point, a, b, c) {
+      if (this.getBarycoord(point, a, b, c, _v3$1) === null) {
         return false;
       }
       return _v3$1.x >= 0 && _v3$1.y >= 0 && _v3$1.x + _v3$1.y <= 1;
@@ -4931,15 +4931,15 @@ var MundialUI = (() => {
       target.addScaledVector(v3, _v3$1.z);
       return target;
     }
-    static isFrontFacing(a, b, c2, direction) {
-      _v0$1.subVectors(c2, b);
+    static isFrontFacing(a, b, c, direction) {
+      _v0$1.subVectors(c, b);
       _v1$3.subVectors(a, b);
       return _v0$1.cross(_v1$3).dot(direction) < 0 ? true : false;
     }
-    set(a, b, c2) {
+    set(a, b, c) {
       this.a.copy(a);
       this.b.copy(b);
-      this.c.copy(c2);
+      this.c.copy(c);
       return this;
     }
     setFromPointsAndIndices(points, i0, i1, i2) {
@@ -5000,10 +5000,10 @@ var MundialUI = (() => {
       return box.intersectsTriangle(this);
     }
     closestPointToPoint(p, target) {
-      const a = this.a, b = this.b, c2 = this.c;
+      const a = this.a, b = this.b, c = this.c;
       let v, w;
       _vab.subVectors(b, a);
-      _vac.subVectors(c2, a);
+      _vac.subVectors(c, a);
       _vap.subVectors(p, a);
       const d1 = _vab.dot(_vap);
       const d2 = _vac.dot(_vap);
@@ -5021,11 +5021,11 @@ var MundialUI = (() => {
         v = d1 / (d1 - d3);
         return target.copy(a).addScaledVector(_vab, v);
       }
-      _vcp.subVectors(p, c2);
+      _vcp.subVectors(p, c);
       const d5 = _vab.dot(_vcp);
       const d6 = _vac.dot(_vcp);
       if (d6 >= 0 && d5 <= d6) {
-        return target.copy(c2);
+        return target.copy(c);
       }
       const vb = d5 * d2 - d1 * d6;
       if (vb <= 0 && d2 >= 0 && d6 <= 0) {
@@ -5034,7 +5034,7 @@ var MundialUI = (() => {
       }
       const va = d3 * d6 - d5 * d4;
       if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) {
-        _vbc.subVectors(c2, b);
+        _vbc.subVectors(c, b);
         w = (d4 - d3) / (d4 - d3 + (d5 - d6));
         return target.copy(b).addScaledVector(_vbc, w);
       }
@@ -5199,12 +5199,12 @@ var MundialUI = (() => {
   };
   var _hslA = { h: 0, s: 0, l: 0 };
   var _hslB = { h: 0, s: 0, l: 0 };
-  function hue2rgb(p, q2, t) {
+  function hue2rgb(p, q, t) {
     if (t < 0) t += 1;
     if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q2 - p) * 6 * t;
-    if (t < 1 / 2) return q2;
-    if (t < 2 / 3) return p + (q2 - p) * 6 * (2 / 3 - t);
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * 6 * (2 / 3 - t);
     return p;
   }
   var Color = class {
@@ -5251,18 +5251,18 @@ var MundialUI = (() => {
       ColorManagement.toWorkingColorSpace(this, colorSpace);
       return this;
     }
-    setHSL(h, s, l, colorSpace = ColorManagement.workingColorSpace) {
+    setHSL(h, s, l2, colorSpace = ColorManagement.workingColorSpace) {
       h = euclideanModulo(h, 1);
       s = clamp(s, 0, 1);
-      l = clamp(l, 0, 1);
+      l2 = clamp(l2, 0, 1);
       if (s === 0) {
-        this.r = this.g = this.b = l;
+        this.r = this.g = this.b = l2;
       } else {
-        const p = l <= 0.5 ? l * (1 + s) : l + s - l * s;
-        const q2 = 2 * l - p;
-        this.r = hue2rgb(q2, p, h + 1 / 3);
-        this.g = hue2rgb(q2, p, h);
-        this.b = hue2rgb(q2, p, h - 1 / 3);
+        const p = l2 <= 0.5 ? l2 * (1 + s) : l2 + s - l2 * s;
+        const q = 2 * l2 - p;
+        this.r = hue2rgb(q, p, h + 1 / 3);
+        this.g = hue2rgb(q, p, h);
+        this.b = hue2rgb(q, p, h - 1 / 3);
       }
       ColorManagement.toWorkingColorSpace(this, colorSpace);
       return this;
@@ -5427,9 +5427,9 @@ var MundialUI = (() => {
       }
       return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
     }
-    offsetHSL(h, s, l) {
+    offsetHSL(h, s, l2) {
       this.getHSL(_hslA);
-      return this.setHSL(_hslA.h + h, _hslA.s + s, _hslA.l + l);
+      return this.setHSL(_hslA.h + h, _hslA.s + s, _hslA.l + l2);
     }
     add(color) {
       this.r += color.r;
@@ -5484,8 +5484,8 @@ var MundialUI = (() => {
       color.getHSL(_hslB);
       const h = lerp(_hslA.h, _hslB.h, alpha);
       const s = lerp(_hslA.s, _hslB.s, alpha);
-      const l = lerp(_hslA.l, _hslB.l, alpha);
-      this.setHSL(h, s, l);
+      const l2 = lerp(_hslA.l, _hslB.l, alpha);
+      this.setHSL(h, s, l2);
       return this;
     }
     setFromVector3(v) {
@@ -5502,8 +5502,8 @@ var MundialUI = (() => {
       this.b = e2[2] * r + e2[5] * g + e2[8] * b;
       return this;
     }
-    equals(c2) {
-      return c2.r === this.r && c2.g === this.g && c2.b === this.b;
+    equals(c) {
+      return c.r === this.r && c.g === this.g && c.b === this.b;
     }
     fromArray(array, offset = 0) {
       this.r = array[offset];
@@ -5960,7 +5960,7 @@ var MundialUI = (() => {
     copyAt(index1, attribute, index2) {
       index1 *= this.itemSize;
       index2 *= attribute.itemSize;
-      for (let i = 0, l = this.itemSize; i < l; i++) {
+      for (let i = 0, l2 = this.itemSize; i < l2; i++) {
         this.array[index1 + i] = attribute.array[index2 + i];
       }
       return this;
@@ -5971,13 +5971,13 @@ var MundialUI = (() => {
     }
     applyMatrix3(m) {
       if (this.itemSize === 2) {
-        for (let i = 0, l = this.count; i < l; i++) {
+        for (let i = 0, l2 = this.count; i < l2; i++) {
           _vector2$1.fromBufferAttribute(this, i);
           _vector2$1.applyMatrix3(m);
           this.setXY(i, _vector2$1.x, _vector2$1.y);
         }
       } else if (this.itemSize === 3) {
-        for (let i = 0, l = this.count; i < l; i++) {
+        for (let i = 0, l2 = this.count; i < l2; i++) {
           _vector$9.fromBufferAttribute(this, i);
           _vector$9.applyMatrix3(m);
           this.setXYZ(i, _vector$9.x, _vector$9.y, _vector$9.z);
@@ -5986,7 +5986,7 @@ var MundialUI = (() => {
       return this;
     }
     applyMatrix4(m) {
-      for (let i = 0, l = this.count; i < l; i++) {
+      for (let i = 0, l2 = this.count; i < l2; i++) {
         _vector$9.fromBufferAttribute(this, i);
         _vector$9.applyMatrix4(m);
         this.setXYZ(i, _vector$9.x, _vector$9.y, _vector$9.z);
@@ -5994,7 +5994,7 @@ var MundialUI = (() => {
       return this;
     }
     applyNormalMatrix(m) {
-      for (let i = 0, l = this.count; i < l; i++) {
+      for (let i = 0, l2 = this.count; i < l2; i++) {
         _vector$9.fromBufferAttribute(this, i);
         _vector$9.applyNormalMatrix(m);
         this.setXYZ(i, _vector$9.x, _vector$9.y, _vector$9.z);
@@ -6002,7 +6002,7 @@ var MundialUI = (() => {
       return this;
     }
     transformDirection(m) {
-      for (let i = 0, l = this.count; i < l; i++) {
+      for (let i = 0, l2 = this.count; i < l2; i++) {
         _vector$9.fromBufferAttribute(this, i);
         _vector$9.transformDirection(m);
         this.setXYZ(i, _vector$9.x, _vector$9.y, _vector$9.z);
@@ -6044,13 +6044,13 @@ var MundialUI = (() => {
       return this;
     }
     getZ(index) {
-      let z2 = this.array[index * this.itemSize + 2];
-      if (this.normalized) z2 = denormalize(z2, this.array);
-      return z2;
+      let z = this.array[index * this.itemSize + 2];
+      if (this.normalized) z = denormalize(z, this.array);
+      return z;
     }
-    setZ(index, z2) {
-      if (this.normalized) z2 = normalize(z2, this.array);
-      this.array[index * this.itemSize + 2] = z2;
+    setZ(index, z) {
+      if (this.normalized) z = normalize(z, this.array);
+      this.array[index * this.itemSize + 2] = z;
       return this;
     }
     getW(index) {
@@ -6073,29 +6073,29 @@ var MundialUI = (() => {
       this.array[index + 1] = y;
       return this;
     }
-    setXYZ(index, x, y, z2) {
+    setXYZ(index, x, y, z) {
       index *= this.itemSize;
       if (this.normalized) {
         x = normalize(x, this.array);
         y = normalize(y, this.array);
-        z2 = normalize(z2, this.array);
+        z = normalize(z, this.array);
       }
       this.array[index + 0] = x;
       this.array[index + 1] = y;
-      this.array[index + 2] = z2;
+      this.array[index + 2] = z;
       return this;
     }
-    setXYZW(index, x, y, z2, w) {
+    setXYZW(index, x, y, z, w) {
       index *= this.itemSize;
       if (this.normalized) {
         x = normalize(x, this.array);
         y = normalize(y, this.array);
-        z2 = normalize(z2, this.array);
+        z = normalize(z, this.array);
         w = normalize(w, this.array);
       }
       this.array[index + 0] = x;
       this.array[index + 1] = y;
-      this.array[index + 2] = z2;
+      this.array[index + 2] = z;
       this.array[index + 3] = w;
       return this;
     }
@@ -6222,8 +6222,8 @@ var MundialUI = (() => {
       }
       return this;
     }
-    applyQuaternion(q2) {
-      _m1.makeRotationFromQuaternion(q2);
+    applyQuaternion(q) {
+      _m1.makeRotationFromQuaternion(q);
       this.applyMatrix4(_m1);
       return this;
     }
@@ -6242,13 +6242,13 @@ var MundialUI = (() => {
       this.applyMatrix4(_m1);
       return this;
     }
-    translate(x, y, z2) {
-      _m1.makeTranslation(x, y, z2);
+    translate(x, y, z) {
+      _m1.makeTranslation(x, y, z);
       this.applyMatrix4(_m1);
       return this;
     }
-    scale(x, y, z2) {
-      _m1.makeScale(x, y, z2);
+    scale(x, y, z) {
+      _m1.makeScale(x, y, z);
       this.applyMatrix4(_m1);
       return this;
     }
@@ -6266,7 +6266,7 @@ var MundialUI = (() => {
     }
     setFromPoints(points) {
       const position = [];
-      for (let i = 0, l = points.length; i < l; i++) {
+      for (let i = 0, l2 = points.length; i < l2; i++) {
         const point = points[i];
         position.push(point.x, point.y, point.z || 0);
       }
@@ -6388,13 +6388,13 @@ var MundialUI = (() => {
         tan2[i] = new Vector3();
       }
       const vA = new Vector3(), vB = new Vector3(), vC = new Vector3(), uvA = new Vector2(), uvB = new Vector2(), uvC = new Vector2(), sdir = new Vector3(), tdir = new Vector3();
-      function handleTriangle(a, b, c2) {
+      function handleTriangle(a, b, c) {
         vA.fromArray(positions, a * 3);
         vB.fromArray(positions, b * 3);
-        vC.fromArray(positions, c2 * 3);
+        vC.fromArray(positions, c * 3);
         uvA.fromArray(uvs, a * 2);
         uvB.fromArray(uvs, b * 2);
-        uvC.fromArray(uvs, c2 * 2);
+        uvC.fromArray(uvs, c * 2);
         vB.sub(vA);
         vC.sub(vA);
         uvB.sub(uvA);
@@ -6405,10 +6405,10 @@ var MundialUI = (() => {
         tdir.copy(vC).multiplyScalar(uvB.x).addScaledVector(vB, -uvC.x).multiplyScalar(r);
         tan1[a].add(sdir);
         tan1[b].add(sdir);
-        tan1[c2].add(sdir);
+        tan1[c].add(sdir);
         tan2[a].add(tdir);
         tan2[b].add(tdir);
-        tan2[c2].add(tdir);
+        tan2[c].add(tdir);
       }
       let groups = this.groups;
       if (groups.length === 0) {
@@ -6525,7 +6525,7 @@ var MundialUI = (() => {
         const normalized = attribute.normalized;
         const array2 = new array.constructor(indices2.length * itemSize);
         let index = 0, index2 = 0;
-        for (let i = 0, l = indices2.length; i < l; i++) {
+        for (let i = 0, l2 = indices2.length; i < l2; i++) {
           if (attribute.isInterleavedBufferAttribute) {
             index = indices2[i] * attribute.data.stride + attribute.offset;
           } else {
@@ -6562,7 +6562,7 @@ var MundialUI = (() => {
       }
       geometry2.morphTargetsRelative = this.morphTargetsRelative;
       const groups = this.groups;
-      for (let i = 0, l = groups.length; i < l; i++) {
+      for (let i = 0, l2 = groups.length; i < l2; i++) {
         const group = groups[i];
         geometry2.addGroup(group.start, group.count, group.materialIndex);
       }
@@ -6656,14 +6656,14 @@ var MundialUI = (() => {
       for (const name in morphAttributes) {
         const array = [];
         const morphAttribute = morphAttributes[name];
-        for (let i = 0, l = morphAttribute.length; i < l; i++) {
+        for (let i = 0, l2 = morphAttribute.length; i < l2; i++) {
           array.push(morphAttribute[i].clone(data));
         }
         this.morphAttributes[name] = array;
       }
       this.morphTargetsRelative = source.morphTargetsRelative;
       const groups = source.groups;
-      for (let i = 0, l = groups.length; i < l; i++) {
+      for (let i = 0, l2 = groups.length; i < l2; i++) {
         const group = groups[i];
         this.addGroup(group.start, group.count, group.materialIndex);
       }
@@ -6804,8 +6804,8 @@ var MundialUI = (() => {
             for (let j = start, jl = end; j < jl; j += 3) {
               const a = index.getX(j);
               const b = index.getX(j + 1);
-              const c2 = index.getX(j + 2);
-              intersection = checkGeometryIntersection(this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c2);
+              const c = index.getX(j + 2);
+              intersection = checkGeometryIntersection(this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c);
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3);
                 intersection.face.materialIndex = group.materialIndex;
@@ -6819,8 +6819,8 @@ var MundialUI = (() => {
           for (let i = start, il = end; i < il; i += 3) {
             const a = index.getX(i);
             const b = index.getX(i + 1);
-            const c2 = index.getX(i + 2);
-            intersection = checkGeometryIntersection(this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c2);
+            const c = index.getX(i + 2);
+            intersection = checkGeometryIntersection(this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c);
             if (intersection) {
               intersection.faceIndex = Math.floor(i / 3);
               intersects.push(intersection);
@@ -6837,8 +6837,8 @@ var MundialUI = (() => {
             for (let j = start, jl = end; j < jl; j += 3) {
               const a = j;
               const b = j + 1;
-              const c2 = j + 2;
-              intersection = checkGeometryIntersection(this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c2);
+              const c = j + 2;
+              intersection = checkGeometryIntersection(this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c);
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3);
                 intersection.face.materialIndex = group.materialIndex;
@@ -6852,8 +6852,8 @@ var MundialUI = (() => {
           for (let i = start, il = end; i < il; i += 3) {
             const a = i;
             const b = i + 1;
-            const c2 = i + 2;
-            intersection = checkGeometryIntersection(this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c2);
+            const c = i + 2;
+            intersection = checkGeometryIntersection(this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c);
             if (intersection) {
               intersection.faceIndex = Math.floor(i / 3);
               intersects.push(intersection);
@@ -6881,29 +6881,29 @@ var MundialUI = (() => {
       object
     };
   }
-  function checkGeometryIntersection(object, material, raycaster, ray, uv, uv1, normal, a, b, c2) {
+  function checkGeometryIntersection(object, material, raycaster, ray, uv, uv1, normal, a, b, c) {
     object.getVertexPosition(a, _vA$1);
     object.getVertexPosition(b, _vB$1);
-    object.getVertexPosition(c2, _vC$1);
+    object.getVertexPosition(c, _vC$1);
     const intersection = checkIntersection(object, material, raycaster, ray, _vA$1, _vB$1, _vC$1, _intersectionPoint);
     if (intersection) {
       if (uv) {
         _uvA$1.fromBufferAttribute(uv, a);
         _uvB$1.fromBufferAttribute(uv, b);
-        _uvC$1.fromBufferAttribute(uv, c2);
+        _uvC$1.fromBufferAttribute(uv, c);
         intersection.uv = Triangle.getInterpolation(_intersectionPoint, _vA$1, _vB$1, _vC$1, _uvA$1, _uvB$1, _uvC$1, new Vector2());
       }
       if (uv1) {
         _uvA$1.fromBufferAttribute(uv1, a);
         _uvB$1.fromBufferAttribute(uv1, b);
-        _uvC$1.fromBufferAttribute(uv1, c2);
+        _uvC$1.fromBufferAttribute(uv1, c);
         intersection.uv1 = Triangle.getInterpolation(_intersectionPoint, _vA$1, _vB$1, _vC$1, _uvA$1, _uvB$1, _uvC$1, new Vector2());
         intersection.uv2 = intersection.uv1;
       }
       if (normal) {
         _normalA.fromBufferAttribute(normal, a);
         _normalB.fromBufferAttribute(normal, b);
-        _normalC.fromBufferAttribute(normal, c2);
+        _normalC.fromBufferAttribute(normal, c);
         intersection.normal = Triangle.getInterpolation(_intersectionPoint, _vA$1, _vB$1, _vC$1, _normalA, _normalB, _normalC, new Vector3());
         if (intersection.normal.dot(ray.direction) > 0) {
           intersection.normal.multiplyScalar(-1);
@@ -6912,7 +6912,7 @@ var MundialUI = (() => {
       const face = {
         a,
         b,
-        c: c2,
+        c,
         normal: new Vector3(),
         materialIndex: 0
       };
@@ -6985,10 +6985,10 @@ var MundialUI = (() => {
           for (let ix = 0; ix < gridX; ix++) {
             const a = numberOfVertices + ix + gridX1 * iy;
             const b = numberOfVertices + ix + gridX1 * (iy + 1);
-            const c2 = numberOfVertices + (ix + 1) + gridX1 * (iy + 1);
+            const c = numberOfVertices + (ix + 1) + gridX1 * (iy + 1);
             const d = numberOfVertices + (ix + 1) + gridX1 * iy;
             indices.push(a, b, d);
-            indices.push(b, c2, d);
+            indices.push(b, c, d);
             groupCount += 6;
           }
         }
@@ -7588,8 +7588,8 @@ var MundialUI = (() => {
       this.constant = constant;
       return this;
     }
-    setComponents(x, y, z2, w) {
-      this.normal.set(x, y, z2);
+    setComponents(x, y, z, w) {
+      this.normal.set(x, y, z);
       this.constant = w;
       return this;
     }
@@ -7598,8 +7598,8 @@ var MundialUI = (() => {
       this.constant = -point.dot(this.normal);
       return this;
     }
-    setFromCoplanarPoints(a, b, c2) {
-      const normal = _vector1.subVectors(c2, b).cross(_vector2.subVectors(a, b)).normalize();
+    setFromCoplanarPoints(a, b, c) {
+      const normal = _vector1.subVectors(c, b).cross(_vector2.subVectors(a, b)).normalize();
       this.setFromNormalAndCoplanarPoint(normal, a);
       return this;
     }
@@ -7700,20 +7700,20 @@ var MundialUI = (() => {
     }
     setFromProjectionMatrix(m, coordinateSystem = WebGLCoordinateSystem) {
       const planes = this.planes;
-      const me2 = m.elements;
-      const me0 = me2[0], me1 = me2[1], me22 = me2[2], me3 = me2[3];
-      const me4 = me2[4], me5 = me2[5], me6 = me2[6], me7 = me2[7];
-      const me8 = me2[8], me9 = me2[9], me10 = me2[10], me11 = me2[11];
-      const me12 = me2[12], me13 = me2[13], me14 = me2[14], me15 = me2[15];
+      const me = m.elements;
+      const me0 = me[0], me1 = me[1], me2 = me[2], me3 = me[3];
+      const me4 = me[4], me5 = me[5], me6 = me[6], me7 = me[7];
+      const me8 = me[8], me9 = me[9], me10 = me[10], me11 = me[11];
+      const me12 = me[12], me13 = me[13], me14 = me[14], me15 = me[15];
       planes[0].setComponents(me3 - me0, me7 - me4, me11 - me8, me15 - me12).normalize();
       planes[1].setComponents(me3 + me0, me7 + me4, me11 + me8, me15 + me12).normalize();
       planes[2].setComponents(me3 + me1, me7 + me5, me11 + me9, me15 + me13).normalize();
       planes[3].setComponents(me3 - me1, me7 - me5, me11 - me9, me15 - me13).normalize();
-      planes[4].setComponents(me3 - me22, me7 - me6, me11 - me10, me15 - me14).normalize();
+      planes[4].setComponents(me3 - me2, me7 - me6, me11 - me10, me15 - me14).normalize();
       if (coordinateSystem === WebGLCoordinateSystem) {
-        planes[5].setComponents(me3 + me22, me7 + me6, me11 + me10, me15 + me14).normalize();
+        planes[5].setComponents(me3 + me2, me7 + me6, me11 + me10, me15 + me14).normalize();
       } else if (coordinateSystem === WebGPUCoordinateSystem) {
-        planes[5].setComponents(me22, me6, me10, me14).normalize();
+        planes[5].setComponents(me2, me6, me10, me14).normalize();
       } else {
         throw new Error("THREE.Frustum.setFromProjectionMatrix(): Invalid coordinate system: " + coordinateSystem);
       }
@@ -7858,7 +7858,7 @@ var MundialUI = (() => {
         gl.bufferSubData(bufferType, 0, array);
       }
       if (updateRanges.length !== 0) {
-        for (let i = 0, l = updateRanges.length; i < l; i++) {
+        for (let i = 0, l2 = updateRanges.length; i < l2; i++) {
           const range = updateRanges[i];
           if (isWebGL2) {
             gl.bufferSubData(
@@ -7977,10 +7977,10 @@ var MundialUI = (() => {
         for (let ix = 0; ix < gridX; ix++) {
           const a = ix + gridX1 * iy;
           const b = ix + gridX1 * (iy + 1);
-          const c2 = ix + 1 + gridX1 * (iy + 1);
+          const c = ix + 1 + gridX1 * (iy + 1);
           const d = ix + 1 + gridX1 * iy;
           indices.push(a, b, d);
-          indices.push(b, c2, d);
+          indices.push(b, c, d);
         }
       }
       this.setIndex(indices);
@@ -10295,7 +10295,7 @@ var MundialUI = (() => {
       }
       for (const name in geometry.morphAttributes) {
         const array = geometry.morphAttributes[name];
-        for (let i = 0, l = array.length; i < l; i++) {
+        for (let i = 0, l2 = array.length; i < l2; i++) {
           attributes.remove(array[i]);
         }
       }
@@ -10327,7 +10327,7 @@ var MundialUI = (() => {
       const morphAttributes = geometry.morphAttributes;
       for (const name in morphAttributes) {
         const array = morphAttributes[name];
-        for (let i = 0, l = array.length; i < l; i++) {
+        for (let i = 0, l2 = array.length; i < l2; i++) {
           attributes.update(array[i], gl.ARRAY_BUFFER);
         }
       }
@@ -10340,20 +10340,20 @@ var MundialUI = (() => {
       if (geometryIndex !== null) {
         const array = geometryIndex.array;
         version = geometryIndex.version;
-        for (let i = 0, l = array.length; i < l; i += 3) {
+        for (let i = 0, l2 = array.length; i < l2; i += 3) {
           const a = array[i + 0];
           const b = array[i + 1];
-          const c2 = array[i + 2];
-          indices.push(a, b, b, c2, c2, a);
+          const c = array[i + 2];
+          indices.push(a, b, b, c, c, a);
         }
       } else if (geometryPosition !== void 0) {
         const array = geometryPosition.array;
         version = geometryPosition.version;
-        for (let i = 0, l = array.length / 3 - 1; i < l; i += 3) {
+        for (let i = 0, l2 = array.length / 3 - 1; i < l2; i += 3) {
           const a = i + 0;
           const b = i + 1;
-          const c2 = i + 2;
-          indices.push(a, b, b, c2, c2, a);
+          const c = i + 2;
+          indices.push(a, b, b, c, c, a);
         }
       } else {
         return;
@@ -10749,13 +10749,13 @@ var MundialUI = (() => {
   }
   function arraysEqual(a, b) {
     if (a.length !== b.length) return false;
-    for (let i = 0, l = a.length; i < l; i++) {
+    for (let i = 0, l2 = a.length; i < l2; i++) {
       if (a[i] !== b[i]) return false;
     }
     return true;
   }
   function copyArray(a, b) {
-    for (let i = 0, l = b.length; i < l; i++) {
+    for (let i = 0, l2 = b.length; i < l2; i++) {
       a[i] = b[i];
     }
   }
@@ -12593,7 +12593,7 @@ var MundialUI = (() => {
       transmissive.length = 0;
       transparent.length = 0;
     }
-    function getNextRenderItem(object, geometry, material, groupOrder, z2, group) {
+    function getNextRenderItem(object, geometry, material, groupOrder, z, group) {
       let renderItem = renderItems[renderItemsIndex];
       if (renderItem === void 0) {
         renderItem = {
@@ -12603,7 +12603,7 @@ var MundialUI = (() => {
           material,
           groupOrder,
           renderOrder: object.renderOrder,
-          z: z2,
+          z,
           group
         };
         renderItems[renderItemsIndex] = renderItem;
@@ -12614,14 +12614,14 @@ var MundialUI = (() => {
         renderItem.material = material;
         renderItem.groupOrder = groupOrder;
         renderItem.renderOrder = object.renderOrder;
-        renderItem.z = z2;
+        renderItem.z = z;
         renderItem.group = group;
       }
       renderItemsIndex++;
       return renderItem;
     }
-    function push(object, geometry, material, groupOrder, z2, group) {
-      const renderItem = getNextRenderItem(object, geometry, material, groupOrder, z2, group);
+    function push(object, geometry, material, groupOrder, z, group) {
+      const renderItem = getNextRenderItem(object, geometry, material, groupOrder, z, group);
       if (material.transmission > 0) {
         transmissive.push(renderItem);
       } else if (material.transparent === true) {
@@ -12630,8 +12630,8 @@ var MundialUI = (() => {
         opaque.push(renderItem);
       }
     }
-    function unshift(object, geometry, material, groupOrder, z2, group) {
-      const renderItem = getNextRenderItem(object, geometry, material, groupOrder, z2, group);
+    function unshift(object, geometry, material, groupOrder, z, group) {
+      const renderItem = getNextRenderItem(object, geometry, material, groupOrder, z, group);
       if (material.transmission > 0) {
         transmissive.unshift(renderItem);
       } else if (material.transparent === true) {
@@ -12852,7 +12852,7 @@ var MundialUI = (() => {
       let numLightProbes = 0;
       lights.sort(shadowCastingAndTexturingLightsFirst);
       const scaleFactor = useLegacyLights === true ? Math.PI : 1;
-      for (let i = 0, l = lights.length; i < l; i++) {
+      for (let i = 0, l2 = lights.length; i < l2; i++) {
         const light = lights[i];
         const color = light.color;
         const intensity = light.intensity;
@@ -13011,7 +13011,7 @@ var MundialUI = (() => {
       let rectAreaLength = 0;
       let hemiLength = 0;
       const viewMatrix = camera.matrixWorldInverse;
-      for (let i = 0, l = lights.length; i < l; i++) {
+      for (let i = 0, l2 = lights.length; i < l2; i++) {
         const light = lights[i];
         if (light.isDirectionalLight) {
           const uniforms = state.directional[directionalLength];
@@ -13378,7 +13378,7 @@ var MundialUI = (() => {
         }
       }
       const children = object.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         renderObject(children[i], camera, shadowCamera, light, type);
       }
     }
@@ -16414,7 +16414,7 @@ var MundialUI = (() => {
       const uniforms = uniformsGroup.uniforms;
       let offset = 0;
       const chunkSize = 16;
-      for (let i = 0, l = uniforms.length; i < l; i++) {
+      for (let i = 0, l2 = uniforms.length; i < l2; i++) {
         const uniformArray = Array.isArray(uniforms[i]) ? uniforms[i] : [uniforms[i]];
         for (let j = 0, jl = uniformArray.length; j < jl; j++) {
           const uniform = uniformArray[j];
@@ -17093,7 +17093,7 @@ var MundialUI = (() => {
         currentRenderState.setupLights(_this._useLegacyLights);
         if (camera.isArrayCamera) {
           const cameras = camera.cameras;
-          for (let i = 0, l = cameras.length; i < l; i++) {
+          for (let i = 0, l2 = cameras.length; i < l2; i++) {
             const camera2 = cameras[i];
             renderScene(currentRenderList, scene, camera2, camera2.viewport);
           }
@@ -17161,7 +17161,7 @@ var MundialUI = (() => {
               }
               if (Array.isArray(material)) {
                 const groups = geometry.groups;
-                for (let i = 0, l = groups.length; i < l; i++) {
+                for (let i = 0, l2 = groups.length; i < l2; i++) {
                   const group = groups[i];
                   const groupMaterial = material[group.materialIndex];
                   if (groupMaterial && groupMaterial.visible) {
@@ -17175,7 +17175,7 @@ var MundialUI = (() => {
           }
         }
         const children = object.children;
-        for (let i = 0, l = children.length; i < l; i++) {
+        for (let i = 0, l2 = children.length; i < l2; i++) {
           projectObject(children[i], camera, groupOrder, sortObjects);
         }
       }
@@ -17227,7 +17227,7 @@ var MundialUI = (() => {
         textures.updateMultisampleRenderTarget(_transmissionRenderTarget);
         textures.updateRenderTargetMipmap(_transmissionRenderTarget);
         let renderTargetNeedsUpdate = false;
-        for (let i = 0, l = transmissiveObjects.length; i < l; i++) {
+        for (let i = 0, l2 = transmissiveObjects.length; i < l2; i++) {
           const renderItem = transmissiveObjects[i];
           const object = renderItem.object;
           const geometry = renderItem.geometry;
@@ -17253,7 +17253,7 @@ var MundialUI = (() => {
       }
       function renderObjects(renderList, scene, camera) {
         const overrideMaterial = scene.isScene === true ? scene.overrideMaterial : null;
-        for (let i = 0, l = renderList.length; i < l; i++) {
+        for (let i = 0, l2 = renderList.length; i < l2; i++) {
           const renderItem = renderList[i];
           const object = renderItem.object;
           const geometry = renderItem.geometry;
@@ -17536,7 +17536,7 @@ var MundialUI = (() => {
         p_uniforms.setValue(_gl, "modelMatrix", object.matrixWorld);
         if (material.isShaderMaterial || material.isRawShaderMaterial) {
           const groups = material.uniformsGroups;
-          for (let i = 0, l = groups.length; i < l; i++) {
+          for (let i = 0, l2 = groups.length; i < l2; i++) {
             if (capabilities.isWebGL2) {
               const group = groups[i];
               uniformsGroups.update(group, program);
@@ -18196,29 +18196,29 @@ var MundialUI = (() => {
     getPoint(t, optionalTarget = new Vector3()) {
       const point = optionalTarget;
       const points = this.points;
-      const l = points.length;
-      const p = (l - (this.closed ? 0 : 1)) * t;
+      const l2 = points.length;
+      const p = (l2 - (this.closed ? 0 : 1)) * t;
       let intPoint = Math.floor(p);
       let weight = p - intPoint;
       if (this.closed) {
-        intPoint += intPoint > 0 ? 0 : (Math.floor(Math.abs(intPoint) / l) + 1) * l;
-      } else if (weight === 0 && intPoint === l - 1) {
-        intPoint = l - 2;
+        intPoint += intPoint > 0 ? 0 : (Math.floor(Math.abs(intPoint) / l2) + 1) * l2;
+      } else if (weight === 0 && intPoint === l2 - 1) {
+        intPoint = l2 - 2;
         weight = 1;
       }
       let p0, p3;
       if (this.closed || intPoint > 0) {
-        p0 = points[(intPoint - 1) % l];
+        p0 = points[(intPoint - 1) % l2];
       } else {
         tmp.subVectors(points[0], points[1]).add(points[0]);
         p0 = tmp;
       }
-      const p1 = points[intPoint % l];
-      const p2 = points[(intPoint + 1) % l];
-      if (this.closed || intPoint + 2 < l) {
-        p3 = points[(intPoint + 2) % l];
+      const p1 = points[intPoint % l2];
+      const p2 = points[(intPoint + 1) % l2];
+      if (this.closed || intPoint + 2 < l2) {
+        p3 = points[(intPoint + 2) % l2];
       } else {
-        tmp.subVectors(points[l - 1], points[l - 2]).add(points[l - 1]);
+        tmp.subVectors(points[l2 - 1], points[l2 - 2]).add(points[l2 - 1]);
         p3 = tmp;
       }
       if (this.curveType === "centripetal" || this.curveType === "chordal") {
@@ -18247,7 +18247,7 @@ var MundialUI = (() => {
     copy(source) {
       super.copy(source);
       this.points = [];
-      for (let i = 0, l = source.points.length; i < l; i++) {
+      for (let i = 0, l2 = source.points.length; i < l2; i++) {
         const point = source.points[i];
         this.points.push(point.clone());
       }
@@ -18259,7 +18259,7 @@ var MundialUI = (() => {
     toJSON() {
       const data = super.toJSON();
       data.points = [];
-      for (let i = 0, l = this.points.length; i < l; i++) {
+      for (let i = 0, l2 = this.points.length; i < l2; i++) {
         const point = this.points[i];
         data.points.push(point.toArray());
       }
@@ -18271,7 +18271,7 @@ var MundialUI = (() => {
     fromJSON(json) {
       super.fromJSON(json);
       this.points = [];
-      for (let i = 0, l = json.points.length; i < l; i++) {
+      for (let i = 0, l2 = json.points.length; i < l2; i++) {
         const point = json.points[i];
         this.points.push(new Vector3().fromArray(point));
       }
@@ -18608,7 +18608,7 @@ var MundialUI = (() => {
     copy(source) {
       super.copy(source);
       this.points = [];
-      for (let i = 0, l = source.points.length; i < l; i++) {
+      for (let i = 0, l2 = source.points.length; i < l2; i++) {
         const point = source.points[i];
         this.points.push(point.clone());
       }
@@ -18617,7 +18617,7 @@ var MundialUI = (() => {
     toJSON() {
       const data = super.toJSON();
       data.points = [];
-      for (let i = 0, l = this.points.length; i < l; i++) {
+      for (let i = 0, l2 = this.points.length; i < l2; i++) {
         const point = this.points[i];
         data.points.push(point.toArray());
       }
@@ -18626,7 +18626,7 @@ var MundialUI = (() => {
     fromJSON(json) {
       super.fromJSON(json);
       this.points = [];
-      for (let i = 0, l = json.points.length; i < l; i++) {
+      for (let i = 0, l2 = json.points.length; i < l2; i++) {
         const point = json.points[i];
         this.points.push(new Vector2().fromArray(point));
       }
@@ -18696,10 +18696,10 @@ var MundialUI = (() => {
         for (let ix = 0; ix < widthSegments; ix++) {
           const a = grid[iy][ix + 1];
           const b = grid[iy][ix];
-          const c2 = grid[iy + 1][ix];
+          const c = grid[iy + 1][ix];
           const d = grid[iy + 1][ix + 1];
           if (iy !== 0 || thetaStart > 0) indices.push(a, b, d);
-          if (iy !== heightSegments - 1 || thetaEnd < Math.PI) indices.push(b, c2, d);
+          if (iy !== heightSegments - 1 || thetaEnd < Math.PI) indices.push(b, c, d);
         }
       }
       this.setIndex(indices);
@@ -18734,7 +18734,7 @@ var MundialUI = (() => {
       const vertex2 = new Vector3();
       const normal = new Vector3();
       const uv = new Vector2();
-      let P = new Vector3();
+      let P2 = new Vector3();
       const vertices = [];
       const normals = [];
       const uvs = [];
@@ -18753,7 +18753,7 @@ var MundialUI = (() => {
         generateIndices();
       }
       function generateSegment(i) {
-        P = path.getPointAt(i / tubularSegments, P);
+        P2 = path.getPointAt(i / tubularSegments, P2);
         const N = frames.normals[i];
         const B = frames.binormals[i];
         for (let j = 0; j <= radialSegments; j++) {
@@ -18765,9 +18765,9 @@ var MundialUI = (() => {
           normal.z = cos * N.z + sin * B.z;
           normal.normalize();
           normals.push(normal.x, normal.y, normal.z);
-          vertex2.x = P.x + radius * normal.x;
-          vertex2.y = P.y + radius * normal.y;
-          vertex2.z = P.z + radius * normal.z;
+          vertex2.x = P2.x + radius * normal.x;
+          vertex2.y = P2.y + radius * normal.y;
+          vertex2.z = P2.z + radius * normal.z;
           vertices.push(vertex2.x, vertex2.y, vertex2.z);
         }
       }
@@ -18776,10 +18776,10 @@ var MundialUI = (() => {
           for (let i = 1; i <= radialSegments; i++) {
             const a = (radialSegments + 1) * (j - 1) + (i - 1);
             const b = (radialSegments + 1) * j + (i - 1);
-            const c2 = (radialSegments + 1) * j + i;
+            const c = (radialSegments + 1) * j + i;
             const d = (radialSegments + 1) * (j - 1) + i;
             indices.push(a, b, d);
-            indices.push(b, c2, d);
+            indices.push(b, c, d);
           }
         }
       }
@@ -19431,7 +19431,7 @@ var MundialUI = (() => {
         return this;
       };
       this.getHandler = function(file) {
-        for (let i = 0, l = handlers.length; i < l; i += 2) {
+        for (let i = 0, l2 = handlers.length; i < l2; i += 2) {
           const regex = handlers[i];
           const loader = handlers[i + 1];
           if (regex.global) regex.lastIndex = 0;
@@ -20119,7 +20119,7 @@ var MundialUI = (() => {
       return intersects;
     }
     intersectObjects(objects, recursive = true, intersects = []) {
-      for (let i = 0, l = objects.length; i < l; i++) {
+      for (let i = 0, l2 = objects.length; i < l2; i++) {
         intersectObject(objects[i], this, intersects, recursive);
       }
       intersects.sort(ascSort);
@@ -20135,7 +20135,7 @@ var MundialUI = (() => {
     }
     if (recursive === true) {
       const children = object.children;
-      for (let i = 0, l = children.length; i < l; i++) {
+      for (let i = 0, l2 = children.length; i < l2; i++) {
         intersectObject(children[i], raycaster, intersects, true);
       }
     }
@@ -20154,13 +20154,13 @@ var MundialUI = (() => {
   }
 
   // packages/mundial-ui/dist/mundial-ui.js
-  function we({ size: n = 26, markOnly: a = false, className: o }) {
+  function Pe({ size: n = 26, markOnly: a = false, className: o }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-brand", o].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", { width: n, height: n, viewBox: "0 0 256 256", fill: "#ffffff", xmlns: "http://www.w3.org/2000/svg", "aria-hidden": !a, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z" }) }),
       !a && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-brand__word", style: { fontSize: Math.round(n * 0.92) }, children: "Mundial" })
     ] });
   }
-  function le({ children: n, tone: a = "default", className: o }) {
+  function fe({ children: n, tone: a = "default", className: o }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "span",
       {
@@ -20169,7 +20169,7 @@ var MundialUI = (() => {
       }
     );
   }
-  var me = {
+  var Ee = {
     MEX: "mx",
     RSA: "za",
     KOR: "kr",
@@ -20219,23 +20219,23 @@ var MundialUI = (() => {
     GHA: "gh",
     PAN: "pa"
   };
-  function ue(n, a = 40) {
-    const o = me[n];
+  function ve(n, a = 40) {
+    const o = Ee[n];
     return o ? `https://flagcdn.com/w${a}/${o}.png` : "";
   }
-  function U({ code: n, size: a = "md", alt: o, className: t }) {
-    const s = ue(n, a === "lg" || a === "xl" ? 80 : 40);
+  function P({ code: n, size: a = "md", alt: o, className: t }) {
+    const r = ve(n, a === "lg" || a === "xl" ? 80 : 40);
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "img",
       {
         className: ["mun-flag", `mun-flag--${a}`, t].filter(Boolean).join(" "),
-        src: s,
+        src: r,
         alt: o ?? n,
         loading: "lazy"
       }
     );
   }
-  function pe({ active: n = false, onClick: a, children: o, className: t }) {
+  function be({ active: n = false, onClick: a, children: o, className: t }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "button",
       {
@@ -20248,74 +20248,74 @@ var MundialUI = (() => {
       }
     );
   }
-  function ye({ items: n, value: a, onChange: o, className: t }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: ["mun-navpills", t].filter(Boolean).join(" "), role: "tablist", children: n.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(pe, { active: s.id === a, onClick: () => o(s.id), children: s.label }, s.id)) });
+  function Ge({ items: n, value: a, onChange: o, className: t }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: ["mun-navpills", t].filter(Boolean).join(" "), role: "tablist", children: n.map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(be, { active: r.id === a, onClick: () => o(r.id), children: r.label }, r.id)) });
   }
-  var he = {
+  var we = {
     final: "Full Time",
     upcoming: "Kick-off",
     today: "TODAY"
   };
-  function fe({ variant: n, children: a, className: o }) {
+  function ye({ variant: n, children: a, className: o }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "span",
       {
         className: ["mun-status", `mun-status--${n}`, o].filter(Boolean).join(" "),
-        children: a ?? he[n]
+        children: a ?? we[n]
       }
     );
   }
-  function Me({
+  function Ie({
     group: n,
     state: a,
     status: o,
     teamA: t,
-    teamB: s,
-    selected: r = false,
-    onClick: m,
+    teamB: r,
+    selected: d = false,
+    onClick: h,
     onMouseEnter: E,
     onMouseLeave: A,
-    className: u
+    className: f
   }) {
-    const d = a === "final", _ = d && (t.score ?? 0) > (s.score ?? 0), G = d && (s.score ?? 0) > (t.score ?? 0), D = (p, P) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-matchcard__row", children: [
+    const m = a === "final", N = m && (t.score ?? 0) > (r.score ?? 0), G = m && (r.score ?? 0) > (t.score ?? 0), T = (i, I) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-matchcard__row", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-matchcard__team", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: p.code, size: "sm" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__code", children: p.code }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__name", children: p.name })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: i.code, size: "sm" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__code", children: i.code }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__name", children: i.name })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__score", "data-win": P || void 0, children: d ? p.score : "" })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__score", "data-win": I || void 0, children: m ? i.score : "" })
     ] });
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
       "div",
       {
-        className: ["mun-matchcard", u].filter(Boolean).join(" "),
-        "data-selected": r || void 0,
-        onClick: m,
+        className: ["mun-matchcard", f].filter(Boolean).join(" "),
+        "data-selected": d || void 0,
+        onClick: h,
         onMouseEnter: E,
         onMouseLeave: A,
-        role: m ? "button" : void 0,
+        role: h ? "button" : void 0,
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-matchcard__head", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-matchcard__group", children: [
               "GROUP ",
               n
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__status", "data-upcoming": !d || void 0, children: o })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__status", "data-upcoming": !m || void 0, children: o })
           ] }),
-          D(t, _),
-          D(s, G)
+          T(t, N),
+          T(r, G)
         ]
       }
     );
   }
-  function Oe({
+  function De({
     group: n,
     teamA: a,
     teamB: o,
     state: t,
-    score: s,
-    status: r,
-    venue: m,
+    score: r,
+    status: d,
+    venue: h,
     className: E
   }) {
     const A = t === "final";
@@ -20326,162 +20326,162 @@ var MundialUI = (() => {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-featured__score-line", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__code", children: a.code }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__score", "data-final": A || void 0, children: A ? s ?? "" : "vs" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__score", "data-final": A || void 0, children: A ? r ?? "" : "vs" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__code", children: o.code })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-featured__names", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-featured__name", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: a.code, size: "md" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: a.code, size: "md" }),
           a.name
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__dot", children: "\xB7" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-featured__name", children: [
           o.name,
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: o.code, size: "md" })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: o.code, size: "md" })
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-featured__meta", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { variant: A ? "final" : "upcoming", children: r ?? (A ? "Full Time" : "Kick-off") }),
-        m && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__venue", children: m })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ye, { variant: A ? "final" : "upcoming", children: d ?? (A ? "Full Time" : "Kick-off") }),
+        h && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__venue", children: h })
       ] })
     ] });
   }
-  function Be({
+  function ke({
     days: n,
     value: a,
     onChange: o,
     caption: t = "Drag back through the tournament to replay every result",
-    className: s
+    className: r
   }) {
-    const r = (0, import_react.useRef)(null), m = Math.max(1, n.length - 1), E = (u) => `${u / m * 100}%`, A = (u) => {
-      const d = r.current;
-      if (!d) return a;
-      const _ = d.getBoundingClientRect(), G = Math.min(1, Math.max(0, (u - _.left) / _.width));
-      return Math.round(G * m);
+    const d = (0, import_react.useRef)(null), h = Math.max(1, n.length - 1), E = (f) => `${f / h * 100}%`, A = (f) => {
+      const m = d.current;
+      if (!m) return a;
+      const N = m.getBoundingClientRect(), G = Math.min(1, Math.max(0, (f - N.left) / N.width));
+      return Math.round(G * h);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-timeline", s].filter(Boolean).join(" "), children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-timeline", r].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
         "div",
         {
-          ref: r,
+          ref: d,
           className: "mun-timeline__track",
           role: "slider",
           tabIndex: 0,
           "aria-valuemin": 0,
-          "aria-valuemax": m,
+          "aria-valuemax": h,
           "aria-valuenow": a,
           "aria-valuetext": n[a],
-          onPointerDown: (u) => {
-            var d, _;
-            (_ = (d = u.target).setPointerCapture) == null || _.call(d, u.pointerId), o(A(u.clientX));
+          onPointerDown: (f) => {
+            var m, N;
+            (N = (m = f.target).setPointerCapture) == null || N.call(m, f.pointerId), o(A(f.clientX));
           },
-          onPointerMove: (u) => {
-            u.buttons === 1 && o(A(u.clientX));
+          onPointerMove: (f) => {
+            f.buttons === 1 && o(A(f.clientX));
           },
-          onKeyDown: (u) => {
-            u.key === "ArrowLeft" && o(Math.max(0, a - 1)), u.key === "ArrowRight" && o(Math.min(m, a + 1));
+          onKeyDown: (f) => {
+            f.key === "ArrowLeft" && o(Math.max(0, a - 1)), f.key === "ArrowRight" && o(Math.min(h, a + 1));
           },
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-timeline__rail" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-timeline__fill", style: { width: E(a) } }),
-            n.map((u, d) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            n.map((f, m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
               "div",
               {
                 className: "mun-timeline__tick",
-                style: { left: E(d) },
-                onClick: (_) => {
-                  _.stopPropagation(), o(d);
+                style: { left: E(m) },
+                onClick: (N) => {
+                  N.stopPropagation(), o(m);
                 },
                 children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "span",
                   {
                     className: "mun-timeline__dot",
-                    "data-past": d <= a || void 0,
-                    "data-active": d === a || void 0
+                    "data-past": m <= a || void 0,
+                    "data-active": m === a || void 0
                   }
                 )
               },
-              d
+              m
             )),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-timeline__handle", style: { left: E(a) } })
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-timeline__labels", children: n.map((u, d) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-timeline__label", "data-active": d === a || void 0, children: u }, d)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-timeline__labels", children: n.map((f, m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-timeline__label", "data-active": m === a || void 0, children: f }, m)) }),
       t && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-timeline__caption", children: t })
     ] });
   }
-  var ge = (n) => n > 0 ? `+${n}` : String(n);
-  function Se({
+  var Fe = (n) => n > 0 ? `+${n}` : String(n);
+  function je({
     group: n,
     rows: a,
     advancing: o = 2,
     onTeamHover: t,
-    className: s
+    className: r
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-standings", s].filter(Boolean).join(" "), children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-standings", r].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-standings__head", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {}),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-standings__group", children: [
           "Group ",
           n
         ] }),
-        ["P", "W", "D", "L", "GD"].map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__col", children: r }, r)),
+        ["P", "W", "D", "L", "GD"].map((d) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__col", children: d }, d)),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__col mun-standings__col--pts", children: "Pts" })
       ] }),
-      a.map((r, m) => {
-        const E = m < o;
+      a.map((d, h) => {
+        const E = h < o;
         return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "div",
           {
             className: "mun-standings__row",
             "data-qualifies": E || void 0,
-            "data-playoff": m === o || void 0,
-            onMouseEnter: () => t == null ? void 0 : t(r.code),
+            "data-playoff": h === o || void 0,
+            onMouseEnter: () => t == null ? void 0 : t(d.code),
             onMouseLeave: () => t == null ? void 0 : t(null),
-            onClick: () => t == null ? void 0 : t(r.code),
+            onClick: () => t == null ? void 0 : t(d.code),
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__pos", children: m + 1 }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__pos", children: h + 1 }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-standings__team", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: r.code, size: "sm" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__code", children: r.code }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__name", children: r.name })
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: d.code, size: "sm" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__code", children: d.code }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__name", children: d.name })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: r.P }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: r.W }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: r.D }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: r.L }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: ge(r.GD) }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__pts", children: r.Pts })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: d.P }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: d.W }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: d.D }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: d.L }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__val", children: Fe(d.GD) }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-standings__pts", children: d.Pts })
             ]
           },
-          r.code
+          d.code
         );
       })
     ] });
   }
-  function _e({
+  function Me({
     teamA: n,
     teamB: a,
     size: o = "sm",
     onMouseEnter: t,
-    onMouseLeave: s,
-    onClick: r,
-    className: m
+    onMouseLeave: r,
+    onClick: d,
+    className: h
   }) {
     const E = (A) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-bracket-match__side", "data-winner": A.winner || void 0, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: A.code, size: o === "lg" ? "md" : "sm" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: A.code, size: o === "lg" ? "md" : "sm" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-bracket-match__code", children: A.code }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-bracket-match__name", children: A.name })
     ] });
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
       "div",
       {
-        className: ["mun-bracket-match", `mun-bracket-match--${o}`, m].filter(Boolean).join(" "),
+        className: ["mun-bracket-match", `mun-bracket-match--${o}`, h].filter(Boolean).join(" "),
         onMouseEnter: t,
-        onMouseLeave: s,
-        onClick: r,
-        role: r ? "button" : void 0,
+        onMouseLeave: r,
+        onClick: d,
+        role: d ? "button" : void 0,
         children: [
           E(n),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-bracket-match__divider" }),
@@ -20490,17 +20490,17 @@ var MundialUI = (() => {
       }
     );
   }
-  function Le({ label: n, children: a, className: o }) {
+  function ze({ label: n, children: a, className: o }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-bracket-col", o].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-bracket-col__label", children: n }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-bracket-col__matches", children: a })
     ] });
   }
-  function Re({ final: n, champion: a, className: o }) {
+  function Te({ final: n, champion: a, className: o }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-champion", o].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-champion__label", children: "FINAL" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        _e,
+        Me,
         {
           size: "lg",
           teamA: n.teamA,
@@ -20517,148 +20517,166 @@ var MundialUI = (() => {
       ] })
     ] });
   }
-  var Ne = "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
-  var z = 100;
-  function Q(n, a, o) {
-    const t = (90 - n) * Math.PI / 180, s = (a + 180) * Math.PI / 180;
+  var Le = "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
+  var X = 100;
+  function oe(n, a, o) {
+    const t = (90 - n) * Math.PI / 180, r = (a + 180) * Math.PI / 180;
     return new Vector3(
-      -o * Math.sin(t) * Math.cos(s),
+      -o * Math.sin(t) * Math.cos(r),
       o * Math.cos(t),
-      o * Math.sin(t) * Math.sin(s)
+      o * Math.sin(t) * Math.sin(r)
     );
   }
-  function se(n) {
+  function ge(n) {
     return new Quaternion().setFromUnitVectors(n.clone().normalize(), new Vector3(0, 0, 1));
   }
-  function ce(n, a) {
-    return se(Q(n, a, 1));
+  function he(n, a) {
+    return ge(oe(n, a, 1));
   }
-  function Ue({
+  function Ve({
     nations: n,
     focusCode: a,
     focusCodes: o,
     arcs: t,
-    autoRotate: s = true,
-    textureUrl: r = Ne,
-    zoom: m = 439,
+    autoRotate: r = true,
+    textureUrl: d = Le,
+    zoom: h = 439,
     onHoverNation: E,
     className: A
   }) {
-    const u = (0, import_react.useRef)(null), d = (0, import_react.useRef)({ focusCode: a, focusCodes: o, arcs: t, autoRotate: s, zoom: m, onHoverNation: E, nations: n });
-    return d.current = { focusCode: a, focusCodes: o, arcs: t, autoRotate: s, zoom: m, onHoverNation: E, nations: n }, (0, import_react.useEffect)(() => {
-      const _ = u.current;
-      if (!_) return;
-      const G = _.clientWidth || 600, D = _.clientHeight || 600, p = new WebGLRenderer({ alpha: true, antialias: true });
-      p.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)), p.setSize(G, D), Object.assign(p.domElement.style, { width: "100%", height: "100%", display: "block" }), _.appendChild(p.domElement);
-      const P = new Scene(), x = new PerspectiveCamera(40, G / D, 0.1, 2e3);
-      x.position.set(0, 0, m);
-      const b = new Group();
-      b.rotation.order = "YXZ", P.add(b);
-      const y = new MeshPhongMaterial({ color: 1455183, emissive: 530470, shininess: 6, specular: 662056 }), T = new Mesh(new SphereGeometry(z, 96, 96), y);
-      b.add(T);
-      const $ = new TextureLoader();
-      $.setCrossOrigin("anonymous"), $.load(r, (i) => {
-        y.map = i, y.color.set(16777215), y.emissive.set(660514), y.emissiveIntensity = 0.35, y.needsUpdate = true;
-      }), P.add(new AmbientLight(16777215, 0.8));
-      const H = new DirectionalLight(16777215, 0.85);
-      H.position.set(-1.2, 0.9, 1.8), P.add(H);
-      const O = new Group();
-      b.add(O);
-      const X = [], Y = [];
-      n.forEach((i) => {
-        const h = Q(i.lat, i.lon, z * 1.01), f = new Color(i.color), g = new Group(), w = new Mesh(new SphereGeometry(1.7, 14, 14), new MeshBasicMaterial({ color: f })), v = new Mesh(
+    const f = (0, import_react.useRef)(null), m = (0, import_react.useRef)({ focusCode: a, focusCodes: o, arcs: t, autoRotate: r, zoom: h, onHoverNation: E, nations: n });
+    return m.current = { focusCode: a, focusCodes: o, arcs: t, autoRotate: r, zoom: h, onHoverNation: E, nations: n }, (0, import_react.useEffect)(() => {
+      const N = f.current;
+      if (!N) return;
+      const G = N.clientWidth || 600, T = N.clientHeight || 600, i = new WebGLRenderer({ alpha: true, antialias: true });
+      i.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)), i.setSize(G, T), Object.assign(i.domElement.style, { width: "100%", height: "100%", display: "block" }), N.appendChild(i.domElement);
+      const I = new Scene(), D = new PerspectiveCamera(40, G / T, 0.1, 2e3);
+      D.position.set(0, 0, h);
+      const w = new Group();
+      w.rotation.order = "YXZ", I.add(w);
+      const F = new MeshPhongMaterial({ color: 1455183, emissive: 530470, shininess: 6, specular: 662056 }), q = new Mesh(new SphereGeometry(X, 96, 96), F);
+      w.add(q);
+      const te = new TextureLoader();
+      te.setCrossOrigin("anonymous"), te.load(d, (c) => {
+        F.map = c, F.color.set(16777215), F.emissive.set(660514), F.emissiveIntensity = 0.35, F.needsUpdate = true;
+      }), I.add(new AmbientLight(16777215, 0.8));
+      const ce = new DirectionalLight(16777215, 0.85);
+      ce.position.set(-1.2, 0.9, 1.8), I.add(ce);
+      const S = new Group();
+      w.add(S);
+      const le = [], se = [];
+      n.forEach((c) => {
+        const p = oe(c.lat, c.lon, X * 1.01), u = new Color(c.color), g = new Group(), y = new Mesh(new SphereGeometry(1.7, 14, 14), new MeshBasicMaterial({ color: u })), v = new Mesh(
           new SphereGeometry(3, 16, 16),
-          new MeshBasicMaterial({ color: f, transparent: true, opacity: 0.26 })
+          new MeshBasicMaterial({ color: u, transparent: true, opacity: 0.26 })
         );
-        g.add(w, v), g.position.copy(h), b.add(g);
-        const N = new Mesh(
+        g.add(y, v), g.position.copy(p), w.add(g);
+        const C = new Mesh(
           new SphereGeometry(6.5, 10, 10),
           new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
         );
-        N.position.copy(h), N.userData.code = i.code, b.add(N), Y.push(N), X.push({ grp: g, dot: w, ring: v, code: i.code });
+        C.position.copy(p), C.userData.code = c.code, w.add(C), se.push(C), le.push({ grp: g, dot: y, ring: v, code: c.code });
       });
-      const ee = new Raycaster(), V = (i) => {
-        const h = d.current.nations.find((f) => f.code === i);
-        return h ? Q(h.lat, h.lon, 1) : null;
-      }, B = { x: -1, y: -1, has: false };
-      let I = null;
-      const re = () => {
-        var w, v;
-        if (!d.current.onHoverNation) return;
-        const i = p.domElement.getBoundingClientRect();
-        if (i.width <= 0 || !B.has) return;
-        const h = (B.x - i.left) / i.width * 2 - 1, f = -((B.y - i.top) / i.height) * 2 + 1;
+      const re = new Raycaster(), Q = (c) => {
+        const p = m.current.nations.find((u) => u.code === c);
+        return p ? oe(p.lat, p.lon, 1) : null;
+      }, U = { x: -1, y: -1, has: false };
+      let k = null;
+      const _e = () => {
+        var y, v;
+        if (!m.current.onHoverNation) return;
+        const c = i.domElement.getBoundingClientRect();
+        if (c.width <= 0 || !U.has) return;
+        const p = (U.x - c.left) / c.width * 2 - 1, u = -((U.y - c.top) / c.height) * 2 + 1;
         let g = null;
-        if (h >= -1 && h <= 1 && f >= -1 && f <= 1) {
-          b.updateMatrixWorld(), ee.setFromCamera(new Vector2(h, f), x);
-          const N = ee.intersectObject(T, false)[0];
-          if (N) {
-            const M = new Vector3();
-            let S = 1 / 0;
-            for (const L of Y) {
-              L.getWorldPosition(M);
-              const R = M.distanceTo(N.point);
-              R < S && (S = R, g = L.userData.code);
+        if (p >= -1 && p <= 1 && u >= -1 && u <= 1) {
+          w.updateMatrixWorld(), re.setFromCamera(new Vector2(p, u), D);
+          const C = re.intersectObject(q, false)[0];
+          if (C) {
+            const O = new Vector3();
+            let R = 1 / 0;
+            for (const x of se) {
+              x.getWorldPosition(O);
+              const z = O.distanceTo(C.point);
+              z < R && (R = z, g = x.userData.code);
             }
           }
         }
-        g !== I && (I = g, (v = (w = d.current).onHoverNation) == null || v.call(w, g));
-      }, ne = (i) => {
-        B.x = i.clientX, B.y = i.clientY, B.has = true, re();
-      }, ae = () => {
-        var i, h;
-        B.has = false, I !== null && (I = null, (h = (i = d.current).onHoverNation) == null || h.call(i, null));
+        g !== k && (k = g, (v = (y = m.current).onHoverNation) == null || v.call(y, g));
       };
-      p.domElement.addEventListener("pointermove", ne), p.domElement.addEventListener("pointerleave", ae);
-      let oe = "";
-      const ie = () => {
-        var h, f;
-        for (; O.children.length; ) {
-          const g = O.children.pop();
-          O.remove(g), (h = g.geometry) == null || h.dispose(), (f = g.material) == null || f.dispose();
+      let V = -70, j = 6, W = false, $ = 0, H = 0, M = 0, L = 0;
+      const ie = (c) => {
+        if (U.x = c.clientX, U.y = c.clientY, U.has = true, W) {
+          const p = c.clientX - $, u = c.clientY - H;
+          $ = c.clientX, H = c.clientY, M = -p * 0.28, L = u * 0.28, V += M, j = Math.max(-78, Math.min(78, j + L));
+        } else
+          _e();
+      }, de = () => {
+        var c, p;
+        U.has = false, k !== null && (k = null, (p = (c = m.current).onHoverNation) == null || p.call(c, null));
+      }, me = (c) => {
+        W = true, $ = c.clientX, H = c.clientY, M = 0, L = 0, i.domElement.style.cursor = "grabbing";
+        try {
+          i.domElement.setPointerCapture(c.pointerId);
+        } catch {
         }
-        (d.current.arcs ?? []).forEach((g, w) => {
-          var C, F;
-          const v = (C = V(g.a)) == null ? void 0 : C.multiplyScalar(z * 1.02), N = (F = V(g.b)) == null ? void 0 : F.multiplyScalar(z * 1.02);
-          if (!v || !N) return;
-          const M = v.distanceTo(N), S = v.clone().add(N).multiplyScalar(0.5).normalize().multiplyScalar(z * 1.02 + M * 0.45 + 6), L = new QuadraticBezierCurve3(v, S, N), R = new TubeGeometry(L, 44, g.highlighted ? 1.1 : 0.75, 8, false), k = new Mesh(R, new MeshBasicMaterial({ color: 16765096, transparent: true, opacity: 0.55 }));
-          k.userData.i = w, O.add(k);
+      }, Y = (c) => {
+        W = false, i.domElement.style.cursor = "grab";
+        try {
+          i.domElement.releasePointerCapture(c.pointerId);
+        } catch {
+        }
+      };
+      i.domElement.style.cursor = "grab", i.domElement.addEventListener("pointermove", ie), i.domElement.addEventListener("pointerleave", de), i.domElement.addEventListener("pointerdown", me), i.domElement.addEventListener("pointerup", Y), i.domElement.addEventListener("pointercancel", Y);
+      let ue = "";
+      const Ne = () => {
+        var p, u;
+        for (; S.children.length; ) {
+          const g = S.children.pop();
+          S.remove(g), (p = g.geometry) == null || p.dispose(), (u = g.material) == null || u.dispose();
+        }
+        (m.current.arcs ?? []).forEach((g, y) => {
+          var J, _;
+          const v = (J = Q(g.a)) == null ? void 0 : J.multiplyScalar(X * 1.02), C = (_ = Q(g.b)) == null ? void 0 : _.multiplyScalar(X * 1.02);
+          if (!v || !C) return;
+          const O = v.distanceTo(C), R = v.clone().add(C).multiplyScalar(0.5).normalize().multiplyScalar(X * 1.02 + O * 0.45 + 6), x = new QuadraticBezierCurve3(v, R, C), z = new TubeGeometry(x, 44, g.highlighted ? 1.1 : 0.75, 8, false), K = new Mesh(z, new MeshBasicMaterial({ color: 16765096, transparent: true, opacity: 0.55 }));
+          K.userData.i = y, S.add(K);
         });
       };
-      let W = -70, K = m, J = 0;
-      b.quaternion.copy(ce(6, W));
-      const te = () => {
-        var R, k;
-        const i = _.clientWidth, h = _.clientHeight;
-        i && h && (Math.abs(i - p.domElement.clientWidth) > 1 || Math.abs(h - p.domElement.clientHeight) > 1) && (p.setSize(i, h), x.aspect = i / h, x.updateProjectionMatrix());
-        const f = d.current, g = JSON.stringify(f.arcs ?? []);
-        g !== oe && (oe = g, ie()), O.visible = (((R = f.arcs) == null ? void 0 : R.length) ?? 0) > 0;
-        const w = performance.now() * 3e-3, v = I ? [I] : f.focusCode ? [f.focusCode] : f.focusCodes ?? [], N = f.zoom ?? 439;
-        let M, S = N;
+      let ee = h, ne = 0;
+      w.quaternion.copy(he(j, V));
+      const pe = () => {
+        var K, J;
+        const c = N.clientWidth, p = N.clientHeight;
+        c && p && (Math.abs(c - i.domElement.clientWidth) > 1 || Math.abs(p - i.domElement.clientHeight) > 1) && (i.setSize(c, p), D.aspect = c / p, D.updateProjectionMatrix());
+        const u = m.current, g = JSON.stringify(u.arcs ?? []);
+        g !== ue && (ue = g, Ne()), S.visible = (((K = u.arcs) == null ? void 0 : K.length) ?? 0) > 0;
+        const y = performance.now() * 3e-3, v = k ? [k] : u.focusCode ? [u.focusCode] : u.focusCodes ?? [], C = u.zoom ?? 439;
+        let O, R = C;
         if (v.length) {
-          const C = v.map(V).filter(Boolean);
-          let F = C.reduce((j, Z) => j.add(Z), new Vector3());
-          F.length() < 1e-4 && (F = ((k = C[0]) == null ? void 0 : k.clone()) ?? new Vector3(0, 0, 1)), M = se(F), S = C.length >= 2 ? Math.max(N, Math.min(N + 108, N + C[0].angleTo(C[1]) * 110)) : N - 50;
+          const _ = v.map(Q).filter(Boolean);
+          let b = _.reduce((B, Z) => B.add(Z), new Vector3());
+          b.length() < 1e-4 && (b = ((J = _[0]) == null ? void 0 : J.clone()) ?? new Vector3(0, 0, 1)), O = ge(b), R = _.length >= 2 ? Math.max(C, Math.min(C + 108, C + _[0].angleTo(_[1]) * 110)) : C - 50;
         } else
-          f.autoRotate !== false && (W += 0.12), M = ce(6, W);
-        b.quaternion.slerp(M, 0.08), K += (S - K) * 0.08, x.position.z = K;
-        const L = new Set(v);
-        for (const C of X) {
-          const F = L.has(C.code), j = 1 + Math.sin(w) * 0.12;
-          C.ring.scale.setScalar((F ? 2.3 : 1) * j), C.ring.material.opacity = F ? 0.6 : L.size ? 0.06 : 0.24, C.dot.scale.setScalar(F ? 1.9 : 1);
+          W || (V += M, j = Math.max(-78, Math.min(78, j + L)), M *= 0.94, L *= 0.94, Math.abs(M) < 0.02 && (M = 0), Math.abs(L) < 0.02 && (L = 0), M === 0 && L === 0 && u.autoRotate !== false && (V += 0.12)), O = he(j, V);
+        w.quaternion.slerp(O, W ? 0.4 : 0.08), ee += (R - ee) * 0.08, D.position.z = ee;
+        const x = new Set(v), z = new Map(u.nations.map((_) => [_.code, Math.max(0, Math.min(1, _.intensity ?? 0))]));
+        for (const _ of le) {
+          const b = x.has(_.code), B = z.get(_.code) ?? 0, Z = 1 + Math.sin(y) * (0.12 + B * 0.55), Ce = b ? 2.3 : 1 + B * 1.6;
+          _.ring.scale.setScalar(Ce * Z), _.ring.material.opacity = b ? 0.6 : x.size ? 0.06 : 0.2 + B * 0.6, _.dot.scale.setScalar(b ? 1.9 : 1 + B * 0.7);
         }
-        O.children.forEach((C) => {
-          const F = (f.arcs ?? [])[C.userData.i], j = (f.arcs ?? []).some((Z) => Z.highlighted);
-          C.material.opacity = j ? F != null && F.highlighted ? 0.95 : 0.06 : 0.5;
-        }), p.render(P, x), J = requestAnimationFrame(te);
+        S.children.forEach((_) => {
+          const b = (u.arcs ?? [])[_.userData.i], B = (u.arcs ?? []).some((Z) => Z.highlighted);
+          _.material.opacity = B ? b != null && b.highlighted ? 0.95 : 0.06 : 0.5;
+        }), i.render(I, D), ne = requestAnimationFrame(pe);
       };
-      return J = requestAnimationFrame(te), () => {
-        var i;
-        cancelAnimationFrame(J), p.domElement.removeEventListener("pointermove", ne), p.domElement.removeEventListener("pointerleave", ae), p.dispose(), (i = y.map) == null || i.dispose(), y.dispose(), T.geometry.dispose(), p.domElement.parentNode === _ && _.removeChild(p.domElement);
+      return ne = requestAnimationFrame(pe), () => {
+        var c;
+        cancelAnimationFrame(ne), i.domElement.removeEventListener("pointermove", ie), i.domElement.removeEventListener("pointerleave", de), i.domElement.removeEventListener("pointerdown", me), i.domElement.removeEventListener("pointerup", Y), i.domElement.removeEventListener("pointercancel", Y), i.dispose(), (c = F.map) == null || c.dispose(), F.dispose(), q.geometry.dispose(), i.domElement.parentNode === N && N.removeChild(i.domElement);
       };
-    }, []), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: u, className: ["mun-globe", A].filter(Boolean).join(" ") });
+    }, []), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: f, className: ["mun-globe", A].filter(Boolean).join(" ") });
   }
-  var Ae = {
+  var Oe = {
     AFC: { label: "AFC", color: "#ff7fb0" },
     CAF: { label: "CAF", color: "#ffd35c" },
     CONCACAF: { label: "CONCACAF", color: "#ff8a5c" },
@@ -20666,31 +20684,31 @@ var MundialUI = (() => {
     OFC: { label: "OFC", color: "#5fd4e0" },
     UEFA: { label: "UEFA", color: "#6ea8ff" }
   };
-  var Ce = Object.values(Ae);
-  function Ge({
-    items: n = Ce,
+  var Be = Object.values(Oe);
+  function We({
+    items: n = Be,
     title: a = "Confederations",
     className: o
   }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-legend", o].filter(Boolean).join(" "), children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { tone: "subtle", children: a }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { tone: "subtle", children: a }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-legend__items", children: n.map((t) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-legend__item", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-legend__dot", style: { background: t.color, boxShadow: `0 0 10px ${t.color}` } }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-legend__label", children: t.label })
       ] }, t.label)) })
     ] });
   }
-  function Pe({
+  function Ke({
     name: n,
     code: a,
     group: o,
     confederation: t,
-    flagCode: s,
-    className: r
+    flagCode: r,
+    className: d
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-country", r].filter(Boolean).join(" "), children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-country", d].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-country__name", style: { color: t.color }, children: n }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: s ?? a, size: "lg" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: r ?? a, size: "lg" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-country__code", children: a }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-country__badges", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-country__badge", children: [
@@ -20701,29 +20719,29 @@ var MundialUI = (() => {
       ] })
     ] });
   }
-  function xe({ group: n, accentColor: a, fixtures: o, className: t }) {
+  function Je({ group: n, accentColor: a, fixtures: o, className: t }) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-fixtures", t].filter(Boolean).join(" "), children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(le, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { color: a }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(fe, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { color: a }, children: [
         "Group ",
         n,
         " \xB7 Fixtures"
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-fixtures__list", children: o.map((s, r) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-fixtures__row", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mun-fixtures__list", children: o.map((r, d) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-fixtures__row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-fixtures__match", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-fixtures__opp", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(U, { code: s.oppCode, size: "md" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(P, { code: r.oppCode, size: "md" }),
             "vs ",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: a }, children: s.oppCode }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: a }, children: r.oppCode }),
             " \xB7 ",
-            s.oppName
+            r.oppName
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-fixtures__venue", children: s.venue })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-fixtures__venue", children: r.venue })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-fixtures__date", children: s.date })
-      ] }, r)) })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-fixtures__date", children: r.date })
+      ] }, d)) })
     ] });
   }
-  var Ee = [
+  var Se = [
     { name: "Mexico", code: "MEX", group: "A", confed: "CONCACAF", lat: 23.6, lon: -102.5 },
     { name: "South Africa", code: "RSA", group: "A", confed: "CAF", lat: -30.6, lon: 22.9 },
     { name: "South Korea", code: "KOR", group: "A", confed: "AFC", lat: 36.5, lon: 127.8 },
@@ -20773,12 +20791,12 @@ var MundialUI = (() => {
     { name: "Ghana", code: "GHA", group: "L", confed: "CAF", lat: 7.9, lon: -1 },
     { name: "Panama", code: "PAN", group: "L", confed: "CONCACAF", lat: 8.5, lon: -80 }
   ];
-  var ve = Object.fromEntries(
-    Ee.map((n) => [n.code, n])
+  var Ue = Object.fromEntries(
+    Se.map((n) => [n.code, n])
   );
-  function Ie(n) {
+  function Ze(n) {
     var a;
-    return ((a = ve[n]) == null ? void 0 : a.name) ?? n;
+    return ((a = Ue[n]) == null ? void 0 : a.name) ?? n;
   }
   return __toCommonJS(bundle_entry_exports);
 })();

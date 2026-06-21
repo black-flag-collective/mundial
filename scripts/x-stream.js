@@ -36,8 +36,14 @@ async function streamPosts(onPost, { signal, onOpen } = {}) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
+    // Capture the server's rate-limit window so the runner can wait exactly
+    // until it resets (instead of a blind exponential guess) on 429/420.
+    const reset = res.headers.get('x-rate-limit-reset'); // epoch seconds
+    const retryAfter = res.headers.get('retry-after'); // seconds
     throw Object.assign(new Error(`stream HTTP ${res.status} ${text.slice(0, 200)}`), {
       status: res.status,
+      rateLimitResetMs: reset ? Number(reset) * 1000 : null,
+      retryAfterMs: retryAfter ? Number(retryAfter) * 1000 : null,
     });
   }
 

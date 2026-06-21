@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "update": "node scripts/update-data.js",
-    "test": "node scripts/smoke-test.js"
+    "test": "node scripts/x-self-test.js && node scripts/smoke-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",

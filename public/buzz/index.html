@@ -236,11 +236,11 @@ class Component extends DCLogic {
     const hot = hotEntry ? (this.byCode[hotEntry.code] || {}) : null;
 
     // Connection pill + tiles adapt to the active mode.
-    const connText = counts ? (h.capped ? 'CAPPED' : 'COUNTS') : mode === 'sim' ? 'SIMULATED' : mode === 'off' ? 'OFF' : 'STREAM';
-    const liveish = (counts && !h.capped) || mode === 'sim';
-    const connDot = h.capped ? '#ff8a5c' : liveish ? '#5fe0a0' : 'var(--mun-fg-dim)';
+    const connText = counts ? (h.capped ? 'CAPPED' : h.rateLimited ? 'PAUSED' : 'COUNTS') : mode === 'sim' ? 'SIMULATED' : mode === 'off' ? 'OFF' : 'STREAM';
+    const liveish = (counts && !h.capped && !h.rateLimited) || mode === 'sim';
+    const connDot = (h.capped || h.rateLimited) ? '#ff8a5c' : liveish ? '#5fe0a0' : 'var(--mun-fg-dim)';
     const connSub = counts
-      ? (h.activeTeams ? `${h.activeTeams.length} active team(s)` : 'no matches today')
+      ? `${h.phase || 'idle'} · ${(h.activeTeams || []).length} active team(s)`
       : mode === 'sim' ? 'procedural source · no X cost' : (h.lastEvent || '');
 
     let tiles;
@@ -252,7 +252,7 @@ class Component extends DCLogic {
         { label: 'Source', value: 'Counts', unit: 'X API', sub: 'volume, not post bodies', tone: 'var(--mun-accent)', hasBar: false },
         { label: 'Active teams', value: String((h.activeTeams || []).length), unit: 'today', sub: (h.activeTeams || []).join(' ') || '—', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Requests today', value: String(h.requestsToday || 0), unit: '/ ' + (h.dailyCap || '—'), sub: h.capped ? 'cap reached · paused' : 'daily budget', tone: reqColor, hasBar: true, barPct: reqPct + '%', barColor: reqColor },
-        { label: 'Poll window', value: String(h.windowMin || '—'), unit: 'min', sub: 'every ' + Math.round((h.intervalMs || 0) / 60000) + 'm', tone: 'var(--mun-fg-display)', hasBar: false },
+        { label: 'Cadence', value: String(h.windowMin || '—'), unit: 'min window', sub: 'live ' + Math.round((h.liveIntervalMs || 0) / 1000) + 's · slow ' + Math.round((h.slowIntervalMs || 0) / 60000) + 'm', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Last poll', value: agoP == null ? '—' : (agoP < 1 ? 'now' : agoP + 's'), unit: agoP == null || agoP < 1 ? '' : 'ago', sub: h.lastEvent || 'idle', tone: 'var(--mun-fg-display)', hasBar: false },
       ];
     } else {
@@ -260,7 +260,7 @@ class Component extends DCLogic {
         { label: 'Source', value: mode === 'sim' ? 'Simulated' : 'Stream', unit: '', sub: mode === 'sim' ? 'no X cost' : (h.lastEvent || ''), tone: 'var(--mun-accent)', hasBar: false },
         { label: 'Nations lit', value: String(s.snap.filter((e) => this.intensity(e) > 0.55).length), unit: 'hot', sub: 'score + spike', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Tracked', value: String(s.teams.length), unit: 'teams', sub: 'all qualified nations', tone: 'var(--mun-fg-display)', hasBar: false },
-        { label: 'Mode', value: connText, unit: '', sub: counts ? 'cost-bounded' : 'set X_BUZZ_MODE=counts for live', tone: 'var(--mun-fg-display)', hasBar: false },
+        { label: 'Mode', value: connText, unit: '', sub: mode === 'sim' ? 'add X_BEARER_TOKEN for live counts' : 'firehose (X_BUZZ_MODE=stream)', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Token', value: h.tokenConfigured ? 'set' : 'none', unit: '', sub: h.tokenConfigured ? 'X configured' : 'simulation only', tone: 'var(--mun-fg-display)', hasBar: false },
       ];
     }

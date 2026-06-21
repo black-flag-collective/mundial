@@ -123,6 +123,34 @@ set `X_BUZZ_MODE=stream` (and `X_STREAM_DISABLED` isn't `1`).
 
 ---
 
+## Trends: what's trending per location
+
+Alongside the per-team *volume* signal, the **`GET /2/trends/by_woeid/{woeid}`**
+endpoint gives the actual **trending topics** (name + post count) for a place —
+the "what the world is watching" layer. It's billed **per location**, so polling
+worldwide + the three host nations is a handful of requests per cycle, wholly
+separate from (and far cheaper than) the 48-team counts budget.
+
+[`scripts/x-trends.js`](../scripts/x-trends.js) polls those locations on a slow
+cadence and serves the result at **`GET /api/trends.json`**:
+
+```json
+{
+  "updatedAt": "…", "source": "x-trends",
+  "locations": [{ "woeid": 1, "name": "Worldwide",
+    "trends": [{ "name": "#WorldCup2026", "postCount": 50000, "wc": true }, …] }],
+  "health": { "enabled": true, "requestsToday": 4, "dailyCap": 800, "capped": false, … }
+}
+```
+
+Each trend is tagged `wc: true` when it looks World-Cup relevant (a nation name,
+a `#CODE`, or a keyword like "world cup"/"fifa") so the UI can filter the noise.
+Runs whenever `X_BEARER_TOKEN` is set (off with `X_TRENDS_DISABLED=1`); app-only
+Bearer auth, no token → inert and `/api/trends.json` returns an empty set. Knobs:
+`X_TRENDS_INTERVAL_MS` (default 10m), `X_TRENDS_DAILY_CAP` (800), `X_TRENDS_WOEIDS`.
+
+---
+
 ## How it works (firehose stream)
 
 ```

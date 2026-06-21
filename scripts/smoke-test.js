@@ -112,6 +112,12 @@ async function run() {
     const b0 = Array.isArray(bjson?.buzz) ? bjson.buzz[0] : null;
     check('buzz entries have code/score/spike/rank',
       b0 && typeof b0.code === 'string' && typeof b0.score === 'number' && typeof b0.spike === 'number' && typeof b0.rank === 'number');
+
+    const trends = await get('/api/trends.json');
+    check('GET /api/trends.json returns 200', trends.status === 200);
+    let tjson = null;
+    try { tjson = JSON.parse(trends.body); } catch { /* leave null */ }
+    check('trends.json has locations[] + health', tjson && Array.isArray(tjson.locations) && typeof tjson.health === 'object');
   } catch (err) {
     failed = true;
     console.error(`\nSmoke test error: ${err.message}`);

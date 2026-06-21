@@ -75,6 +75,13 @@ app.get('/api/buzz.json', (req, res) => {
   }
 });
 
+// What's trending on X per location (worldwide + host nations). Empty until the
+// trends poller has a token and has run; the UI degrades gracefully.
+app.get('/api/trends.json', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ...trendsPoller.snapshot(), health: trendsPoller.stats() });
+});
+
 // ── Live X buzz stream (optional) ──────────────────────────────────────────
 // One upstream X Filtered Stream connection per process feeds the buzz engine
 // (per-country signal) AND is relayed to every browser over Server-Sent Events.
@@ -84,6 +91,11 @@ const { runForever } = require('./scripts/x-stream-runner');
 const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
 const { createCountsPoller, resolveBuzzMode } = require('./scripts/buzz-counts');
+const { createTrendsPoller } = require('./scripts/x-trends');
+
+// X Trends (what's trending per location) runs alongside whichever buzz source —
+// it's a separate, per-location read, billed independently and very cheaply.
+const trendsPoller = createTrendsPoller({});
 
 // Aborting this on shutdown drops the X connection promptly so the single
 // allowed stream slot is released before a redeploy's new machine connects
@@ -272,6 +284,9 @@ const server = app.listen(PORT, () => {
 
   // Start the buzz engine (no API key required — simulated/goal-derived source).
   buzz.start();
+
+  // X Trends poller — independent of the buzz source; no-ops without a token.
+  trendsPoller.start(xStreamController.signal);
 
   // Live buzz source. Counts mode (recommended, cost-bounded) supersedes the
   // firehose stream. Both honor graceful shutdown via xStreamController.

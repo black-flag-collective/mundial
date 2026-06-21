@@ -4,7 +4,7 @@
 // provided by the DC runtime (support.js exposes window.React), so only the
 // component bundle + styles are loaded here.
 (() => {
-  const base = '_ds';
+  const base = '../_ds';
   for (const p of ['_ds_bundle.css', 'styles.css']) {
     const l = document.createElement('link');
     l.rel = 'stylesheet';

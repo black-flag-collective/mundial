@@ -5,6 +5,8 @@ Jun 11 – Jul 19) — a 3D globe of all 48 nations paired with day-by-day resul
 computed group tables, a projected knockout bracket, and a real-time "buzz"
 layer showing which countries the world is watching right now.
 
+**Live:** [mundial-buzz.fly.dev](https://mundial-buzz.fly.dev)
+
 Everything is one page with five views. The globe stays mounted behind every
 view, so moving between them feels continuous.
 
@@ -17,35 +19,67 @@ view, so moving between them feels continuous.
 | 🏆 | **Bracket** | How might the knockouts play out? | [bracket.md](docs/features/bracket.md) |
 
 **Feature tour:** in-app at **`/features`** ([source](public/features/index.html)) ·
-[`docs/FEATURES.md`](docs/FEATURES.md) ·
-**Operator/dev docs:** [`HANDOFF.md`](HANDOFF.md),
-[`docs/DATA-PIPELINE.md`](docs/DATA-PIPELINE.md),
-[`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md)
+[`docs/FEATURES.md`](docs/FEATURES.md)
 
 ---
 
-# CODING AGENTS: READ THIS FIRST
+## Running locally
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Requires **Node ≥ 20**.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+```bash
+npm install
+npm start          # serves http://localhost:3000
+```
 
-## What you should do — IMPORTANT
+That's it — the web server has no required secrets and serves the seeded match
+data in [`data/matches.json`](data/matches.json) out of the box.
 
-**Read the chat transcripts first.** There are 5 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+| Command | What it does |
+|---------|--------------|
+| `npm start` | Run the Express server (`server.js`) |
+| `npm test` | Boot the server and smoke-test the routes + X rules self-test |
+| `npm run update` | Run the match-data updater by hand (needs `ANTHROPIC_API_KEY`) |
 
-**Read `project/Match Hero.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+Optional environment variables are documented in
+[`.env.example`](.env.example). None are needed to run the app — they only
+enable the live data updater (`ANTHROPIC_API_KEY`) and the real-time X buzz
+stream (`X_BEARER_TOKEN`); without them the app falls back to seeded data and a
+simulated buzz signal.
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## How it works
 
-## About the design files
+- **Frontend** — a single-page app in [`public/`](public/): a Three.js globe
+  plus the five views, with a WebGL shader "buzz" layer rippling over the map.
+- **Server** — [`server.js`](server.js) (Express) serves the app and exposes
+  `/api/data.json` (matches, with a per-request `today` flag) and
+  `/api/buzz.json` (the live buzz snapshot).
+- **Data pipeline** — a scheduled GitHub Action runs
+  [`scripts/update-data.js`](scripts/update-data.js), which uses Claude with web
+  search to find the latest results and commits them back to
+  `data/matches.json` (additively — confirmed final scores are never
+  overwritten). See [`docs/DATA-PIPELINE.md`](docs/DATA-PIPELINE.md).
+- **Buzz** — [`scripts/buzz-engine.js`](scripts/buzz-engine.js) produces a
+  per-country intensity signal (from a simulated source by default, or the live
+  X API when configured). See [`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md).
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+Architecture, the data model, and operational notes live in
+[`HANDOFF.md`](HANDOFF.md). Deployment is documented in
+[`DEPLOY.md`](DEPLOY.md).
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+## Project structure
 
-## Bundle contents
+```
+public/        the single-page app (globe, views, buzz shader)
+server.js      Express server + JSON APIs
+scripts/       data updater, buzz engine, X stream adapter, tests
+data/          seeded match data (matches.json)
+docs/          feature tour + data/realtime pipeline docs
+packages/      mundial-ui design-system package
+project/        original HTML/CSS/JS design prototypes (kept for reference)
+chats/          design-iteration transcripts (kept for reference)
+```
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `mundial.buzz` project files (HTML prototypes, assets, components)
+## License
+
+[MIT](LICENSE) © Black Flag Collective

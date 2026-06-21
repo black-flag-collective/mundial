@@ -297,6 +297,12 @@
                       </sc-if>
                       <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
                     </div>
+                    <sc-if value="{{ xHasVs }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.06em; text-transform: uppercase;"><span>match chatter</span><span><span style="color: var(--mun-accent); font-weight: 700;">{{ xVsShare }}</span> {{ xSelCode }} &middot; {{ xVsOppShare }} {{ xVsName }}</span></div>
+                        <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;"><span style="position: absolute; inset: 0 auto 0 0; width: {{ xVsPct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span></span>
+                      </div>
+                    </sc-if>
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
@@ -1834,6 +1840,23 @@ class Component extends DCLogic {
         return (Math.round(x * 10) / 10) + ',' + (Math.round(y * 10) / 10);
       }).join(' ');
     }
+    // Head-to-head buzz split: when both teams of the selected nation's match are
+    // being polled, show who's winning the chatter (free — both counts on hand).
+    let xVsName = '', xVsShare = '', xVsOppShare = '', xVsPct = '';
+    const xSelMatch = (xPer && xSel) ? this.todayMatchFor(xSel) : null;
+    if (xSelMatch) {
+      const oppCode = xSelMatch.a === xSel ? xSelMatch.b : xSelMatch.a;
+      const oppPer = xh.perTeam ? xh.perTeam[oppCode] : null;
+      const a = (xPer.count | 0), b = oppPer ? (oppPer.count | 0) : -1;
+      if (oppPer && a + b > 0) {
+        const pct = Math.round((a / (a + b)) * 100);
+        xVsName = this.byCode[oppCode] ? this.byCode[oppCode].name : oppCode;
+        xVsPct = pct + '%';
+        xVsShare = pct + '%';
+        xVsOppShare = (100 - pct) + '%';
+      }
+    }
+    const xHasVs = !!xVsName;
 
     // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
     const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
@@ -1947,6 +1970,11 @@ class Component extends DCLogic {
       xSelNow: xSelNow,
       xHasSpark: xHasSpark,
       xSelSpark: xSelSpark,
+      xHasVs: xHasVs,
+      xVsName: xVsName,
+      xVsShare: xVsShare,
+      xVsOppShare: xVsOppShare,
+      xVsPct: xVsPct,
       closeXInspect: () => this.setState({ buzzFocusCode: null }),
       retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,

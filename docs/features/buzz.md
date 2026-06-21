@@ -18,8 +18,13 @@ generating the most chatter right now, ranked by a **buzz score**.
 
 ## What you can do
 
-- **Click any row** to jump to the [Globe](globe.md) with that nation
-  spotlighted. When you return, that row scrolls back into view.
+- **Tap any row** to open the **inspect panel** — "what we're pulling from X"
+  for that nation. When the live feed is active it shows the exact recent-counts
+  query, the post volume + a per-minute **sparkline**, the **peak / current**
+  rate, and — for a nation in a live match — the **head-to-head split** (which
+  side is winning the match's chatter). For a nation that isn't being polled
+  live, it explains *when* its match is (kicks off later / played earlier / not
+  today) and notes its bar is ambient interest.
 
 ## States
 

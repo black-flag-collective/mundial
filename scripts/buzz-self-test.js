@@ -8,13 +8,26 @@
  */
 
 const assert = require('node:assert');
-const { BuzzEngine } = require('./buzz-engine');
+const { BuzzEngine, weightForRank, buildPop } = require('./buzz-engine');
 
 let passed = 0;
 const checks = [];
 function check(name, fn) { checks.push({ name, fn }); }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+check('pop: weightForRank descends from 1.0 and clamps to the baseline', () => {
+  assert.strictEqual(weightForRank(1), 1, 'rank 1 → 1.0');
+  assert.ok(weightForRank(1) > weightForRank(6) && weightForRank(6) > weightForRank(15), 'monotonic by rank');
+  assert.strictEqual(weightForRank(200), 0.45, 'deep ranks clamp to the baseline');
+});
+check('pop: buildPop seeds weights from the FIFA ranking, rest at baseline', () => {
+  const pop = buildPop({ ranks: { ARG: 1, BRA: 6 } });
+  assert.strictEqual(pop.ARG, 1, 'rank 1 nation weighted top');
+  assert.ok(pop.BRA < pop.ARG && pop.BRA > 0.45, 'mid top-20 nation between top and baseline');
+  assert.strictEqual(pop.GHA, 0.45, 'an unranked nation gets the baseline');
+  for (const code of Object.keys(pop)) assert.ok(pop[code] >= 0.45 && pop[code] <= 1, code + ' in range');
+  assert.ok(Object.keys(pop).length >= 48, 'covers the full field');
+});
 check('constructor: every nation starts in range, no spike', () => {
   const e = new BuzzEngine();
   const codes = Object.keys(e.state);

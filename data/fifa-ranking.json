@@ -1,0 +1,27 @@
+{
+  "source": "FIFA/Coca-Cola Men's World Ranking",
+  "asOf": "2026-06-11",
+  "url": "https://en.wikipedia.org/wiki/FIFA_Men's_World_Ranking",
+  "note": "Published top-20 captured verbatim from the 11 June 2026 release. Nations outside the top 20 are not enumerated here; the buzz engine gives them a uniform baseline weight (see scripts/buzz-engine.js / docs/METHODOLOGY.md). Rank 12 (Italy) is omitted as it is not in this tournament's field.",
+  "ranks": {
+    "ARG": 1,
+    "ESP": 2,
+    "FRA": 3,
+    "ENG": 4,
+    "POR": 5,
+    "BRA": 6,
+    "MAR": 7,
+    "NED": 8,
+    "BEL": 9,
+    "GER": 10,
+    "CRO": 11,
+    "COL": 13,
+    "MEX": 14,
+    "SEN": 15,
+    "URU": 16,
+    "USA": 17,
+    "JPN": 18,
+    "SUI": 19,
+    "IRN": 20
+  }
+}

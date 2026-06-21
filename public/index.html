@@ -294,6 +294,7 @@
               <span style="font-size: 14px; color: var(--mun-fg); line-height: 1.45;">&ldquo;{{ oracleHotTake }}&rdquo;</span>
               <span style="font-size: 12px; color: var(--mun-fg-muted); line-height: 1.5;">{{ oracleEvidence }}</span>
               <span style="font-size: 10px; color: var(--mun-fg-faint); letter-spacing: 0.04em;">mundial.buzz &middot; data-grounded from live X buzz &middot; {{ oracleCachedNote }}</span>
+              <span onClick="{{ shareOracle }}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 6px 14px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleShareLabel }}</span>
             </div>
           </sc-if>
         </div>
@@ -1007,6 +1008,29 @@ class Component extends DCLogic {
         }
       })
       .catch(() => { this._oracleLoading = false; this._oracleErr = 'Could not reach the Oracle.'; this.setState({ oracleStatus: 'error' }); });
+  }
+
+  // Share the current prediction: native share sheet on mobile, clipboard
+  // fallback elsewhere (with a brief "Copied!" confirmation). The shared text
+  // carries the mundial.buzz link — that's the viral loop.
+  oracleShareText() {
+    const p = this._oracle || {};
+    const score = p.finalScore ? ` (${p.finalScore}${p.runnerUp ? ' vs ' + p.runnerUp : ''})` : '';
+    const take = p.hotTake ? ` “${p.hotTake}”` : '';
+    return `🔮 The Buzz Oracle calls it: ${p.championName || p.champion} to win the 2026 World Cup${score}.${take} — read live from the world’s X buzz at https://mundial.buzz`;
+  }
+  shareOracle() {
+    if (!this._oracle) return;
+    const text = this.oracleShareText();
+    const url = 'https://mundial.buzz';
+    if (navigator.share) { navigator.share({ title: 'mundial.buzz · Buzz Oracle', text, url }).catch(() => {}); return; }
+    const confirm = () => {
+      this.setState({ oracleShared: true });
+      clearTimeout(this._shareT);
+      this._shareT = setTimeout(() => this.setState({ oracleShared: false }), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(confirm).catch(confirm);
+    else confirm();
   }
 
   // Compact post-count formatting for trend chips: 950→"950", 12000→"12K", 1.2M.
@@ -2089,6 +2113,8 @@ class Component extends DCLogic {
       oracleHotTake: op.hotTake || '',
       oracleEvidence: op.evidence || '',
       oracleCachedNote: op.cached ? 'the world’s current read' : 'fresh read',
+      shareOracle: () => this.shareOracle(),
+      oracleShareLabel: this.state.oracleShared ? '✓ Copied!' : '\u{1F517} Share this prediction',
       buzzLoading: buzzLoading,
       buzzError: buzzError,
       buzzEmpty: buzzEmpty,

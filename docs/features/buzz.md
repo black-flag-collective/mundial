@@ -55,4 +55,9 @@ built-in simulated source — the experience is identical either way. Only
 **aggregate intensity per country** is stored; no post text, authors, or
 account IDs.
 
-See also: [Globe](globe.md) · [full feature tour](../FEATURES.md)
+**Exactly what the score measures** — and where it's real measured X volume vs a
+modeled attention estimate, and how the Oracle's prediction uses it — is defined
+in [METHODOLOGY.md](../METHODOLOGY.md). Short version: buzz is *attention* (how
+much a nation is talked about), not a measure of team strength.
+
+See also: [Globe](globe.md) · [full feature tour](../FEATURES.md) · [Methodology](../METHODOLOGY.md)

@@ -69,6 +69,10 @@ simulated buzz signal.
   per-country intensity signal (from a simulated source by default, or the live
   X API when configured). See [`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md).
 
+**What "buzzing" actually measures, and how the Buzz Oracle prediction uses it,
+is defined honestly in [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** — including
+where the number is real measured X volume vs a modeled attention estimate.
+
 Architecture, the data model, and operational notes live in
 [`HANDOFF.md`](HANDOFF.md).
 

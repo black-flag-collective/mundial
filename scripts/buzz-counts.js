@@ -192,6 +192,8 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     requestsToday: 0,
     dailyCap: DAILY_CAP,
     capped: false,
+    rateLimited: false,
+    pausedUntilMs: null,
     liveIntervalMs: LIVE_INTERVAL,
     slowIntervalMs: SLOW_INTERVAL,
     idleIntervalMs: IDLE_INTERVAL,
@@ -208,6 +210,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   const lastFetchAt = {}; // code -> ms of last successful counts request
   const lastCount = {};   // code -> last total
   const perTeamState = {}; // code -> { query, count, signal, trend }
+  let pausedUntil = 0;    // ms epoch — when X rate-limited us, don't spend until this
 
   function captureRate(r) {
     const rem = r.headers.get('x-rate-limit-remaining');
@@ -229,6 +232,14 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     if (!r.ok) {
       stats.errors++;
       stats.lastEvent = `counts HTTP ${r.status}`;
+      // Rate-limited (429) or capacity (420): honor the server's reset window so
+      // we stop spending requests that only earn more 429s. Falls back to ~60s.
+      if (r.status === 429 || r.status === 420) {
+        const reset = r.headers.get('x-rate-limit-reset');
+        const retry = r.headers.get('retry-after');
+        const resetMs = reset ? Number(reset) * 1000 : (retry ? Date.now() + Number(retry) * 1000 : Date.now() + 60_000);
+        return { total: 0, series: [], rateLimited: true, resetMs };
+      }
       return { total: 0, series: [] };
     }
     const body = await r.json().catch(() => ({}));
@@ -259,7 +270,10 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     // Tiered selection: live nations every cycle, warmup/cooldown on the slow tier.
     const now = Date.now();
-    const fetchCodes = codes.filter((c) => dueForFetch(phaseOf(c), lastFetchAt[c], now, SLOW_INTERVAL));
+    // Respect a rate-limit pause: while X has us paused we spend nothing, but the
+    // board stays alive from last-known counts (normalized below). Skip the fetch.
+    const paused = now < pausedUntil;
+    const fetchCodes = paused ? [] : codes.filter((c) => dueForFetch(phaseOf(c), lastFetchAt[c], now, SLOW_INTERVAL));
 
     // Circuit breaker: don't start a fetch we can't finish within the daily cap.
     if (fetchCodes.length && stats.requestsToday + fetchCodes.length > DAILY_CAP) {
@@ -270,12 +284,20 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     }
     stats.capped = false;
 
+    let fetched = 0;
     for (const code of fetchCodes) {
-      const { total, series } = await countFor(code);
+      const { total, series, rateLimited, resetMs } = await countFor(code);
+      if (rateLimited) {
+        // X rate-limited us — back off until its reset window, don't keep trying.
+        pausedUntil = resetMs || (Date.now() + 60_000);
+        stats.lastEvent = `rate-limited by X — pausing counts until ${new Date(pausedUntil).toLocaleTimeString()}`;
+        break;
+      }
       const s = computeTrend(series);
       lastCount[code] = total;
       lastFetchAt[code] = Date.now();
       stats.requestsToday++;
+      fetched++;
       const rule = ruleForTeam(code);
       perTeamState[code] = {
         query: rule ? rule.value : '',
@@ -308,10 +330,13 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     for (const code of codes) if (perTeamState[code]) perTeam[code] = perTeamState[code];
     stats.perTeam = perTeam;
 
-    if (fetchCodes.length) {
+    stats.rateLimited = Date.now() < pausedUntil;
+    stats.pausedUntilMs = pausedUntil || null;
+
+    if (fetched) {
       stats.lastPollMs = Date.now();
       const top = codes.reduce((a, b) => ((lastCount[b] || 0) >= (lastCount[a] || 0) ? b : a), codes[0]);
-      stats.lastEvent = `${stats.phase} · fetched ${fetchCodes.length}/${codes.length} team(s) · hottest ${top} (${lastCount[top] || 0})`;
+      stats.lastEvent = `${stats.phase} · fetched ${fetched}/${codes.length} team(s) · hottest ${top} (${lastCount[top] || 0})`;
     }
   }
 
@@ -335,6 +360,10 @@ function createCountsPoller({ engine, log = console, context } = {}) {
         // Live matches set the fast cadence; a window with only warmup/cooldown
         // nations ticks on the slow tier; nothing active → request-free re-check.
         nextDelay = !codes.length ? IDLE_INTERVAL : (anyLive ? LIVE_INTERVAL : SLOW_INTERVAL);
+        // If X rate-limited us, don't tick again until its reset window passes.
+        if (stats.pausedUntilMs && stats.pausedUntilMs > Date.now()) {
+          nextDelay = Math.max(nextDelay, stats.pausedUntilMs - Date.now() + 1_000);
+        }
       } catch (e) {
         stats.errors++;
         stats.lastEvent = 'cycle error: ' + e.message;

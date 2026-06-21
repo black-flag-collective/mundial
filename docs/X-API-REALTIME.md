@@ -101,10 +101,16 @@ matches**. Want it cheaper? Raise `X_COUNTS_LIVE_INTERVAL_MS` (e.g. back to 90s)
 raise `X_COUNTS_SLOW_INTERVAL_MS`, or lower the cap; the circuit breaker
 guarantees you can't blow past the cap even if the schedule data is wrong.
 
+If X **rate-limits** the counts endpoint (HTTP 429/420), the poller backs off
+until the server's `x-rate-limit-reset` window instead of retrying every cycle —
+so it never burns the daily budget earning more 429s. While paused it spends
+nothing and the board holds its last-known counts; `rateLimited` + `pausedUntilMs`
+surface the state.
+
 `GET /api/x/health` reports `{mode:"counts", phase, activeTeams, requestsToday,
-dailyCap, capped, liveIntervalMs, slowIntervalMs, idleIntervalMs, windowMin,
-nextPollMs, perTeam, rateRemaining, lastEvent, …}` — `phase` is
-`live`/`warmup`/`cooldown`/`idle` and
+dailyCap, capped, rateLimited, pausedUntilMs, liveIntervalMs, slowIntervalMs,
+idleIntervalMs, windowMin, nextPollMs, perTeam, rateRemaining, lastEvent, …}` —
+`phase` is `live`/`warmup`/`cooldown`/`idle` and
 `perTeam[code]` carries the exact query, post count, normalized signal, trend,
 and — mined for free from the same per-minute response — the **peak** and
 **current** per-minute rate plus the raw **`minutes`** series (which the Buzz

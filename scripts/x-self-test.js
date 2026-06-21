@@ -8,7 +8,7 @@
 
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
-const { streamPosts } = require('./x-stream');
+const { streamPosts, postWeight } = require('./x-stream');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend } = require('./buzz-counts');
 
@@ -207,6 +207,17 @@ check('stream: non-OK status rejects with .status and rate-limit hints', async (
   assert.strictEqual(threw && threw.status, 429);
   assert.ok(threw.rateLimitResetMs > Date.now(), 'captures x-rate-limit-reset for the backoff');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+check('stream: postWeight scales with engagement, bounded [1, 8]', () => {
+  assert.strictEqual(postWeight({}), 1, 'no metrics → base weight 1');
+  assert.strictEqual(postWeight({ public_metrics: { like_count: 0 } }), 1, 'zero engagement → 1');
+  const low = postWeight({ public_metrics: { like_count: 9 } });
+  const mid = postWeight({ public_metrics: { like_count: 999 } });
+  assert.ok(low > 1 && low < mid, 'more engagement → more weight');
+  const viral = postWeight({ public_metrics: { like_count: 1e9, retweet_count: 1e9 } });
+  assert.ok(viral <= 8, 'mega-viral post is capped at 8, not unbounded');
+  assert.ok(viral >= mid, 'monotonic');
 });
 
 (async () => {

@@ -77,6 +77,7 @@ app.get('/api/buzz.json', (req, res) => {
 // Runs only when X_BEARER_TOKEN is set; otherwise this is inert and the app's
 // simulated buzz is unchanged. See docs/X-API-REALTIME.md.
 const { runForever } = require('./scripts/x-stream-runner');
+const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
 const { createCountsPoller } = require('./scripts/buzz-counts');
 
@@ -103,6 +104,7 @@ const xStats = {
   reconnects: 0,
   totalPosts: 0,
   postTimestamps: [], // ms; trimmed to the last 60s on read
+  postsByCountry: {}, // FIFA code -> posts seen this process (observability)
   lastPullMs: null,
   activeRules: null,
   rateRemaining: null,
@@ -139,6 +141,11 @@ app.get('/api/x/health', (req, res) => {
 
   const now = Date.now();
   xStats.postTimestamps = xStats.postTimestamps.filter((t) => now - t < 60000);
+  // Top nations by posts seen this process — observability parity with counts mode.
+  const topCountries = Object.entries(xStats.postsByCountry)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([code, posts]) => ({ code, posts }));
   res.json({
     mode: process.env.X_STREAM_DISABLED === '1' ? 'off' : 'stream',
     tokenConfigured: xStats.tokenConfigured,
@@ -147,6 +154,7 @@ app.get('/api/x/health', (req, res) => {
     reconnects: xStats.reconnects,
     throughputPerMin: xStats.postTimestamps.length,
     totalPosts: xStats.totalPosts,
+    topCountries,
     lastPullMs: xStats.lastPullMs,
     activeRules: xStats.activeRules,
     rateRemaining: xStats.rateRemaining,
@@ -185,8 +193,14 @@ function onXPost(payload) {
   xStats.postTimestamps.push(ts);
   if (xStats.postTimestamps.length > 5000) xStats.postTimestamps.shift();
 
+  // Weight the nudge by engagement so a viral post buzzes louder than a lone
+  // reply (bounded — see postWeight). tag === FIFA code (see x-build-rules.js).
   const tags = (payload.matching_rules || []).map((r) => r.tag).filter(Boolean);
-  for (const code of tags) buzz.ingest(code); // tag === FIFA code (see x-build-rules.js)
+  const weight = postWeight(post);
+  for (const code of tags) {
+    buzz.ingest(code, weight);
+    xStats.postsByCountry[code] = (xStats.postsByCountry[code] || 0) + 1;
+  }
 
   const users = (payload.includes && payload.includes.users) || [];
   const author = users.find((u) => u.id === post.author_id);

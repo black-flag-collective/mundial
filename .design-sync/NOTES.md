@@ -75,3 +75,20 @@ the component set or token vocabulary changes, re-validate before syncing.
   reference Storybook centers them on a full dark canvas. That framing delta is
   intentional (rubric: judge the component, not its surroundings) — don't
   re-grade it as drift.
+- **[CRITICAL] The repo lives in `~/Documents`, which is iCloud-synced — build
+  `ds-bundle/` to a NON-synced `--out`, never the repo root.** On the 2026-06-21
+  re-sync, the converter wrote all 17 components correctly and validate passed,
+  then iCloud mangled the on-disk tree seconds later: it spawned a `globe 2/`
+  conflict-copy dir (mode `700`) and dropped `bracket/*` + 3 primitives — an
+  incomplete tree that would silently desync the project if uploaded. Fix that
+  worked: rebuild via `package-build.mjs --out <scratchpad>/ds-bundle` under
+  `/private/tmp` (outside iCloud), validate THERE, and `finalize_plan`'s
+  `localDir` = that scratchpad path. The driver's own `--out ./ds-bundle` is
+  fine for the verdict/diff (read immediately), but never upload from it.
+- **Re-sync 2026-06-21 outcome.** Sources unchanged — all 17 `verified-by-upload`
+  (0 changed/new/removed). One `canary: reference_drift` (converter/Storybook
+  version bump since the first sync re-rendered the reference) spot-checked 5
+  (Eyebrow, FeaturedMatch, Pill, ChampionCard, Flag) with grades kept; all 5
+  sheets re-confirmed `match`. `conventions.md` re-validated against the fresh
+  build — every token/component/font it names still resolves, IBM Plex present,
+  no stale Inter/Playfair — left unchanged.

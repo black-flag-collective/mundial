@@ -57,6 +57,10 @@ app.get('/api/buzz.json', (req, res) => {
       snap.activeTeams = st.activeTeams || [];
       snap.lastPollMs = st.lastPollMs || null;
       snap.windowMin = st.windowMin || null;
+      // Honesty flags: while paused (X rate-limited) or capped (daily budget hit)
+      // the numbers are held from the last poll, not fresh — let the UI say so.
+      snap.paused = !!st.rateLimited;
+      snap.capped = !!st.capped;
       // Surface per-country momentum (rising/falling) so the UI can flag what's
       // "trending right now". Only the polled (in-play) nations carry a trend.
       const perTeam = st.perTeam || {};

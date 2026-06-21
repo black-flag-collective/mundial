@@ -8,6 +8,7 @@
 
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
+const { streamPosts } = require('./x-stream');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend } = require('./buzz-counts');
 
@@ -140,6 +141,72 @@ check('counts: liveContext polls only teams in their kickoff window', () => {
   const quiet = liveContext({ now: Date.parse('2026-06-23T04:00:00Z'), matches });
   assert.strictEqual(quiet.phase, 'idle');
   assert.strictEqual(quiet.codes.length, 0);
+});
+
+// Fake fetch whose body reader yields the given string chunks, then EOF.
+function fakeStreamFetch(chunks, { onCancel } = {}) {
+  const enc = new TextEncoder();
+  let i = 0;
+  return async () => ({
+    ok: true,
+    headers: { get: () => null },
+    body: {
+      getReader: () => ({
+        read: async () =>
+          i < chunks.length ? { value: enc.encode(chunks[i++]), done: false } : { value: undefined, done: true },
+        cancel: async () => { if (onCancel) onCancel(); },
+      }),
+    },
+  });
+}
+
+check('stream: parses NDJSON posts and skips blank keep-alives', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const post = { data: { id: '9' }, matching_rules: [{ tag: 'BRA' }] };
+  global.fetch = fakeStreamFetch(['\n', JSON.stringify(post) + '\n']); // keep-alive, then a post
+  const got = [];
+  await streamPosts((p) => got.push(p), {});
+  assert.strictEqual(got.length, 1, 'one post delivered; blank keep-alive ignored');
+  assert.strictEqual(got[0].data.id, '9');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('stream: reassembles a post split across chunks', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const line = JSON.stringify({ data: { id: '42' } });
+  global.fetch = fakeStreamFetch([line.slice(0, 10), line.slice(10) + '\n']); // split mid-line
+  const got = [];
+  await streamPosts((p) => got.push(p), {});
+  assert.strictEqual(got.length, 1, 'split line reassembled into one post');
+  assert.strictEqual(got[0].data.id, '42');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('stream: a silent connection trips the stall watchdog and frees the slot', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let cancelled = false;
+  global.fetch = async () => ({
+    ok: true,
+    headers: { get: () => null },
+    body: { getReader: () => ({ read: () => new Promise(() => {}), cancel: async () => { cancelled = true; } }) },
+  });
+  let threw = null;
+  await streamPosts(() => {}, { stallMs: 40 }).catch((e) => { threw = e; });
+  assert.ok(threw && threw.stall, 'stalled stream rejects with a .stall error');
+  assert.ok(cancelled, 'reader cancelled so X’s single connection slot is released');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('stream: non-OK status rejects with .status and rate-limit hints', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({
+    ok: false,
+    status: 429,
+    headers: { get: (h) => (h === 'x-rate-limit-reset' ? String(Math.floor(Date.now() / 1000) + 60) : null) },
+    text: async () => 'Too Many Requests',
+  });
+  let threw = null;
+  await streamPosts(() => {}, {}).catch((e) => { threw = e; });
+  assert.strictEqual(threw && threw.status, 429);
+  assert.ok(threw.rateLimitResetMs > Date.now(), 'captures x-rate-limit-reset for the backoff');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
 (async () => {

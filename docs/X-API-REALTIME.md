@@ -347,13 +347,21 @@ A long-lived stream **will** drop. Treat disconnects as normal and reconnect
 with backoff — the [official guidance](https://docs.x.com/x-api/fundamentals/handling-disconnections.md):
 
 - **Heartbeat timeout:** if no data *and* no keep-alive for ~20 s, drop and
-  reconnect.
-- **Backoff by failure type:**
+  reconnect. `streamPosts()` enforces this with a **stall watchdog** — each read
+  races a silence timer (default 30 s, `X_STREAM_STALL_MS`); on timeout it
+  cancels the reader (freeing X's single connection slot) and rejects with a
+  `.stall` error so the supervisor reconnects, instead of blocking forever on a
+  half-open socket that never errors on its own.
+- **Backoff by failure type** (`backoff()` in `x-stream-runner.js`, unit-tested):
   - Network blip / stream stall → **linear** backoff (e.g. +250 ms up to ~16 s).
-  - HTTP `429` (rate limit) or `420` → **exponential** backoff, minutes scale.
+  - HTTP `429` (rate limit) or `420` → wait for the server's `x-rate-limit-reset`
+    / `retry-after` window when known, else **exponential** (minutes scale).
+  - HTTP `409` (another connection holds the slot) → **yield** 30 s → 5 m so the
+    existing leader keeps it (rolling-deploy overlap resolves itself).
   - HTTP `5xx` → **exponential** backoff starting ~5 s, capped ~320 s.
 - **One connection only** (pay-per-use): a second connection gets a `429` and
-  *disconnects the first*. Guard against double-starting the worker.
+  *disconnects the first*. Guard against double-starting the worker (secondary
+  Fly machines set `X_STREAM_DISABLED=1`).
 
 ```js
 // scripts/x-stream-runner.js — supervise the stream with backoff.

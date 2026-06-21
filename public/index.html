@@ -1812,7 +1812,13 @@ class Component extends DCLogic {
     const buzzIsLive = bm.source === 'counts';
     const xh = this.xHealth || {};
     const xWindowMin = xh.windowMin || 10;
-    const buzzSource = buzzIsLive ? ('live X volume · in-play nations · last ' + xWindowMin + ' min') : 'simulated demo signal';
+    // Held data is honest about itself: while X has us paused (rate-limited) or the
+    // daily budget is spent, the numbers are the last poll's, not fresh.
+    const buzzPaused = !!bm.paused;
+    const buzzCapped = !!bm.capped;
+    const buzzFreshNote = buzzCapped ? ' · daily budget reached, holding last values'
+      : (buzzPaused ? ' · live feed paused (rate-limited), holding last values' : '');
+    const buzzSource = (buzzIsLive ? ('live X volume · in-play nations · last ' + xWindowMin + ' min') : 'simulated demo signal') + buzzFreshNote;
     const buzzHowText = buzzIsLive
       ? ('While a match is live, we ask the X (Twitter) API how many recent posts mention each nation in it — volume only, never the post text — and rank them live. Nations not currently in a live match show ambient interest (popularity + match-day buzz), so the board stays full. No post content is fetched or stored, and we only poll during live windows, so it stays cheap (a few hundred requests/day, hard-capped).')
       : ('Live mode pulls real X (Twitter) post volume for each nation while its match is live. Right now it’s showing the free simulated signal (X polling is paused or off) — it switches to live automatically when a match kicks off.');

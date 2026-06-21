@@ -54,17 +54,19 @@
     nav { padding: 12px 14px !important; }
     .nav-brand { display: none !important; }
     .nav-pills { position: static !important; left: auto !important; transform: none !important; width: 100% !important; display: flex !important; justify-content: center !important; }
-    /* standings + bracket: globe is a prominent top band, content scrolls below it */
-    .pane-standings { top: 42vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
+    /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
+    .pane-standings { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
     .standings-rail .rail-desc { display: none !important; }
     .standings-head { flex-wrap: wrap !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 8px !important; margin-top: 4px !important; }
     .standings-grid { grid-template-columns: 1fr !important; margin-top: 10px !important; }
-    .pane-bracket { top: 42vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
+    .pane-bracket { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
     .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
     .bk-inner { gap: 7px !important; padding: 0 14px; }
-    .legend-cap { left: 50% !important; transform: translateX(-50%); bottom: auto !important; top: calc(32vh + 66px) !important; width: auto !important; }
-    .legend-backing { bottom: auto !important; top: -50px !important; left: 0 !important; width: 100vw !important; height: calc(32vh + 150px) !important; background: radial-gradient(60% 75% at 50% 42%, rgba(4,16,28,0.86), rgba(4,16,28,0) 78%) !important; }
+    /* hover-to-trace caption is a desktop affordance — no hover on a phone, and
+       it collided with the view header. Hide it; the slim globe band stays decorative. */
+    .legend-cap { display: none !important; }
+    .legend-backing { display: none !important; }
     /* Globe/home view: decorative legend + hover-hint don't fit a phone; keep
        the globe + hero + a centered schedule CTA. */
     .globe-legend { display: none !important; }
@@ -160,30 +162,7 @@
           </div>
           <div class="standings-grid" style="flex: 1; min-height: 0; overflow-y: auto; margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 18px; align-content: start;">
           <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 14px;">
-              <div style="display: grid; grid-template-columns: 18px 1fr repeat(5,18px) 26px; align-items: center; gap: 4px; padding: 0 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <span></span>
-                <span style="font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.02em;">Group {{ g.group }}</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">P</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">W</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">D</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">L</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: center;">GD</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4); text-align: right;">Pts</span>
-              </div>
-              <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="4">
-                <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 18px 1fr repeat(5,18px) 26px; align-items: center; gap: 4px; padding: 7px 4px; border-left: 3px solid {{ r.bar }}; background: {{ r.rowBg }}; border-radius: 3px; margin-top: 2px; cursor: pointer; transition: background 0.16s;" style-hover="background: rgba(255,255,255,0.1);">
-                  <span style="font-size: 11px; font-weight: 700; color: {{ r.posColor }}; text-align: center;">{{ r.pos }}</span>
-                  <span style="display: flex; align-items: center; gap: 7px; min-width: 0;"><img src="{{ r.flag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-size: 12px; font-weight: 700; color: #fff; flex: none;">{{ r.code }}</span><span style="font-size: 12px; color: rgba(255,255,255,0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">{{ r.name }}</span></span>
-                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.P }}</span>
-                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.W }}</span>
-                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.D }}</span>
-                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.L }}</span>
-                  <span style="font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">{{ r.GD }}</span>
-                  <span style="font-size: 12px; font-weight: 700; color: #fff; text-align: right;">{{ r.Pts }}</span>
-                </div>
-              </sc-for>
-            </div>
+            <x-import component-from-global-scope="MundialUI.StandingsTable" group="{{ g.group }}" rows="{{ g.rows }}" advancing="{{ 2 }}" on-team-hover="{{ onTeamHover }}"></x-import>
           </sc-for>
           </div>
         </div>
@@ -1518,19 +1497,13 @@ class Component extends DCLogic {
     const isStandings = this.state.view === 'standings';
     const isBracket = this.state.view === 'bracket';
 
-    // ---- standings ----
+    // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
+    const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
     const standings = this.computeStandings().map((g) => ({
       group: g.group,
-      rows: g.rows.map((r, idx) => ({
-        pos: String(idx + 1),
-        code: r.code, name: r.name, flag: this.flagUrl(r.code),
-        P: String(r.P), W: String(r.W), D: String(r.D), L: String(r.L),
-        GD: (r.GD > 0 ? '+' : '') + r.GD, Pts: String(r.Pts),
-        bar: idx < 2 ? accent : (idx === 2 ? 'rgba(255,255,255,0.3)' : 'transparent'),
-        rowBg: idx < 2 ? 'rgba(255,255,255,0.06)' : 'transparent',
-        posColor: idx < 2 ? accent : 'rgba(255,255,255,0.4)',
-        onEnter: () => this.setLegendTeam(r.code),
-        onLeave: () => this.clearLegend()
+      rows: g.rows.map((r) => ({
+        code: r.code, name: r.name,
+        P: r.P, W: r.W, D: r.D, L: r.L, GD: r.GD, Pts: r.Pts
       }))
     }));
 
@@ -1626,6 +1599,7 @@ class Component extends DCLogic {
       bracketPillBg: isBracket ? 'rgba(255,255,255,0.18)' : 'transparent',
       bracketPillColor: isBracket ? '#ffffff' : 'rgba(255,255,255,0.8)',
       standings: standings,
+      onTeamHover: onTeamHover,
       leftR32: mk(B.r32.slice(0, 8)), rightR32: mk(B.r32.slice(8)),
       leftR16: mk(B.r16.slice(0, 4)), rightR16: mk(B.r16.slice(4)),
       leftQF: mk(B.qf.slice(0, 2)), rightQF: mk(B.qf.slice(2)),

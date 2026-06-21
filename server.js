@@ -46,7 +46,19 @@ const buzz = getEngine();
 app.get('/api/buzz.json', (req, res) => {
   try {
     res.set('Cache-Control', 'no-store');
-    res.json(buzz.snapshot());
+    const snap = buzz.snapshot();
+    // Tell the truth about the source: when the counts poller is live and not
+    // capped, in-play nations are driven by real X post volume (blended with the
+    // ambient simulation). When capped/idle it has faded back to simulation.
+    if (countsPoller) {
+      const st = countsPoller.stats();
+      const live = st.enabled && !st.capped && (st.activeTeams || []).length > 0;
+      snap.source = live ? 'counts' : 'simulated';
+      snap.activeTeams = st.activeTeams || [];
+      snap.lastPollMs = st.lastPollMs || null;
+      snap.windowMin = st.windowMin || null;
+    }
+    res.json(snap);
   } catch (err) {
     console.error('Failed to serve buzz.json:', err.message);
     res.status(503).json({ error: 'buzz not available' });

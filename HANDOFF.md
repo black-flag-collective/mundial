@@ -121,22 +121,27 @@ glow) eases toward `popularity × match-state multiplier × procedural noise`;
 `spike` (sharp pulse) is added by live-match flares and by `fireGoal()` on a
 detected score change, then decays.
 
-**Source-agnostic by design.** To go from simulated → real X data, feed a real
-per-country signal into `tick()` (map rolling tweet counts onto
-`state[code].score/.spike`) from the X filtered stream (Pro tier) or
-recent-search polling (the 2026 pay-per-use default, ~$0.005/read). The
-`/api/buzz.json` contract and the entire globe layer stay identical.
+**Real X data: the counts adapter (shipped).** The cost-bounded counts poller
+([`scripts/buzz-counts.js`](scripts/buzz-counts.js), `X_BUZZ_MODE=counts`) is the
+production adapter. It polls `GET /2/tweets/counts/recent` per team (volume only,
+no post bodies), feeds sustained volume into `engine.setSignals()` (the glow
+floor) and minute-over-minute jumps into `engine.surge()` (the spike). Polling is
+scoped to live match windows via each fixture's `ko` kickoff time, so it spends
+nothing when no match is live. Full design + cost envelope in
+[`docs/X-API-REALTIME.md`](docs/X-API-REALTIME.md). The `/api/buzz.json` contract
+and the globe layer stay identical — the engine is still source-agnostic.
 
 **Privacy:** only aggregate intensity per country is stored — no tweet text,
 authors, or ids.
 
-**Known limitation — goal spikes in production.** `fireGoal()` only fires when
-the *same* process observes a `matches.json` change. In the commit-Action +
-redeploy model the process restarts on every data change, resetting the
-in-memory baseline, so real per-goal spikes don't fire in prod. Production
-liveness comes from live-match classification + procedural flares. Real per-goal
-spikes need a persistent baseline or a delta feed from the updater (see next
-steps). The goal-delta path still works in local dev / an in-process updater.
+**Goal spikes in production — covered by counts momentum.** The in-process
+`fireGoal()` path (comparing `matches.json` reads) only works in local dev / an
+in-process updater: in prod the process restarts on every data commit, resetting
+the baseline. In counts mode this no longer matters — goal-reaction pops come
+from the **counts trend** (a sharp minute-over-minute volume jump fires
+`engine.surge()`), which is independent of the in-process delta and survives
+redeploys. Without a token, prod liveness still falls back to live-match
+classification + procedural flares.
 
 **Tuning knobs** (all in `buildBuzzLayer`, `public/index.html`): wave frequency
 `* 34.0`, `reach` radius, ring sharpness `pow(wave, 2.4)`, grid brightness
@@ -189,13 +194,13 @@ mundial-buzz.fly.dev. A first deploy can also be done by hand with `fly deploy`.
 - Consider a real football API as a fallback/cross-check to the Claude agent.
 
 ### Buzz layer
-- **Swap the simulated source for the real X API adapter.** Feed
-  per-country tweet volume into `tick()` per the "source-agnostic" note above.
-  Decide tier first: pay-per-use polling (cheap, near-realtime) vs Pro filtered
-  stream (true realtime, $5k/mo). Keep `/api/buzz.json` shape unchanged.
-- **Real per-goal spikes in prod** (optional): give the updater a way to emit a
-  goal/delta event (or persist `_lastScores` to an external store) so `fireGoal()`
-  survives redeploys. Today's prod liveness is live-match flares only.
+- **Front-end "your country is trending".** The API now returns per-nation
+  `trend` and a `phase` flag (`live`/`cooldown`/`idle`); the globe + `/buzz`
+  leaderboard could surface a rising/falling indicator and auto-highlight the
+  visitor's country (from locale/timezone) to make "watch your country light up"
+  explicit. (Backend shipped; UI not yet wired.)
 - **Visual tuning pass** on the wave field once seen on the deployed site with the
   real earth texture (knobs listed in the Buzz layer section).
 - Optional `?buzzDemo=1` flag to preview the "loud" state without live data.
+- _Done:_ real X data via the cost-bounded counts adapter + goal-reaction
+  momentum surges (see the Buzz layer section above).

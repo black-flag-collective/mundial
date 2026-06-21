@@ -35,18 +35,31 @@ const path = require('path');
 
 const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
 
-// Rough relative social-volume weights (0..1). Drives the ambient glow so that
-// big footballing nations always hum a little louder than the minnows.
-const POP = {
-  BRA: 1.0, ARG: 1.0, FRA: 0.95, ENG: 0.95, GER: 0.9, ESP: 0.9, POR: 0.9,
-  MEX: 0.8, USA: 0.78, NED: 0.75, BEL: 0.7, COL: 0.7, MAR: 0.7, JPN: 0.68,
-  KOR: 0.65, TUR: 0.62, URU: 0.6, SEN: 0.6, CRO: 0.6, EGY: 0.6, SUI: 0.55,
-  SWE: 0.55, NOR: 0.55, IRN: 0.55, GHA: 0.55, CIV: 0.55, ALG: 0.55, ECU: 0.52,
-  CZE: 0.5, SCO: 0.5, AUS: 0.5, AUT: 0.5, TUN: 0.5, KSA: 0.5, CAN: 0.5, RSA: 0.5,
-  PAR: 0.45, COD: 0.45, IRQ: 0.45, BIH: 0.42, UZB: 0.4, JOR: 0.4, PAN: 0.4,
-  QAT: 0.4, NZL: 0.35, HAI: 0.35, CUW: 0.3, CPV: 0.3
-};
-const DEFAULT_POP = 0.45;
+// Ambient "attention" weights (0..1) that drive the modeled glow so bigger
+// footballing nations hum louder than minnows. These are NOT hand-set: they're
+// derived from a citable source — the FIFA/Coca-Cola Men's World Ranking
+// (data/fifa-ranking.json) — used as a transparent proxy for baseline attention.
+// Real X post volume overrides this for nations in a live match. The weight is a
+// smooth descent from 1.0 (rank 1) into a uniform baseline for nations outside
+// the published top 20. See docs/METHODOLOGY.md.
+const { CODE_NAME } = require('./x-build-rules');
+let RANKING = { ranks: {}, asOf: null, source: null };
+try { RANKING = require('../data/fifa-ranking.json'); } catch { /* no file → all baseline */ }
+
+const POP_BASELINE = 0.45; // nations outside the published FIFA top 20
+
+function weightForRank(rank) {
+  return Math.round(Math.max(POP_BASELINE, 1.0 - (rank - 1) * 0.028) * 100) / 100;
+}
+function buildPop(ranking = RANKING) {
+  const ranks = (ranking && ranking.ranks) || {};
+  const pop = {};
+  for (const code of Object.keys(CODE_NAME)) pop[code] = ranks[code] ? weightForRank(ranks[code]) : POP_BASELINE;
+  return pop;
+}
+
+const POP = buildPop();
+const DEFAULT_POP = POP_BASELINE;
 
 const CODES = Object.keys(POP);
 
@@ -262,4 +275,4 @@ function getEngine() {
   return engine;
 }
 
-module.exports = { getEngine, BuzzEngine };
+module.exports = { getEngine, BuzzEngine, weightForRank, buildPop, RANKING, POP };

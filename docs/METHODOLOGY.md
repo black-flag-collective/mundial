@@ -28,6 +28,18 @@ occasional viral pops; it decays over ~12s.
 |------|------|-------------------|
 | **Measured** (real X) | A nation **in a live match**, with `X_BEARER_TOKEN` + counts mode on | Its **real X post volume** over the last ~10 min ([`buzz-counts.js`](../scripts/buzz-counts.js)), normalized against the loudest live nation. This is the only genuinely "live X buzz." |
 | **Modeled** (ambient) | Every other nation, even with a token | A popularity weight × match-day state (live / upcoming / finished / idle) × smooth motion. An **attention estimate**, not measured volume. The UI labels these nations' bars "ambient interest." |
+
+The **popularity weight** is not hand-set — it's derived from a citable source,
+the **FIFA/Coca-Cola Men's World Ranking** (`data/fifa-ranking.json`, the
+**11 June 2026** release), used as a transparent proxy for how much a nation
+tends to draw attention. The published **top 20** are weighted by their rank
+(a smooth `weight = max(0.45, 1.0 − (rank−1)×0.028)`, so rank 1 → 1.0 and the
+curve eases into the baseline by ~rank 20); every nation **outside the published
+top 20** gets a uniform **0.45** baseline. It's a *prior*, not a precise
+popularity figure — and it's overridden entirely by real X volume whenever a
+nation is in a live match. (FIFA ranking measures strength, which correlates
+with attention; we use it as the best citable, dated proxy available, not as a
+claim that the buzz reflects team quality.)
 | **Simulated** | No token configured | *All* nations use the modeled signal. The experience is identical, but nothing is real X data — the eyebrow reads "Buzz · simulated." |
 
 The poller only spends X requests on the nations whose match is **live right now**

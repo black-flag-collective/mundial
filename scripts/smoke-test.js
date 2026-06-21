@@ -19,7 +19,7 @@ function get(pathname) {
     const req = http.get(`${BASE}${pathname}`, res => {
       let body = '';
       res.on('data', c => (body += c));
-      res.on('end', () => resolve({ status: res.statusCode, body }));
+      res.on('end', () => resolve({ status: res.statusCode, body, headers: res.headers }));
     });
     req.on('error', reject);
     req.setTimeout(5000, () => req.destroy(new Error('request timeout')));
@@ -63,6 +63,10 @@ async function run() {
     const index = await get('/');
     check('GET / returns 200', index.status === 200);
     check('GET / serves the app shell', /<x-dc>/.test(index.body));
+    check('security headers present', index.headers['x-content-type-options'] === 'nosniff'
+      && !!index.headers['x-frame-options'] && !!index.headers['referrer-policy']
+      && !!index.headers['strict-transport-security']);
+    check('framework header not advertised', !index.headers['x-powered-by']);
 
     const support = await get('/support.js');
     check('GET /support.js returns 200', support.status === 200);

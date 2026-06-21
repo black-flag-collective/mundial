@@ -33,12 +33,26 @@ generating the most chatter right now, ranked by a **buzz score**.
 - **SURGING badge (▲)** — appears on a nation whose chatter just spiked sharply
   (a goal, a result, a viral moment). It's the "something is happening _now_"
   signal, distinct from a steadily high score.
-- **Click any row** to jump to the Globe with that nation spotlighted (see
-  [Buzz ↔ Globe](#how-buzz-and-the-globe-connect) below).
+- **🔥 Trending strip + badge** — when the live X feed is on, a strip of the
+  hottest **World-Cup trends on X** (worldwide + host nations, with post counts)
+  sits above the board, and any nation currently trending gets a 🔥 TRENDING
+  badge — *what's being said*, on top of *how loud*.
+- **Tap any row** to open the **inspect panel** ("what we're pulling from X"):
+  the recent-counts query, post volume + a per-minute sparkline, peak/now rate,
+  the live-match head-to-head split, the nation's own trending topics, or — for
+  a nation not in a live match — when its match is and that its bar is ambient
+  interest.
+- **🔮 Ask the Oracle** — a button (when the prediction feature is enabled)
+  asks an AI for a **data-grounded tournament prediction**: projected champion +
+  final, a one-line take, and the buzz/form evidence, with one-tap **share**.
 - **States you may see:** a spinner ("_Tuning into the chatter…_") on first
   load, an "_All quiet… for now_" empty state before posts start flowing, and a
   "_Lost the signal_" error with a **Try again** button if the feed can't be
   reached.
+
+> **What "buzz" actually measures** — real X volume for nations in a live match
+> vs a modeled attention estimate otherwise — and **how the Oracle uses it** is
+> defined in [METHODOLOGY.md](METHODOLOGY.md).
 
 ### 🌍 Globe — 48 nations in 3D
 

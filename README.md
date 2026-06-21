@@ -24,6 +24,11 @@ view, so moving between them feels continuous.
 | 📊 | **Standings** | Who's advancing? | [standings.md](docs/features/standings.md) |
 | 🏆 | **Bracket** | How might the knockouts play out? | [bracket.md](docs/features/bracket.md) |
 
+When the live X feed is on, the Buzz view also surfaces **what's trending on X**
+(a strip + per-nation badge) and a **🔮 Buzz Oracle** — a shareable, data-grounded
+AI prediction of the tournament. What "buzz" measures and how the Oracle uses it
+is defined in [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md).
+
 **Feature tour:** in-app at **`/features`** ([source](public/features/index.html)) ·
 [`docs/FEATURES.md`](docs/FEATURES.md)
 

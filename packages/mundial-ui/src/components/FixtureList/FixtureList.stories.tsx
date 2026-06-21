@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FixtureList } from './FixtureList';
 import { CONFEDERATIONS } from '../../data/confederations';
 

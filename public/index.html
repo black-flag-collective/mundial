@@ -278,6 +278,15 @@
               <span style="color: var(--mun-accent); font-weight: 600;">{{ buzzLiveCount }}</span> nations buzzing &middot; updated {{ buzzUpdated }} &middot; <span style="color: var(--mun-fg-subtle);">tap a nation to see its X feed</span>
             </div>
 
+            <sc-if value="{{ hasTrends }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 2px 2px 6px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mun-accent);">&#128293; Trending on X</span>
+                <sc-for list="{{ trendStrip }}" as="t" hint-placeholder-count="6">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mun-fg-muted); background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-pill); padding: 3px 10px;">{{ t.name }}<span style="color: var(--mun-fg-faint); font-size: 11px;">{{ t.count }}</span></span>
+                </sc-for>
+              </div>
+            </sc-if>
+
             <sc-if value="{{ xInspectShow }}" hint-placeholder-val="{{ false }}">
               <div style="background: var(--mun-surface-3); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 13px 15px; display: flex; flex-direction: column; gap: 9px;">
                 <div style="display: flex; align-items: center; gap: 9px;">
@@ -323,6 +332,7 @@
                     <span style="font-size: 14px; font-weight: 700; color: var(--mun-fg);">{{ r.code }}</span>
                     <span style="font-size: 13px; color: var(--mun-fg-muted); overflow: hidden; text-overflow: ellipsis;">{{ r.name }}</span>
                     <sc-if value="{{ r.surging }}" hint-placeholder-val="{{ false }}"><span class="bz-surge" style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--mun-accent); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 1px 7px;">&#9650; SURGING</span></sc-if>
+                    <sc-if value="{{ r.trending }}" hint-placeholder-val="{{ false }}"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--mun-fg-display); background: var(--mun-surface-4); border: 1px solid var(--mun-border-strong); border-radius: var(--mun-radius-pill); padding: 1px 7px;">&#128293; TRENDING</span></sc-if>
                   </span>
                   <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;">
                     <span style="position: absolute; inset: 0 auto 0 0; width: {{ r.pct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span>
@@ -506,6 +516,7 @@ class Component extends DCLogic {
     this.buzzDisp = {};     // code -> eased display values
     this._buzzLastT = 0;
     this.buzzMeta = { status: 'loading', updatedAt: null, source: null, window: null };
+    this.trendsData = null; // /api/trends.json — what's trending per location
 
     this.confed = {
       AFC:      { label: 'AFC',      color: '#ff7fb0' },
@@ -873,10 +884,15 @@ class Component extends DCLogic {
   _loadXHealth() {
     const poll = () => {
       if (this._buzzStopped) return;
-      fetch('/api/x/health')
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d) { this.xHealth = d; if (this.currentView() === 'buzz') this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); } })
-        .catch(() => {})
+      Promise.all([
+        fetch('/api/x/health').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/trends.json').then(r => r.ok ? r.json() : null).catch(() => null),
+      ])
+        .then(([health, trends]) => {
+          if (health) this.xHealth = health;
+          if (trends) this.trendsData = trends;
+          if ((health || trends) && this.currentView() === 'buzz') this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 });
+        })
         .finally(() => { if (!this._buzzStopped) this._xHealthTimer = setTimeout(poll, 30000); });
     };
     poll();
@@ -936,6 +952,14 @@ class Component extends DCLogic {
     if (!live) return { live: false, clock: '', score: '' };
     const clock = (mins == null) ? 'LIVE' : (mins >= 90 ? "90+'" : mins + "'");
     return { live: true, clock: clock, score: (m.as || 0) + ' – ' + (m.bs || 0) };
+  }
+
+  // Compact post-count formatting for trend chips: 950→"950", 12000→"12K", 1.2M.
+  compactNum(n) {
+    n = Number(n) || 0;
+    if (n >= 1e6) return (Math.round(n / 1e5) / 10) + 'M';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'K';
+    return String(n);
   }
 
   // Today's fixture for a nation, if any (matched by date like the counts poller,
@@ -1778,6 +1802,23 @@ class Component extends DCLogic {
       .sort((a, b) => b.score - a.score);
     const buzzTop = buzzRows.filter((r) => r.score > 0.001).slice(0, 16);
     const buzzMax = buzzTop.length ? buzzTop[0].score : 1;
+    // Trends (/api/trends.json): a strip of the hottest World-Cup trends, and a
+    // set of nations whose name/#CODE is currently trending (for a row badge).
+    const allTrends = (this.trendsData && this.trendsData.locations || []).flatMap((l) => l.trends || []);
+    const wcByName = {};
+    for (const t of allTrends) { if (t.wc && (!wcByName[t.name] || t.postCount > wcByName[t.name])) wcByName[t.name] = t.postCount || 0; }
+    const trendStrip = Object.keys(wcByName)
+      .map((name) => ({ name, count: wcByName[name] }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map((t) => ({ name: t.name, count: t.count ? this.compactNum(t.count) : '' }));
+    const hasTrends = trendStrip.length > 0;
+    const trendingCodes = {};
+    for (const code of Object.keys(this.byCode)) {
+      const nm = (this.byCode[code].name || '').toLowerCase();
+      const tag = '#' + code.toLowerCase();
+      if (allTrends.some((t) => { const s = (t.name || '').toLowerCase(); return s.includes(tag) || (nm && s.includes(nm)); })) trendingCodes[code] = true;
+    }
     const buzzLeader = buzzTop.map((r, idx) => ({
       rank: String(idx + 1),
       rankColor: idx < 3 ? 'var(--mun-accent)' : 'var(--mun-fg-faint)',
@@ -1786,6 +1827,7 @@ class Component extends DCLogic {
       pct: Math.max(6, Math.round((r.score / (buzzMax || 1)) * 100)) + '%',
       score: String(Math.round(r.score * 100)),
       surging: r.spike > 0.1,
+      trending: !!trendingCodes[r.code],
       rowClass: this.state.buzzFocusCode === r.code ? 'bz-focused' : 'bz-row',
       rowBg: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-soft)' : 'var(--mun-surface-2)',
       rowBorder: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-border)' : 'var(--mun-border-soft)',
@@ -1947,6 +1989,8 @@ class Component extends DCLogic {
       isBracket: isBracket,
       isBuzz: isBuzz,
       buzzLeader: buzzLeader,
+      trendStrip: trendStrip,
+      hasTrends: hasTrends,
       buzzLoading: buzzLoading,
       buzzError: buzzError,
       buzzEmpty: buzzEmpty,

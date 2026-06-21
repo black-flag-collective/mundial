@@ -15,6 +15,10 @@ generating the most chatter right now, ranked by a **buzz score**.
 - **▲ SURGING badge** — appears on a nation whose chatter just spiked sharply
   (a goal, a result, a viral moment). It's the "something is happening _now_"
   signal, distinct from a steadily high score.
+- **🔥 Trending strip + badge** — when the live X feed is on, a strip of the
+  hottest **World-Cup trends on X** (worldwide + host nations, with post counts)
+  sits above the board, and any nation currently trending gets a **🔥 TRENDING**
+  badge. This is *what's being said*, layered on top of *how loud* each nation is.
 
 ## What you can do
 

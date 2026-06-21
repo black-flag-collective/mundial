@@ -68,11 +68,13 @@ instead of pulling them — and only while a match is actually being played:
 - **Hard daily cap** — a request budget with a circuit breaker that pauses polling
   (buzz fades back to the free simulation) when hit.
 
-Enable + tune (all off by default — turn on with `X_BUZZ_MODE=counts`):
+**Counts is the default** when a token is set — you don't turn it on, you'd turn
+it *off* by explicitly choosing the firehose (`X_BUZZ_MODE=stream`). Without a
+token, both paths are inert and the free simulation runs. Tune with:
 
 | Env | Default | Meaning |
 | :-- | :-- | :-- |
-| `X_BUZZ_MODE=counts` | _(unset → simulation/stream)_ | turn counts mode on |
+| `X_BUZZ_MODE` | `counts` (with token) | set to `stream` to opt into the firehose instead |
 | `X_COUNTS_LIVE_INTERVAL_MS` | `90000` (90s) | poll cadence while a match is live |
 | `X_COUNTS_IDLE_INTERVAL_MS` | `600000` (10m) | request-free re-check when idle |
 | `X_COUNTS_WINDOW_MIN` | `10` | recent-volume window per poll |
@@ -99,9 +101,9 @@ rateRemaining, lastEvent, …}` — `phase` is `live`/`warmup`/`cooldown`/`idle`
 `perTeam[code]` carries the exact query, post count, normalized signal, and
 trend. The **`/buzz`** page in this mode is a free-spin **marble globe** (no
 auto-focus; markers pulse harder where buzz is hotter) beside a **nation
-leaderboard** — no per-post feed, so no per-post cost. Counts mode supersedes the
-firehose stream; the stream path only runs when `X_BUZZ_MODE` isn't `counts` and
-`X_STREAM_DISABLED` isn't `1`.
+leaderboard** — no per-post feed, so no per-post cost. Counts mode is the
+default with a token set; the firehose stream path runs only when you explicitly
+set `X_BUZZ_MODE=stream` (and `X_STREAM_DISABLED` isn't `1`).
 
 ---
 

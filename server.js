@@ -97,12 +97,12 @@ app.get('/api/buzz.json', (req, res) => {
     const snap = buzz.snapshot();
     snap.oracle = !!oracleClient; // lets the UI show the "Ask the Oracle" button without probing it
     // Tell the truth about the source: when the counts poller is live and not
-    // capped, in-play nations are driven by real X post volume (blended with the
-    // ambient simulation). When capped/idle it has faded back to simulation.
+    // capped, in-play nations are driven by real X post volume. Otherwise buzz
+    // is idle (zeros) — there is no simulated fallback.
     if (countsPoller) {
       const st = countsPoller.stats();
       const live = st.enabled && !st.capped && (st.activeTeams || []).length > 0;
-      snap.source = live ? 'counts' : 'simulated';
+      snap.source = live ? 'counts' : 'idle';
       snap.phase = st.phase || 'idle';
       snap.activeTeams = st.activeTeams || [];
       snap.lastPollMs = st.lastPollMs || null;

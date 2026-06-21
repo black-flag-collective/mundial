@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 60" fill="#ffffff" role="img" aria-label="Black Flag Design">
+  <!-- solid canton, top-right -->
+  <rect x="60" y="0" width="52" height="33"/>
+  <!-- top-left stripes -->
+  <rect x="0" y="0" width="54" height="6"/>
+  <rect x="0" y="9" width="54" height="6"/>
+  <rect x="0" y="18" width="54" height="6"/>
+  <rect x="0" y="27" width="54" height="6"/>
+  <!-- full-width stripes -->
+  <rect x="0" y="36" width="112" height="6"/>
+  <rect x="0" y="45" width="112" height="6"/>
+  <rect x="0" y="54" width="112" height="6"/>
+</svg>

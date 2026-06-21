@@ -149,6 +149,25 @@ check('counts: live polled every cycle; cooldown holds its signal on the slow ti
   assert.ok('ARG' in last && last.ARG > 0, 'cooldown team keeps its signal between slow polls');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
+check('counts: a 429 pauses polling until the reset window (no hammering)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let calls = 0;
+  const resetSec = Math.floor(Date.now() / 1000) + 900; // 15 min out
+  global.fetch = async () => {
+    calls++;
+    return { ok: false, status: 429, headers: { get: (h) => (h === 'x-rate-limit-reset' ? String(resetSec) : null) }, json: async () => ({}) };
+  };
+  const engine = { state: { BRA: {}, ARG: {} }, setSignals() {}, surge() {} };
+  const ctx = () => ({ codes: ['BRA', 'ARG'], phase: 'live', phases: { BRA: 'live', ARG: 'live' } });
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: ctx });
+  await poller.cycle();                       // hits 429 on first team, breaks
+  assert.strictEqual(calls, 1, 'stops after the first 429 instead of trying every team');
+  assert.strictEqual(poller.stats().rateLimited, true, 'flagged rate-limited');
+  assert.ok(poller.stats().pausedUntilMs > Date.now(), 'paused until the reset window');
+  await poller.cycle();                       // still within the pause → no new requests
+  assert.strictEqual(calls, 1, 'no requests spent while paused');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
 check('counts: liveContext reports per-nation phase', () => {
   const now = Date.parse('2026-06-22T21:30:00Z');
   const matches = { dayMatches: [[

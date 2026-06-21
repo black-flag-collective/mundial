@@ -105,8 +105,11 @@ guarantees you can't blow past the cap even if the schedule data is wrong.
 dailyCap, capped, liveIntervalMs, slowIntervalMs, idleIntervalMs, windowMin,
 nextPollMs, perTeam, rateRemaining, lastEvent, …}` — `phase` is
 `live`/`warmup`/`cooldown`/`idle` and
-`perTeam[code]` carries the exact query, post count, normalized signal, and
-trend. The **`/buzz`** page in this mode is a free-spin **marble globe** (no
+`perTeam[code]` carries the exact query, post count, normalized signal, trend,
+and — mined for free from the same per-minute response — the **peak** and
+**current** per-minute rate plus the raw **`minutes`** series (which the Buzz
+inspect panel draws as a sparkline). The **`/buzz`** page in this mode is a
+free-spin **marble globe** (no
 auto-focus; markers pulse harder where buzz is hotter) beside a **nation
 leaderboard** — no per-post feed, so no per-post cost. Counts mode is the
 default with a token set; the firehose stream path runs only when you explicitly

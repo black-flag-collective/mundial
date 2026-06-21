@@ -124,23 +124,25 @@ function dueForFetch(phase, lastFetchAt, now, slowMs) {
 }
 
 /**
- * Momentum from the per-minute counts series (no extra request — it ships with
- * every counts call). Compares the latest minute against the trailing baseline:
- *   trend > 0  rising (a country heating up — goal, big chance, controversy)
- *   trend ~ 0  steady
- *   trend < 0  cooling off
- * Returns { recent, baseline, trend } with trend clamped to [-1, 1].
+ * Everything we can squeeze out of the per-minute counts series — all of it
+ * ships with the same counts request, so these add zero extra cost:
+ *   - trend:   latest minute vs the trailing baseline (−1..1; rising/falling)
+ *   - peak:    busiest single minute in the window (posts/min)
+ *   - current: the latest minute's rate (posts/min)
+ *   - minutes: the raw per-minute counts (for a UI sparkline)
  */
 function computeTrend(series) {
-  if (!Array.isArray(series) || series.length < 2) return { recent: 0, baseline: 0, trend: 0 };
-  const counts = series.map((b) => (b && b.tweet_count) | 0);
+  const counts = Array.isArray(series) ? series.map((b) => (b && b.tweet_count) | 0) : [];
+  if (!counts.length) return { recent: 0, baseline: 0, trend: 0, peak: 0, current: 0, minutes: [] };
   const recent = counts[counts.length - 1];
+  const peak = Math.max(...counts);
+  if (counts.length < 2) return { recent, baseline: 0, trend: 0, peak, current: recent, minutes: counts };
   const prior = counts.slice(0, -1);
   const baseline = prior.reduce((a, b) => a + b, 0) / prior.length;
   // Symmetric ratio so a doubling reads ~+0.5 and a halving ~−0.5; +1 smooths
   // out the divide-by-tiny-baseline case for low-volume nations.
   const trend = Math.max(-1, Math.min(1, (recent - baseline) / (recent + baseline + 1)));
-  return { recent, baseline, trend };
+  return { recent, baseline, trend, peak, current: recent, minutes: counts };
 }
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -270,7 +272,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     for (const code of fetchCodes) {
       const { total, series } = await countFor(code);
-      const trend = computeTrend(series).trend;
+      const s = computeTrend(series);
       lastCount[code] = total;
       lastFetchAt[code] = Date.now();
       stats.requestsToday++;
@@ -278,12 +280,15 @@ function createCountsPoller({ engine, log = console, context } = {}) {
       perTeamState[code] = {
         query: rule ? rule.value : '',
         count: total,
-        trend: Math.round(trend * 100) / 100,
-        signal: 0, // filled in after normalization below
+        trend: Math.round(s.trend * 100) / 100,
+        peak: s.peak,            // busiest minute (posts/min) — free, from the series
+        current: s.current,      // latest minute's rate (posts/min)
+        minutes: s.minutes,      // per-minute counts, for a UI sparkline
+        signal: 0,               // filled in after normalization below
       };
       // A sharp minute-over-minute jump = a goal-reaction pop: flare the spike
       // so the globe visibly reacts in near-real-time (decays in the engine).
-      if (trend > 0.25 && engine.surge) engine.surge(code, trend * SURGE_MULT);
+      if (s.trend > 0.25 && engine.surge) engine.surge(code, s.trend * SURGE_MULT);
     }
 
     // Normalize sustained volume across the full hot set (using each nation's

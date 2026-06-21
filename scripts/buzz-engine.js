@@ -153,6 +153,18 @@ class BuzzEngine {
   }
 
   /**
+   * Add an immediate spike of a known magnitude (0..1) to a country — the
+   * momentum pop when its X volume jumps minute-over-minute (a goal reaction,
+   * a red card). Unlike ingest() (one post → tiny nudge), this takes the
+   * already-computed surge size from the counts poller. tick() decays it.
+   */
+  surge(code, amount = 0.4) {
+    const s = this.state[code];
+    if (!s) return;
+    s.spike = clamp01(s.spike + amount);
+  }
+
+  /**
    * Replace the external per-country buzz signal in one shot (atomic — codes
    * omitted from `map` are cleared). Each value is a sustained 0..1 level, NOT
    * a momentary spike: tick() raises a country's glow target to at least this

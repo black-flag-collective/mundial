@@ -9,7 +9,7 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -73,34 +73,73 @@ check('counts: activeTeamCodes returns known FIFA codes (subset)', () => {
   assert.ok(Array.isArray(codes));
   for (const c of codes) assert.ok(/^[A-Z]{3}$/.test(c), c);
 });
+const LIVE_CTX = () => ({ codes: ['BRA', 'ARG', 'FRA'], phase: 'live' });
 check('counts: cycle normalizes volume to 0..1 and feeds the engine', async () => {
-  const codes = activeTeamCodes();
-  if (!codes.length) return; // no fixtures today → nothing to poll
   process.env.X_BEARER_TOKEN = 'test';
   let n = 0;
   global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: ++n * 10 } }) });
   let got = null;
-  const engine = { state: Object.fromEntries(codes.map((c) => [c, {}])), setSignals(m) { got = m; } };
-  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} } });
+  const engine = { state: { BRA: {}, ARG: {}, FRA: {} }, setSignals(m) { got = m; }, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: LIVE_CTX });
   await poller.cycle();
-  assert.ok(got && Object.keys(got).length === codes.length, 'one signal per active team');
+  assert.strictEqual(Object.keys(got).length, 3, 'one signal per polled team');
   for (const v of Object.values(got)) assert.ok(v >= 0 && v <= 1, 'signal in 0..1: ' + v);
   assert.strictEqual(Math.max(...Object.values(got)), 1, 'hottest normalizes to 1');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 check('counts: hard cap trips the circuit breaker (clears signals)', async () => {
-  const codes = activeTeamCodes();
-  if (!codes.length) return;
   process.env.X_BEARER_TOKEN = 'test';
-  process.env.X_COUNTS_DAILY_CAP = '1'; // below the active-team count → can't finish a cycle
+  process.env.X_COUNTS_DAILY_CAP = '1'; // below the polled-team count → can't finish a cycle
   global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 5 } }) });
   let got = 'unset';
-  const engine = { state: Object.fromEntries(codes.map((c) => [c, {}])), setSignals(m) { got = m; } };
-  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} } });
+  const engine = { state: { BRA: {}, ARG: {}, FRA: {} }, setSignals(m) { got = m; }, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: LIVE_CTX });
   await poller.cycle();
   assert.deepStrictEqual(got, {}, 'capped → signals cleared (fades to simulation)');
   assert.strictEqual(poller.stats().capped, true);
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_DAILY_CAP;
+});
+check('counts: a minute-over-minute jump fires a surge (goal-reaction pop)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  // Flat history then a big final minute for BRA; flat for the rest.
+  global.fetch = async (url) => ({
+    ok: true,
+    headers: { get: () => null },
+    json: async () => decodeURIComponent(url).includes('"Brazil"')
+      ? { meta: { total_tweet_count: 130 }, data: [{ tweet_count: 10 }, { tweet_count: 10 }, { tweet_count: 110 }] }
+      : { meta: { total_tweet_count: 30 }, data: [{ tweet_count: 10 }, { tweet_count: 10 }, { tweet_count: 10 }] },
+  });
+  const surged = {};
+  const engine = { state: { BRA: {}, ARG: {}, FRA: {} }, setSignals() {}, surge(c, a) { surged[c] = a; } };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: LIVE_CTX });
+  await poller.cycle();
+  assert.ok(surged.BRA > 0, 'BRA surged on the volume jump');
+  assert.ok(!('ARG' in surged) && !('FRA' in surged), 'flat nations did not surge');
+  assert.ok(poller.stats().perTeam.BRA.trend > 0.25, 'BRA trend rising');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('counts: computeTrend reads rising / steady / falling', () => {
+  assert.ok(computeTrend([{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }]).trend > 0.3, 'rising');
+  assert.strictEqual(computeTrend([{ tweet_count: 10 }, { tweet_count: 10 }, { tweet_count: 10 }]).trend, 0, 'steady');
+  assert.ok(computeTrend([{ tweet_count: 50 }, { tweet_count: 50 }, { tweet_count: 2 }]).trend < -0.3, 'falling');
+  assert.strictEqual(computeTrend([]).trend, 0, 'no data → flat');
+});
+check('counts: liveContext polls only teams in their kickoff window', () => {
+  const now = Date.parse('2026-06-22T21:30:00Z'); // 30m into FRA v IRQ
+  const matches = {
+    dayMatches: [[
+      { a: 'FRA', b: 'IRQ', ko: '2026-06-22T21:00:00Z' }, // live (now − ko = 30m)
+      { a: 'BRA', b: 'ARG', ko: '2026-06-23T18:00:00Z' }, // tomorrow → not yet
+      { a: 'ESP', b: 'GER', ko: '2026-06-22T12:00:00Z' }, // ended hours ago → idle
+    ]],
+  };
+  const ctx = liveContext({ now, matches, matchMin: 150, cooldownMin: 30 });
+  assert.strictEqual(ctx.phase, 'live');
+  assert.deepStrictEqual([...ctx.codes].sort(), ['FRA', 'IRQ']);
+  // Nothing live at 4am → idle, zero teams (no requests would be made).
+  const quiet = liveContext({ now: Date.parse('2026-06-23T04:00:00Z'), matches });
+  assert.strictEqual(quiet.phase, 'idle');
+  assert.strictEqual(quiet.codes.length, 0);
 });
 
 (async () => {

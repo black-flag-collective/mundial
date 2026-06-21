@@ -54,9 +54,16 @@ app.get('/api/buzz.json', (req, res) => {
       const st = countsPoller.stats();
       const live = st.enabled && !st.capped && (st.activeTeams || []).length > 0;
       snap.source = live ? 'counts' : 'simulated';
+      snap.phase = st.phase || 'idle';
       snap.activeTeams = st.activeTeams || [];
       snap.lastPollMs = st.lastPollMs || null;
       snap.windowMin = st.windowMin || null;
+      // Surface per-country momentum (rising/falling) so the UI can flag what's
+      // "trending right now". Only the polled (in-play) nations carry a trend.
+      const perTeam = st.perTeam || {};
+      for (const b of snap.buzz) {
+        if (perTeam[b.code]) b.trend = perTeam[b.code].trend;
+      }
     }
     res.json(snap);
   } catch (err) {

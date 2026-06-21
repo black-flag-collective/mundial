@@ -67,8 +67,9 @@
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
     .nav-brand { display: none !important; }
-    .nav-pills { position: static !important; left: auto !important; transform: none !important; width: 100% !important; display: flex !important; justify-content: safe center !important; flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .nav-pills { position: static !important; left: auto !important; transform: none !important; flex: 1 1 auto !important; min-width: 0 !important; display: flex !important; justify-content: safe center !important; flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .nav-pills::-webkit-scrollbar { display: none !important; }
+    .nav-features { margin-left: 10px !important; padding: 6px 12px !important; font-size: 12px !important; flex: none; }
     /* buzz: header + full-width leaderboard over the dimmed live globe */
     .pane-buzz { padding: 78px 14px 18px !important; }
     /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
@@ -110,6 +111,8 @@
     <div class="nav-pills" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
       <x-import component-from-global-scope="MundialUI.NavPills" items="{{ navItems }}" value="{{ navValue }}" onChange="{{ navOnChange }}" hint-size="330px,44px"></x-import>
     </div>
+
+    <a href="/features" class="nav-features" title="How every view works" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--mun-fg-muted); text-decoration: none; padding: 7px 15px; border: 1px solid var(--mun-border); border-radius: var(--mun-radius-pill); background: var(--mun-surface-2); white-space: nowrap; transition: color 0.16s, border-color 0.16s;" style-hover="color: var(--mun-fg); border-color: var(--mun-border-strong);">Features</a>
   </nav>
 
   <section style="position: relative; width: 100%; overflow: hidden; height: 100vh; background: var(--mun-bg);">
@@ -437,6 +440,7 @@
           <span style="font-size: 13px; color: var(--mun-fg-subtle);">Opening match: Mexico v South Africa</span>
         </div>
         <button style="background: {{ accent }}; color: var(--mun-fg); font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: var(--mun-radius-pill); cursor: pointer; font-family: var(--mun-font-sans); white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
+        <a href="https://blackflag.design" target="_blank" rel="noopener" style="margin-top: 2px; font-size: 12px; color: var(--mun-fg-subtle); text-decoration: none; line-height: 1.5; transition: color 0.16s;" style-hover="color: var(--mun-fg-strong);">From the crew @ <span style="color: var(--mun-fg-strong); font-weight: 600;">Black Flag Design</span> &middot; Let&rsquo;s talk <span style="color: var(--mun-accent);">&rarr;</span></a>
       </div>
     </sc-if>
 

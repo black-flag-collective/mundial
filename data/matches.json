@@ -96,6 +96,7 @@
         "as": 2,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-11T19:00:00Z",
         "venue": "Estadio Azteca, Mexico City"
       },
       {
@@ -105,6 +106,7 @@
         "as": 2,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-12T02:00:00Z",
         "venue": "Estadio Akron, Zapopan"
       }
     ],
@@ -116,6 +118,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-12T19:00:00Z",
         "venue": "BMO Field, Toronto"
       },
       {
@@ -125,6 +128,7 @@
         "as": 4,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-13T01:00:00Z",
         "venue": "SoFi Stadium, Inglewood"
       }
     ],
@@ -136,6 +140,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-13T19:00:00Z",
         "venue": "Levi's Stadium, Santa Clara"
       },
       {
@@ -145,6 +150,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-13T22:00:00Z",
         "venue": "MetLife Stadium, East Rutherford"
       },
       {
@@ -154,6 +160,7 @@
         "as": 0,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-14T01:00:00Z",
         "venue": "Gillette Stadium, Foxborough"
       },
       {
@@ -163,6 +170,7 @@
         "as": 2,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-14T04:00:00Z",
         "venue": "BC Place, Vancouver"
       }
     ],
@@ -174,6 +182,7 @@
         "as": 7,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-14T17:00:00Z",
         "venue": "NRG Stadium, Houston"
       },
       {
@@ -183,6 +192,7 @@
         "as": 2,
         "bs": 2,
         "st": "FT",
+        "ko": "2026-06-14T20:00:00Z",
         "venue": "AT&T Stadium, Arlington"
       },
       {
@@ -192,6 +202,7 @@
         "as": 1,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-14T23:00:00Z",
         "venue": "Lincoln Financial Field, Philadelphia"
       },
       {
@@ -201,6 +212,7 @@
         "as": 5,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-15T02:00:00Z",
         "venue": "Estadio BBVA, Guadalupe"
       }
     ],
@@ -212,6 +224,7 @@
         "as": 0,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-15T16:00:00Z",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       },
       {
@@ -221,6 +234,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-15T19:00:00Z",
         "venue": "Lumen Field, Seattle"
       },
       {
@@ -230,6 +244,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-15T22:00:00Z",
         "venue": "Hard Rock Stadium, Miami Gardens"
       },
       {
@@ -239,6 +254,7 @@
         "as": 2,
         "bs": 2,
         "st": "FT",
+        "ko": "2026-06-16T01:00:00Z",
         "venue": "SoFi Stadium, Inglewood"
       }
     ],
@@ -250,6 +266,7 @@
         "as": 3,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-16T19:00:00Z",
         "venue": "MetLife Stadium, East Rutherford"
       },
       {
@@ -259,6 +276,7 @@
         "as": 1,
         "bs": 4,
         "st": "FT",
+        "ko": "2026-06-16T22:00:00Z",
         "venue": "Gillette Stadium, Foxborough"
       },
       {
@@ -268,6 +286,7 @@
         "as": 3,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-17T01:00:00Z",
         "venue": "Arrowhead Stadium, Kansas City"
       },
       {
@@ -277,6 +296,7 @@
         "as": 3,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-17T04:00:00Z",
         "venue": "Levi's Stadium, Santa Clara"
       }
     ],
@@ -288,6 +308,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-17T17:00:00Z",
         "venue": "NRG Stadium, Houston"
       },
       {
@@ -297,6 +318,7 @@
         "as": 4,
         "bs": 2,
         "st": "FT",
+        "ko": "2026-06-17T20:00:00Z",
         "venue": "AT&T Stadium, Arlington"
       },
       {
@@ -306,6 +328,7 @@
         "as": 1,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-17T23:00:00Z",
         "venue": "BMO Field, Toronto"
       },
       {
@@ -315,6 +338,7 @@
         "as": 1,
         "bs": 3,
         "st": "FT",
+        "ko": "2026-06-18T02:00:00Z",
         "venue": "Estadio Azteca, Mexico City"
       }
     ],
@@ -326,6 +350,7 @@
         "as": 1,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-18T16:00:00Z",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       },
       {
@@ -335,6 +360,7 @@
         "as": 1,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-19T01:00:00Z",
         "venue": "Estadio Akron, Zapopan"
       },
       {
@@ -344,6 +370,7 @@
         "as": 4,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-18T19:00:00Z",
         "venue": "SoFi Stadium, Inglewood"
       },
       {
@@ -353,6 +380,7 @@
         "as": 6,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-18T22:00:00Z",
         "venue": "BC Place, Vancouver"
       }
     ],
@@ -364,6 +392,7 @@
         "as": 2,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-19T19:00:00Z",
         "venue": "Lumen Field, Seattle"
       },
       {
@@ -373,6 +402,7 @@
         "as": 0,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-19T22:00:00Z",
         "venue": "Gillette Stadium, Foxborough"
       },
       {
@@ -382,6 +412,7 @@
         "as": 3,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-20T00:30:00Z",
         "venue": "Lincoln Financial Field, Philadelphia"
       },
       {
@@ -391,6 +422,7 @@
         "as": 0,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-20T03:00:00Z",
         "venue": "Levi's Stadium, Santa Clara"
       }
     ],
@@ -402,6 +434,7 @@
         "as": 5,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-20T17:00:00Z",
         "venue": "NRG Stadium, Houston"
       },
       {
@@ -411,6 +444,7 @@
         "as": 2,
         "bs": 1,
         "st": "FT",
+        "ko": "2026-06-20T20:00:00Z",
         "venue": "BMO Field, Toronto"
       },
       {
@@ -420,6 +454,7 @@
         "as": 0,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-21T00:00:00Z",
         "venue": "Arrowhead Stadium, Kansas City"
       },
       {
@@ -429,6 +464,7 @@
         "as": 0,
         "bs": 4,
         "st": "FT",
+        "ko": "2026-06-21T04:00:00Z",
         "venue": "Estadio BBVA, Guadalupe"
       }
     ],
@@ -440,6 +476,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-21T19:00:00Z",
         "time": "3:00 PM ET",
         "venue": "SoFi Stadium, Inglewood"
       },
@@ -450,6 +487,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-22T01:00:00Z",
         "time": "6:00 PM ET",
         "venue": "BC Place, Vancouver"
       },
@@ -460,6 +498,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-21T16:00:00Z",
         "time": "12:00 PM ET",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       },
@@ -470,6 +509,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-21T22:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Hard Rock Stadium, Miami Gardens"
       }
@@ -482,6 +522,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-22T21:00:00Z",
         "time": "12:00 PM ET",
         "venue": "Lincoln Financial Field, Philadelphia"
       },
@@ -492,6 +533,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-23T00:00:00Z",
         "time": "3:00 PM ET",
         "venue": "MetLife Stadium, East Rutherford"
       },
@@ -502,6 +544,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-22T17:00:00Z",
         "time": "6:00 PM ET",
         "venue": "AT&T Stadium, Arlington"
       },
@@ -512,6 +555,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-23T03:00:00Z",
         "time": "6:00 PM ET",
         "venue": "Levi's Stadium, Santa Clara"
       }
@@ -524,6 +568,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-23T17:00:00Z",
         "time": "12:00 PM ET",
         "venue": "NRG Stadium, Houston"
       },
@@ -534,6 +579,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-24T02:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Estadio Akron, Zapopan"
       },
@@ -544,6 +590,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-23T20:00:00Z",
         "time": "3:00 PM ET",
         "venue": "Gillette Stadium, Foxborough"
       },
@@ -554,6 +601,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-23T23:00:00Z",
         "time": "6:00 PM ET",
         "venue": "BMO Field, Toronto"
       }
@@ -566,6 +614,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-25T01:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Estadio Azteca, Mexico City"
       },
@@ -576,6 +625,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-25T01:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Estadio BBVA, Guadalupe"
       },
@@ -586,6 +636,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-24T19:00:00Z",
         "time": "6:00 PM ET",
         "venue": "BC Place, Vancouver"
       },
@@ -596,6 +647,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-24T19:00:00Z",
         "time": "6:00 PM ET",
         "venue": "Lumen Field, Seattle"
       },
@@ -606,6 +658,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-24T22:00:00Z",
         "time": "3:00 PM ET",
         "venue": "Hard Rock Stadium, Miami Gardens"
       },
@@ -616,6 +669,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-24T22:00:00Z",
         "time": "3:00 PM ET",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       }
@@ -628,6 +682,7 @@
         "as": 0,
         "bs": 0,
         "st": "FT",
+        "ko": "2026-06-25T20:00:00Z",
         "venue": "Lincoln Financial Field, Philadelphia"
       },
       {
@@ -637,6 +692,7 @@
         "as": 0,
         "bs": 2,
         "st": "FT",
+        "ko": "2026-06-25T20:00:00Z",
         "venue": "MetLife Stadium, East Rutherford"
       },
       {
@@ -646,6 +702,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-25T23:00:00Z",
         "time": "6:00 PM ET",
         "venue": "AT&T Stadium, Arlington"
       },
@@ -656,6 +713,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-25T23:00:00Z",
         "time": "6:00 PM ET",
         "venue": "Arrowhead Stadium, Kansas City"
       },
@@ -666,6 +724,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-26T02:00:00Z",
         "time": "9:00 PM ET",
         "venue": "SoFi Stadium, Inglewood"
       },
@@ -676,6 +735,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-26T02:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Levi's Stadium, Santa Clara"
       }
@@ -688,6 +748,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T03:00:00Z",
         "time": "6:00 PM ET",
         "venue": "Lumen Field, Seattle"
       },
@@ -698,6 +759,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T03:00:00Z",
         "time": "6:00 PM ET",
         "venue": "BC Place, Vancouver"
       },
@@ -708,6 +770,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T00:00:00Z",
         "time": "3:00 PM ET",
         "venue": "NRG Stadium, Houston"
       },
@@ -718,6 +781,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T00:00:00Z",
         "time": "3:00 PM ET",
         "venue": "Estadio Akron, Zapopan"
       },
@@ -728,6 +792,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-26T19:00:00Z",
         "time": "9:00 PM ET",
         "venue": "Gillette Stadium, Foxborough"
       },
@@ -738,6 +803,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-26T19:00:00Z",
         "time": "9:00 PM ET",
         "venue": "BMO Field, Toronto"
       }
@@ -750,6 +816,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-28T02:00:00Z",
         "time": "3:00 PM ET",
         "venue": "Arrowhead Stadium, Kansas City"
       },
@@ -760,6 +827,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-28T02:00:00Z",
         "time": "3:00 PM ET",
         "venue": "AT&T Stadium, Arlington"
       },
@@ -770,6 +838,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T23:30:00Z",
         "time": "7:30 PM ET",
         "venue": "Hard Rock Stadium, Miami Gardens"
       },
@@ -780,6 +849,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T23:30:00Z",
         "time": "7:30 PM ET",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       },
@@ -790,6 +860,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T21:00:00Z",
         "time": "6:00 PM ET",
         "venue": "MetLife Stadium, East Rutherford"
       },
@@ -800,6 +871,7 @@
         "as": null,
         "bs": null,
         "st": "UP",
+        "ko": "2026-06-27T21:00:00Z",
         "time": "6:00 PM ET",
         "venue": "Lincoln Financial Field, Philadelphia"
       }

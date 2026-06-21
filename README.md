@@ -11,6 +11,8 @@ layer showing which countries the world is watching right now.
 
 **Live:** [mundial-buzz.fly.dev](https://mundial-buzz.fly.dev)
 
+![mundial.buzz — a 3D globe of all 48 World Cup 2026 nations](public/og-image.png)
+
 Everything is one page with five views. The globe stays mounted behind every
 view, so moving between them feels continuous.
 

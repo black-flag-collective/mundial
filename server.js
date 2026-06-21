@@ -79,17 +79,19 @@ app.get('/api/buzz.json', (req, res) => {
 const { runForever } = require('./scripts/x-stream-runner');
 const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
-const { createCountsPoller } = require('./scripts/buzz-counts');
+const { createCountsPoller, resolveBuzzMode } = require('./scripts/buzz-counts');
 
 // Aborting this on shutdown drops the X connection promptly so the single
 // allowed stream slot is released before a redeploy's new machine connects
 // (prevents the rolling-deploy 409/429 connection churn).
 const xStreamController = new AbortController();
 
-// Buzz source selector. Default: simulated only (free). X_BUZZ_MODE=counts runs
-// the cost-bounded counts poller (recommended live source); the firehose stream
-// path runs only when neither counts mode nor X_STREAM_DISABLED is set.
-const BUZZ_MODE = process.env.X_BUZZ_MODE === 'counts' ? 'counts' : 'stream';
+// Buzz source selector. Cost-safe by default: with a token set, we use the
+// cost-bounded **counts** poller unless the operator explicitly opts into the
+// (billed-per-post) firehose with X_BUZZ_MODE=stream. Without a token both are
+// inert and the free simulation runs. This makes the cheap path the default a
+// forker gets just by setting X_BEARER_TOKEN — the expensive firehose is opt-in.
+const BUZZ_MODE = resolveBuzzMode(process.env);
 const countsPoller = BUZZ_MODE === 'counts' ? createCountsPoller({ engine: buzz }) : null;
 
 const sseClients = new Set();

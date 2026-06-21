@@ -10,7 +10,7 @@ const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -118,6 +118,12 @@ check('counts: a minute-over-minute jump fires a surge (goal-reaction pop)', asy
   assert.ok(!('ARG' in surged) && !('FRA' in surged), 'flat nations did not surge');
   assert.ok(poller.stats().perTeam.BRA.trend > 0.25, 'BRA trend rising');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('counts: buzz source defaults to cost-safe counts; firehose is opt-in', () => {
+  assert.strictEqual(resolveBuzzMode({}), 'counts', 'no env → cost-bounded counts');
+  assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'counts' }), 'counts');
+  assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'stream' }), 'stream', 'firehose only when explicit');
+  assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'anything-else' }), 'counts', 'unknown → counts');
 });
 check('counts: computeTrend reads rising / steady / falling', () => {
   assert.ok(computeTrend([{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }]).trend > 0.3, 'rising');

@@ -133,6 +133,16 @@ function computeTrend(series) {
 const utcDay = () => new Date().toISOString().slice(0, 10);
 
 /**
+ * Resolve the active buzz source from the environment. Cost-safe by default:
+ * the cost-bounded counts poller unless the operator explicitly opts into the
+ * billed-per-post firehose with X_BUZZ_MODE=stream. (Whether either actually
+ * polls still depends on X_BEARER_TOKEN being set.)
+ */
+function resolveBuzzMode(env = process.env) {
+  return env.X_BUZZ_MODE === 'stream' ? 'stream' : 'counts';
+}
+
+/**
  * Build the counts poller. `engine` is the buzz engine (uses setSignals() for
  * the sustained floor and surge() for momentum pops). `context` resolves the
  * hot-team set (defaults to the live-window logic; injectable for tests).
@@ -316,4 +326,4 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   return { start, stats: () => ({ ...stats }), cycle, activeTeamCodes, liveContext: resolveContext };
 }
 
-module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend };
+module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode };

@@ -8,6 +8,11 @@ export interface GlobeNation {
   lon: number;
   /** Marker color (hex string, e.g. confederation color). */
   color: string;
+  /**
+   * Optional buzz intensity 0..1 — drives how hard this nation's marker pulses
+   * and how large/bright its ring glows. Omitted/0 renders the default marker.
+   */
+  intensity?: number;
 }
 
 export interface GlobeArc {
@@ -175,10 +180,39 @@ export function Globe({
       }
       if (next !== hoverCode) { hoverCode = next; live.current.onHoverNation?.(next); }
     };
-    const onMove = (e: PointerEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.has = true; pickHover(); };
+    // ---- drag-to-spin ("marble") + idle rotation state ----
+    let idleLon = -70, idleLat = 6;
+    let dragging = false, lastX = 0, lastY = 0, velLon = 0, velLat = 0;
+
+    const onMove = (e: PointerEvent) => {
+      mouse.x = e.clientX; mouse.y = e.clientY; mouse.has = true;
+      if (dragging) {
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+        lastX = e.clientX; lastY = e.clientY;
+        velLon = -dx * 0.28; velLat = dy * 0.28; // remembered for release inertia
+        idleLon += velLon;
+        idleLat = Math.max(-78, Math.min(78, idleLat + velLat));
+      } else {
+        pickHover();
+      }
+    };
     const onLeave = () => { mouse.has = false; if (hoverCode !== null) { hoverCode = null; live.current.onHoverNation?.(null); } };
+    const onDown = (e: PointerEvent) => {
+      dragging = true; lastX = e.clientX; lastY = e.clientY; velLon = 0; velLat = 0;
+      renderer.domElement.style.cursor = 'grabbing';
+      try { renderer.domElement.setPointerCapture(e.pointerId); } catch { /* unsupported */ }
+    };
+    const onUp = (e: PointerEvent) => {
+      dragging = false;
+      renderer.domElement.style.cursor = 'grab';
+      try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* unsupported */ }
+    };
+    renderer.domElement.style.cursor = 'grab';
     renderer.domElement.addEventListener('pointermove', onMove);
     renderer.domElement.addEventListener('pointerleave', onLeave);
+    renderer.domElement.addEventListener('pointerdown', onDown);
+    renderer.domElement.addEventListener('pointerup', onUp);
+    renderer.domElement.addEventListener('pointercancel', onUp);
 
     // ---- arcs ----
     let arcsKey = '';
@@ -205,10 +239,9 @@ export function Globe({
     };
 
     // ---- render loop ----
-    let idleLon = -70;
     let camZ = zoom;
     let raf = 0;
-    globe.quaternion.copy(faceQuat(6, idleLon));
+    globe.quaternion.copy(faceQuat(idleLat, idleLon));
 
     const loop = () => {
       // resize
@@ -239,20 +272,35 @@ export function Globe({
           ? Math.max(base, Math.min(base + 108, base + vecs[0].angleTo(vecs[1]) * 110))
           : base - 50;
       } else {
-        if (lp.autoRotate !== false) idleLon += 0.12;
-        targetQ = faceQuat(6, idleLon);
+        // Free-spin marble: drag steers directly (onMove), release coasts with
+        // inertia, and an untouched globe drifts with the idle ambient spin.
+        if (!dragging) {
+          idleLon += velLon;
+          idleLat = Math.max(-78, Math.min(78, idleLat + velLat));
+          velLon *= 0.94; velLat *= 0.94;
+          if (Math.abs(velLon) < 0.02) velLon = 0;
+          if (Math.abs(velLat) < 0.02) velLat = 0;
+          if (velLon === 0 && velLat === 0 && lp.autoRotate !== false) idleLon += 0.12;
+        }
+        targetQ = faceQuat(idleLat, idleLon);
       }
-      globe.quaternion.slerp(targetQ, 0.08);
+      globe.quaternion.slerp(targetQ, dragging ? 0.4 : 0.08);
       camZ += (targetZ - camZ) * 0.08;
       camera.position.z = camZ;
 
       const focusSet = new Set(focus);
+      const intenByCode = new Map(lp.nations.map((n) => [n.code, Math.max(0, Math.min(1, n.intensity ?? 0))]));
       for (const m of markers) {
         const on = focusSet.has(m.code);
-        const pulse = 1 + Math.sin(t) * 0.12;
-        m.ring.scale.setScalar((on ? 2.3 : 1) * pulse);
-        (m.ring.material as THREE.MeshBasicMaterial).opacity = on ? 0.6 : (focusSet.size ? 0.06 : 0.24);
-        m.dot.scale.setScalar(on ? 1.9 : 1);
+        const inten = intenByCode.get(m.code) ?? 0;
+        // Hotter nations pulse with bigger amplitude, sit larger, and glow brighter.
+        const pulse = 1 + Math.sin(t) * (0.12 + inten * 0.55);
+        const restScale = on ? 2.3 : 1 + inten * 1.6;
+        m.ring.scale.setScalar(restScale * pulse);
+        (m.ring.material as THREE.MeshBasicMaterial).opacity = on
+          ? 0.6
+          : (focusSet.size ? 0.06 : 0.2 + inten * 0.6);
+        m.dot.scale.setScalar(on ? 1.9 : 1 + inten * 0.7);
       }
       arcGroup.children.forEach((ln) => {
         const arc = (lp.arcs ?? [])[(ln as THREE.Mesh).userData.i as number];
@@ -269,6 +317,9 @@ export function Globe({
       cancelAnimationFrame(raf);
       renderer.domElement.removeEventListener('pointermove', onMove);
       renderer.domElement.removeEventListener('pointerleave', onLeave);
+      renderer.domElement.removeEventListener('pointerdown', onDown);
+      renderer.domElement.removeEventListener('pointerup', onUp);
+      renderer.domElement.removeEventListener('pointercancel', onUp);
       renderer.dispose();
       mat.map?.dispose();
       mat.dispose();

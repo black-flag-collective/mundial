@@ -42,7 +42,40 @@ design; jump to [Quick start](#quick-start) to run it.
 
 ---
 
-## How it works
+## Cost-effective mode: counts → buzz (recommended)
+
+The filtered stream is billed **per post pulled** — during live matches with 48
+broad rules that ran ~$5/min. The buzz engine only needs per-country *volume*,
+not post bodies, so the cost-effective path asks X **how many** posts match
+instead of pulling them:
+
+- **Counts, not stream** — [`scripts/buzz-counts.js`](../scripts/buzz-counts.js)
+  polls `GET /2/tweets/counts/recent` per team (volume only; no bodies) and feeds
+  it to the engine via `setSignals()`.
+- **Scoped** — only the teams in **today's** matches (`data/matches.json`); nothing
+  when there are no matches.
+- **Hard daily cap** — a request budget with a circuit breaker that pauses polling
+  (buzz fades back to the free simulation) when hit.
+
+Enable + tune (all off by default):
+
+| Env | Default | Meaning |
+| :-- | :-- | :-- |
+| `X_BUZZ_MODE=counts` | _(unset → simulation/stream)_ | turn counts mode on |
+| `X_COUNTS_INTERVAL_MS` | `300000` (5m) | poll cadence |
+| `X_COUNTS_WINDOW_MIN` | `10` | recent-volume window per poll |
+| `X_COUNTS_DAILY_CAP` | `2000` | max requests/UTC-day (circuit breaker) |
+
+`GET /api/x/health` reports `{mode:"counts", activeTeams, requestsToday, dailyCap,
+capped, intervalMs, windowMin, rateRemaining, lastEvent, …}`. The **`/buzz`** page
+in this mode is a free-spin **marble globe** (no auto-focus; markers pulse harder
+where buzz is hotter) beside a **nation leaderboard** — no per-post feed, so no
+per-post cost. Counts mode supersedes the firehose stream; the stream path only
+runs when `X_BUZZ_MODE` isn't `counts` and `X_STREAM_DISABLED` isn't `1`.
+
+---
+
+## How it works (firehose stream)
 
 ```
 1. Create rules   POST /2/tweets/search/stream/rules     ← teams, hashtags, matches

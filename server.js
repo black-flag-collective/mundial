@@ -60,11 +60,18 @@ app.get('/api/buzz.json', (req, res) => {
 // simulated buzz is unchanged. See docs/X-API-REALTIME.md.
 const { runForever } = require('./scripts/x-stream-runner');
 const { RULES_URL } = require('./scripts/x-rules');
+const { createCountsPoller } = require('./scripts/buzz-counts');
 
 // Aborting this on shutdown drops the X connection promptly so the single
 // allowed stream slot is released before a redeploy's new machine connects
 // (prevents the rolling-deploy 409/429 connection churn).
 const xStreamController = new AbortController();
+
+// Buzz source selector. Default: simulated only (free). X_BUZZ_MODE=counts runs
+// the cost-bounded counts poller (recommended live source); the firehose stream
+// path runs only when neither counts mode nor X_STREAM_DISABLED is set.
+const BUZZ_MODE = process.env.X_BUZZ_MODE === 'counts' ? 'counts' : 'stream';
+const countsPoller = BUZZ_MODE === 'counts' ? createCountsPoller({ engine: buzz }) : null;
 
 const sseClients = new Set();
 const recentPosts = []; // small ring buffer so new SSE clients get instant context
@@ -105,10 +112,17 @@ async function refreshRulesStats() {
 }
 
 app.get('/api/x/health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
+  // Counts mode: report the poller's cost-bounded telemetry instead of stream stats.
+  if (countsPoller) {
+    return res.json({ mode: 'counts', ...countsPoller.stats() });
+  }
+
   const now = Date.now();
   xStats.postTimestamps = xStats.postTimestamps.filter((t) => now - t < 60000);
-  res.set('Cache-Control', 'no-store');
   res.json({
+    mode: process.env.X_STREAM_DISABLED === '1' ? 'off' : 'stream',
     tokenConfigured: xStats.tokenConfigured,
     streamConnected: xStats.streamConnected,
     lastEvent: xStats.lastEvent,
@@ -223,10 +237,14 @@ const server = app.listen(PORT, () => {
   // Start the buzz engine (no API key required — simulated/goal-derived source).
   buzz.start();
 
-  // Start the live X Filtered Stream if configured. No-ops without
-  // X_BEARER_TOKEN, and X_STREAM_DISABLED=1 forces it off (e.g. on secondary
-  // Fly machines — the stream allows only one concurrent connection).
-  if (process.env.X_STREAM_DISABLED !== '1') {
+  // Live buzz source. Counts mode (recommended, cost-bounded) supersedes the
+  // firehose stream. Both honor graceful shutdown via xStreamController.
+  if (BUZZ_MODE === 'counts') {
+    countsPoller.start(xStreamController.signal);
+    console.log('[buzz-counts] counts mode active (cost-bounded; firehose stream not used)');
+  } else if (process.env.X_STREAM_DISABLED !== '1') {
+    // Firehose filtered-stream path. No-ops without X_BEARER_TOKEN; X_STREAM_DISABLED=1
+    // forces it off (e.g. on secondary Fly machines — one connection only).
     runForever(onXPost, {
       signal: xStreamController.signal,
       onStatus: (state, info) => {

@@ -73,6 +73,7 @@ class BuzzEngine {
     this._tickMs = 2000;
     this._timer = null;
     this._ticking = false;
+    this.signal = {};        // code -> external buzz level 0..1 (e.g. X counts); see setSignals()
   }
 
   start() {
@@ -151,6 +152,24 @@ class BuzzEngine {
     s.spike = clamp01(s.spike + 0.03 * weight);
   }
 
+  /**
+   * Replace the external per-country buzz signal in one shot (atomic — codes
+   * omitted from `map` are cleared). Each value is a sustained 0..1 level, NOT
+   * a momentary spike: tick() raises a country's glow target to at least this
+   * level, so a nation with high real-world volume pulses harder for as long as
+   * the signal holds. Fed by the cost-effective counts poller
+   * (scripts/buzz-counts.js → GET /2/tweets/counts/recent per active team).
+   */
+  setSignals(map) {
+    const next = {};
+    if (map) {
+      for (const code of Object.keys(map)) {
+        if (this.state[code]) next[code] = clamp01(map[code]);
+      }
+    }
+    this.signal = next;
+  }
+
   async tick() {
     // Re-entrancy guard: setInterval can fire again before an awaited tick
     // resolves; skip overlapping runs so _lastScores / goal spikes stay consistent.
@@ -173,7 +192,11 @@ class BuzzEngine {
         s.drift = Math.max(-0.25, Math.min(0.25, s.drift * 0.92));
         const noise = 0.55 + 0.3 * Math.sin(t * 0.27 + s.phase) + s.drift;
 
-        const target = clamp01(base * MULT[stClass] * noise);
+        // Real external buzz (X counts) raises the floor: a nation with strong
+        // live volume glows at least that bright, while the procedural model
+        // still drives ambient motion and the no-signal default is unchanged.
+        const ext = this.signal[code] || 0;
+        const target = clamp01(Math.max(base * MULT[stClass] * noise, ext));
 
         // Ease the steady glow toward target (~3s time constant).
         const k = 1 - Math.exp(-dtMs / 3000);

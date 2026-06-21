@@ -9,6 +9,7 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
+const { parseTrends, isWorldCupTrend, createTrendsPoller } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch } = require('./buzz-counts');
 
@@ -287,6 +288,39 @@ check('stream: postWeight scales with engagement, bounded [1, 8]', () => {
   const viral = postWeight({ public_metrics: { like_count: 1e9, retweet_count: 1e9 } });
   assert.ok(viral <= 8, 'mega-viral post is capped at 8, not unbounded');
   assert.ok(viral >= mid, 'monotonic');
+});
+
+check('trends: parseTrends maps the response and tags World-Cup trends', () => {
+  const out = parseTrends({ data: [
+    { trend_name: '#WorldCup2026', tweet_count: 50000 },
+    { trend_name: 'Argentina', tweet_count: 12000 },
+    { trend_name: 'Taylor Swift', tweet_count: 9000 },
+    { trend_name: 'no count here' },
+  ] });
+  assert.strictEqual(out.length, 4);
+  assert.deepStrictEqual(out[0], { name: '#WorldCup2026', postCount: 50000, wc: true });
+  assert.strictEqual(out[1].wc, true, 'a nation name is a WC trend');
+  assert.strictEqual(out[2].wc, false, 'unrelated trend is not WC');
+  assert.strictEqual(out[3].postCount, 0, 'missing count → 0');
+  assert.deepStrictEqual(parseTrends({}), [], 'no data → empty');
+});
+check('trends: isWorldCupTrend recognizes nations, codes, and keywords', () => {
+  assert.ok(isWorldCupTrend('Brazil'));
+  assert.ok(isWorldCupTrend('#FIFA'));
+  assert.ok(isWorldCupTrend('the world cup final'));
+  assert.ok(!isWorldCupTrend('#Eurovision'));
+  assert.ok(!isWorldCupTrend(''));
+});
+check('trends: poller respects the daily cap (circuit breaker)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_TRENDS_DAILY_CAP = '1'; // below the 2-location count → can't finish
+  let calls = 0;
+  global.fetch = async () => { calls++; return { ok: true, json: async () => ({ data: [{ trend_name: 'X', tweet_count: 1 }] }) }; };
+  const poller = createTrendsPoller({ log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }, { woeid: 2, name: 'B' }] });
+  await poller.cycle();
+  assert.strictEqual(calls, 0, 'no requests when the cycle would exceed the cap');
+  assert.strictEqual(poller.stats().capped, true);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_TRENDS_DAILY_CAP;
 });
 
 (async () => {

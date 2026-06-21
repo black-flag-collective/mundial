@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T22:45:48.445Z",
+  "updatedAt": "2026-06-21T01:35:52.238Z",
   "days": [
     {
       "dow": "Thursday",
@@ -45,6 +45,16 @@
       "dow": "Friday",
       "short": "Jun 19",
       "long": "June 19"
+    },
+    {
+      "dow": "Saturday",
+      "short": "Jun 20",
+      "long": "June 20"
+    },
+    {
+      "dow": "Sunday",
+      "short": "Jun 21",
+      "long": "June 21"
     }
   ],
   "dayMatches": [
@@ -330,7 +340,7 @@
         "g": "C",
         "a": "SCO",
         "b": "MAR",
-        "st": "LIVE",
+        "st": "FT",
         "venue": "Gillette Stadium, Foxborough",
         "as": 0,
         "bs": 1
@@ -339,17 +349,91 @@
         "g": "C",
         "a": "BRA",
         "b": "HAI",
-        "st": "UP",
-        "time": "9:00 PM ET",
-        "venue": "Lincoln Financial Field, Philadelphia"
+        "st": "FT",
+        "venue": "Lincoln Financial Field, Philadelphia",
+        "as": 3,
+        "bs": 0
       },
       {
         "g": "D",
         "a": "TUR",
         "b": "PAR",
+        "st": "FT",
+        "venue": "Levi's Stadium, Santa Clara",
+        "as": 0,
+        "bs": 1
+      }
+    ],
+    [
+      {
+        "g": "E",
+        "a": "GER",
+        "b": "CIV",
+        "as": 2,
+        "bs": 1,
+        "st": "FT",
+        "venue": "BMO Field, Toronto"
+      },
+      {
+        "g": "E",
+        "a": "ECU",
+        "b": "CUW",
+        "as": 0,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Arrowhead Stadium, Kansas City"
+      },
+      {
+        "g": "F",
+        "a": "NED",
+        "b": "SWE",
+        "as": 5,
+        "bs": 1,
+        "st": "FT",
+        "venue": "NRG Stadium, Houston"
+      },
+      {
+        "g": "F",
+        "a": "TUN",
+        "b": "JPN",
+        "as": 0,
+        "bs": 0,
+        "st": "FT",
+        "venue": "Estadio BBVA, Monterrey"
+      }
+    ],
+    [
+      {
+        "g": "H",
+        "a": "ESP",
+        "b": "KSA",
         "st": "UP",
-        "time": "12:00 AM ET",
-        "venue": "Levi's Stadium, Santa Clara"
+        "time": "12:00 PM ET",
+        "venue": "Mercedes-Benz Stadium, Atlanta"
+      },
+      {
+        "g": "G",
+        "a": "BEL",
+        "b": "IRN",
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "SoFi Stadium, LA"
+      },
+      {
+        "g": "H",
+        "a": "URU",
+        "b": "CPV",
+        "st": "UP",
+        "time": "6:00 PM ET",
+        "venue": "Hard Rock Stadium, Miami"
+      },
+      {
+        "g": "G",
+        "a": "NZL",
+        "b": "EGY",
+        "st": "UP",
+        "time": "9:00 PM ET",
+        "venue": "BC Place, Vancouver"
       }
     ]
   ]

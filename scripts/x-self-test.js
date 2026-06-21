@@ -10,7 +10,7 @@ const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -124,6 +124,41 @@ check('counts: buzz source defaults to cost-safe counts; firehose is opt-in', ()
   assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'counts' }), 'counts');
   assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'stream' }), 'stream', 'firehose only when explicit');
   assert.strictEqual(resolveBuzzMode({ X_BUZZ_MODE: 'anything-else' }), 'counts', 'unknown → counts');
+});
+check('counts: dueForFetch — live every cycle, others on the slow tier', () => {
+  const now = 1_000_000;
+  assert.strictEqual(dueForFetch('live', now - 1, now, 300000), true, 'live always due');
+  assert.strictEqual(dueForFetch('cooldown', now - 10000, now, 300000), false, 'cooldown not due yet');
+  assert.strictEqual(dueForFetch('cooldown', now - 300000, now, 300000), true, 'cooldown due after slow interval');
+  assert.strictEqual(dueForFetch('warmup', 0, now, 300000), true, 'never-fetched non-live is due');
+});
+check('counts: live polled every cycle; cooldown holds its signal on the slow tier', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let fetches = 0;
+  global.fetch = async () => { fetches++; return { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 50 }, data: [{ tweet_count: 50 }] }) }; };
+  const sigs = [];
+  const engine = { state: { BRA: {}, ARG: {} }, setSignals(m) { sigs.push(m); }, surge() {} };
+  const ctx = () => ({ codes: ['BRA', 'ARG'], phase: 'live', phases: { BRA: 'live', ARG: 'cooldown' } });
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: ctx });
+  await poller.cycle();           // cycle 1: both fetched (ARG never polled before)
+  const afterFirst = fetches;
+  await poller.cycle();           // cycle 2 (immediate): only BRA (live) re-fetched
+  assert.strictEqual(afterFirst, 2, 'first cycle fetches both');
+  assert.strictEqual(fetches - afterFirst, 1, 'second cycle fetches only the live team');
+  const last = sigs[sigs.length - 1];
+  assert.ok('ARG' in last && last.ARG > 0, 'cooldown team keeps its signal between slow polls');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('counts: liveContext reports per-nation phase', () => {
+  const now = Date.parse('2026-06-22T21:30:00Z');
+  const matches = { dayMatches: [[
+    { a: 'FRA', b: 'IRQ', ko: '2026-06-22T21:00:00Z' },           // live (30m in)
+    { a: 'ESP', b: 'GER', ko: '2026-06-22T18:40:00Z' },           // ended ~20m ago → cooldown
+  ]] };
+  const ctx = liveContext({ now, matches, matchMin: 150, cooldownMin: 30 });
+  assert.strictEqual(ctx.phases.FRA, 'live');
+  assert.strictEqual(ctx.phases.ESP, 'cooldown');
+  assert.strictEqual(ctx.phase, 'live', 'overall phase is the hottest');
 });
 check('counts: computeTrend reads rising / steady / falling', () => {
   assert.ok(computeTrend([{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }]).trend > 0.3, 'rising');

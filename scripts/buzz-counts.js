@@ -78,7 +78,9 @@ function activeTeamCodes() {
  *   - [ko, ko + matchMs]             → 'live'
  *   - (ko + matchMs, +cooldownMs]    → 'cooldown'
  * Overall phase is the hottest contribution (live > warmup/cooldown > idle).
- * Returns { codes, phase } — codes empty + phase 'idle' means: poll nothing.
+ * Returns { codes, phase, phases } where `phases[code]` is that nation's hottest
+ * window right now — used to poll live matches faster than warmup/cooldown ones.
+ * codes empty + phase 'idle' means: poll nothing.
  */
 function liveContext(opts = {}) {
   const now = opts.now != null ? opts.now : Date.now();
@@ -87,9 +89,10 @@ function liveContext(opts = {}) {
   const cooldownMs = (opts.cooldownMin != null ? opts.cooldownMin : 30) * 60_000;
 
   const m = opts.matches || parseMatches();
-  const codes = new Set();
+  const phases = {};
   let phase = 'idle';
-  const rank = { live: 3, warmup: 2, cooldown: 2, idle: 0 };
+  const rank = { live: 3, warmup: 2, cooldown: 1, idle: 0 };
+  const bump = (code, p) => { if (code && (!phases[code] || rank[p] > rank[phases[code]])) phases[code] = p; };
 
   if (m && Array.isArray(m.dayMatches)) {
     for (const day of m.dayMatches) {
@@ -101,13 +104,23 @@ function liveContext(opts = {}) {
         else if (warmupMs > 0 && now >= ko - warmupMs && now < ko) p = 'warmup';
         else if (now > ko + matchMs && now <= ko + matchMs + cooldownMs) p = 'cooldown';
         if (!p) continue;
-        if (x.a) codes.add(x.a);
-        if (x.b) codes.add(x.b);
+        bump(x.a, p);
+        bump(x.b, p);
         if (rank[p] > rank[phase]) phase = p;
       }
     }
   }
-  return { codes: [...codes], phase };
+  return { codes: Object.keys(phases), phase, phases };
+}
+
+/**
+ * Is a nation due for a counts request this cycle? Live matches refresh every
+ * cycle (the heartbeat); warmup/cooldown nations refresh only once per slow
+ * interval, so we spend the budget where the action is.
+ */
+function dueForFetch(phase, lastFetchAt, now, slowMs) {
+  if (phase === 'live') return true;
+  return now - (lastFetchAt || 0) >= slowMs;
 }
 
 /**
@@ -152,7 +165,9 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   const LIVE_INTERVAL =
     Number(process.env.X_COUNTS_LIVE_INTERVAL_MS) ||
     Number(process.env.X_COUNTS_INTERVAL_MS) || // back-compat with the old fixed knob
-    90_000;
+    60_000;
+  // Warmup/cooldown nations refresh on this slower tier (live polls every cycle).
+  const SLOW_INTERVAL = Number(process.env.X_COUNTS_SLOW_INTERVAL_MS) || 300_000;
   const IDLE_INTERVAL = Number(process.env.X_COUNTS_IDLE_INTERVAL_MS) || 600_000;
   const WINDOW_MIN = Number(process.env.X_COUNTS_WINDOW_MIN) || 10;
   const DAILY_CAP = Number(process.env.X_COUNTS_DAILY_CAP) || 2000;
@@ -176,6 +191,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     dailyCap: DAILY_CAP,
     capped: false,
     liveIntervalMs: LIVE_INTERVAL,
+    slowIntervalMs: SLOW_INTERVAL,
     idleIntervalMs: IDLE_INTERVAL,
     windowMin: WINDOW_MIN,
     rateRemaining: null,
@@ -185,6 +201,11 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     lastEvent: 'idle',
   };
   let day = utcDay();
+  // Per-code state persists across cycles so a cooldown nation polled on the slow
+  // tier keeps its last signal between refreshes (instead of dropping to zero).
+  const lastFetchAt = {}; // code -> ms of last successful counts request
+  const lastCount = {};   // code -> last total
+  const perTeamState = {}; // code -> { query, count, signal, trend }
 
   function captureRate(r) {
     const rem = r.headers.get('x-rate-limit-remaining');
@@ -219,8 +240,14 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     const context = ctx || resolveContext();
     const codes = context.codes || [];
+    const phases = context.phases || {};
+    const phaseOf = (code) => phases[code] || 'live'; // default 'live' if unspecified
     stats.phase = context.phase || 'idle';
     stats.activeTeams = codes;
+
+    // Drop state for nations no longer in any window so they fade to simulation.
+    const hot = new Set(codes);
+    for (const c of Object.keys(lastCount)) if (!hot.has(c)) { delete lastCount[c]; delete lastFetchAt[c]; delete perTeamState[c]; }
 
     if (!codes.length) {
       engine.setSignals({});
@@ -228,8 +255,12 @@ function createCountsPoller({ engine, log = console, context } = {}) {
       return;
     }
 
-    // Circuit breaker: don't start a cycle we can't finish within the cap.
-    if (stats.requestsToday + codes.length > DAILY_CAP) {
+    // Tiered selection: live nations every cycle, warmup/cooldown on the slow tier.
+    const now = Date.now();
+    const fetchCodes = codes.filter((c) => dueForFetch(phaseOf(c), lastFetchAt[c], now, SLOW_INTERVAL));
+
+    // Circuit breaker: don't start a fetch we can't finish within the daily cap.
+    if (fetchCodes.length && stats.requestsToday + fetchCodes.length > DAILY_CAP) {
       stats.capped = true;
       stats.lastEvent = `daily cap ${DAILY_CAP} reached — paused until UTC reset`;
       engine.setSignals({}); // fade back to the free simulation
@@ -237,42 +268,46 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     }
     stats.capped = false;
 
-    const counts = {};
-    const trends = {};
-    for (const code of codes) {
+    for (const code of fetchCodes) {
       const { total, series } = await countFor(code);
-      counts[code] = total;
-      trends[code] = computeTrend(series).trend;
+      const trend = computeTrend(series).trend;
+      lastCount[code] = total;
+      lastFetchAt[code] = Date.now();
       stats.requestsToday++;
+      const rule = ruleForTeam(code);
+      perTeamState[code] = {
+        query: rule ? rule.value : '',
+        count: total,
+        trend: Math.round(trend * 100) / 100,
+        signal: 0, // filled in after normalization below
+      };
       // A sharp minute-over-minute jump = a goal-reaction pop: flare the spike
       // so the globe visibly reacts in near-real-time (decays in the engine).
-      if (trends[code] > 0.25 && engine.surge) engine.surge(code, trends[code] * SURGE_MULT);
+      if (trend > 0.25 && engine.surge) engine.surge(code, trend * SURGE_MULT);
     }
 
-    // Normalize sustained volume to 0..1 (sqrt compresses the heavy tail so
-    // mid-volume nations still register); the engine raises each glow floor to it.
-    const max = Math.max(1, ...Object.values(counts));
+    // Normalize sustained volume across the full hot set (using each nation's
+    // last known count, so slow-tier nations keep their glow between refreshes).
+    const max = Math.max(1, ...codes.map((c) => lastCount[c] || 0));
     const signals = {};
-    for (const code of codes) signals[code] = counts[code] > 0 ? Math.sqrt(counts[code] / max) : 0;
+    for (const code of codes) {
+      const cnt = lastCount[code] || 0;
+      const sig = cnt > 0 ? Math.sqrt(cnt / max) : 0;
+      signals[code] = sig;
+      if (perTeamState[code]) perTeamState[code].signal = Math.round(sig * 100) / 100;
+    }
     engine.setSignals(signals);
 
-    // Per-team transparency for the UI: the exact query we send to X, the
-    // post-count volume, the normalized signal, and the rising/falling trend.
+    // Surface only the currently-hot nations (pruned set above).
     const perTeam = {};
-    for (const code of codes) {
-      const rule = ruleForTeam(code);
-      perTeam[code] = {
-        query: rule ? rule.value : '',
-        count: counts[code],
-        signal: Math.round((signals[code] || 0) * 100) / 100,
-        trend: Math.round((trends[code] || 0) * 100) / 100,
-      };
-    }
+    for (const code of codes) if (perTeamState[code]) perTeam[code] = perTeamState[code];
     stats.perTeam = perTeam;
 
-    stats.lastPollMs = Date.now();
-    const top = codes.reduce((a, b) => (counts[b] >= counts[a] ? b : a), codes[0]);
-    stats.lastEvent = `${stats.phase} · polled ${codes.length} team(s) · hottest ${top} (${counts[top]})`;
+    if (fetchCodes.length) {
+      stats.lastPollMs = Date.now();
+      const top = codes.reduce((a, b) => ((lastCount[b] || 0) >= (lastCount[a] || 0) ? b : a), codes[0]);
+      stats.lastEvent = `${stats.phase} · fetched ${fetchCodes.length}/${codes.length} team(s) · hottest ${top} (${lastCount[top] || 0})`;
+    }
   }
 
   function start(signal) {
@@ -288,18 +323,13 @@ function createCountsPoller({ engine, log = console, context } = {}) {
       let nextDelay = IDLE_INTERVAL;
       try {
         const context = resolveContext();
-        if ((context.codes || []).length) {
-          await cycle(context);
-          // Any active window (live/warmup/cooldown) polls on the fast cadence;
-          // a quiet tournament hour falls back to the request-free idle re-check.
-          nextDelay = context.phase === 'idle' ? IDLE_INTERVAL : LIVE_INTERVAL;
-        } else {
-          // No live match: spend nothing, just re-check for the next kickoff.
-          engine.setSignals({});
-          stats.phase = 'idle';
-          stats.activeTeams = [];
-          stats.lastEvent = 'no live match — idle (no requests)';
-        }
+        await cycle(context); // handles the empty/idle case (clears signals) itself
+        const codes = context.codes || [];
+        const phases = context.phases || {};
+        const anyLive = codes.some((c) => (phases[c] || 'live') === 'live');
+        // Live matches set the fast cadence; a window with only warmup/cooldown
+        // nations ticks on the slow tier; nothing active → request-free re-check.
+        nextDelay = !codes.length ? IDLE_INTERVAL : (anyLive ? LIVE_INTERVAL : SLOW_INTERVAL);
       } catch (e) {
         stats.errors++;
         stats.lastEvent = 'cycle error: ' + e.message;
@@ -326,4 +356,4 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   return { start, stats: () => ({ ...stats }), cycle, activeTeamCodes, liveContext: resolveContext };
 }
 
-module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode };
+module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch };

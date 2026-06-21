@@ -58,9 +58,12 @@ instead of pulling them — and only while a match is actually being played:
   we poll only teams whose match is live (kickoff → +`MATCH_MIN`) plus a short
   post-match cooldown. **No live match → zero requests** (match state is read
   from disk for free), so a quiet tournament hour costs nothing.
-- **Adaptive cadence** — fast (`LIVE_INTERVAL`, ~90s) while a match is live so
-  the globe pulses in near-real-time; a slow, request-free re-check
-  (`IDLE_INTERVAL`, ~10m) otherwise, just to notice the next kickoff.
+- **Tiered cadence** — nations in a **live** match refresh every cycle
+  (`LIVE_INTERVAL`, ~60s) so the globe pulses in near-real-time, while
+  **warmup/cooldown** nations refresh on a slower tier (`SLOW_INTERVAL`, ~5m) —
+  the budget goes where the action is. When nothing is live, a request-free
+  re-check (`IDLE_INTERVAL`, ~10m) just watches for the next kickoff. A slow-tier
+  nation keeps its last signal between refreshes, so the board stays stable.
 - **Momentum, for free** — the counts response is per-minute, so each poll also
   yields a rising/falling **trend** per country and fires a **surge** (spike)
   on a sharp minute-over-minute jump — the goal-reaction pop — with no extra
@@ -75,8 +78,9 @@ token, both paths are inert and the free simulation runs. Tune with:
 | Env | Default | Meaning |
 | :-- | :-- | :-- |
 | `X_BUZZ_MODE` | `counts` (with token) | set to `stream` to opt into the firehose instead |
-| `X_COUNTS_LIVE_INTERVAL_MS` | `90000` (90s) | poll cadence while a match is live |
-| `X_COUNTS_IDLE_INTERVAL_MS` | `600000` (10m) | request-free re-check when idle |
+| `X_COUNTS_LIVE_INTERVAL_MS` | `60000` (60s) | poll cadence for nations in a **live** match |
+| `X_COUNTS_SLOW_INTERVAL_MS` | `300000` (5m) | poll cadence for **warmup/cooldown** nations |
+| `X_COUNTS_IDLE_INTERVAL_MS` | `600000` (10m) | request-free re-check when nothing is live |
 | `X_COUNTS_WINDOW_MIN` | `10` | recent-volume window per poll |
 | `X_COUNTS_MATCH_MIN` | `150` | minutes after kickoff a match stays "live" |
 | `X_COUNTS_WARMUP_MIN` | `0` | pre-kickoff hype window (off by default) |
@@ -86,18 +90,21 @@ token, both paths are inert and the free simulation runs. Tune with:
 ### What it costs
 
 Because spend is scoped to live windows, the bill tracks the schedule, not the
-clock. Per live match: 2 teams × (~150 min ÷ 90 s) ≈ **200 requests**. A busy
-group-stage day (4 matches) ≈ **800 requests/day**, comfortably under the 2,000
-default cap; a whole 104-match tournament ≈ **20–25k requests**. At the
-pay-per-use counts price (~$0.005/request) that's a few dollars on a peak day and
-on the order of **~$100 for the entire World Cup** — and **$0 on days with no
-matches**. Tighten further by raising `X_COUNTS_LIVE_INTERVAL_MS` or lowering the
-cap; the circuit breaker guarantees you can't blow past the cap even if the
-schedule data is wrong.
+clock. Per match the live tier dominates: 2 teams × (~150 min ÷ 60 s) ≈ **300
+requests**, plus a handful on the slow tier during the 30-min cooldown (2 teams ÷
+5 min ≈ 12). Call it **~310 requests/match**. A busy group-stage day (4 matches)
+≈ **1,250 requests/day**, under the 2,000 default cap; a whole 104-match
+tournament ≈ **30–35k requests**. At the pay-per-use counts price
+(~$0.005/request) that's a few dollars on a peak day and
+on the order of **~$150 for the entire World Cup** — and **$0 on days with no
+matches**. Want it cheaper? Raise `X_COUNTS_LIVE_INTERVAL_MS` (e.g. back to 90s),
+raise `X_COUNTS_SLOW_INTERVAL_MS`, or lower the cap; the circuit breaker
+guarantees you can't blow past the cap even if the schedule data is wrong.
 
 `GET /api/x/health` reports `{mode:"counts", phase, activeTeams, requestsToday,
-dailyCap, capped, liveIntervalMs, idleIntervalMs, windowMin, nextPollMs, perTeam,
-rateRemaining, lastEvent, …}` — `phase` is `live`/`warmup`/`cooldown`/`idle` and
+dailyCap, capped, liveIntervalMs, slowIntervalMs, idleIntervalMs, windowMin,
+nextPollMs, perTeam, rateRemaining, lastEvent, …}` — `phase` is
+`live`/`warmup`/`cooldown`/`idle` and
 `perTeam[code]` carries the exact query, post count, normalized signal, and
 trend. The **`/buzz`** page in this mode is a free-spin **marble globe** (no
 auto-focus; markers pulse harder where buzz is hotter) beside a **nation

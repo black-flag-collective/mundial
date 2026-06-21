@@ -40,7 +40,6 @@
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script src="./ds-base.js"></script>
 <style>
@@ -67,6 +66,11 @@
     .bk-inner { gap: 7px !important; padding: 0 14px; }
     .legend-cap { left: 50% !important; transform: translateX(-50%); bottom: auto !important; top: calc(32vh + 66px) !important; width: auto !important; }
     .legend-backing { bottom: auto !important; top: -50px !important; left: 0 !important; width: 100vw !important; height: calc(32vh + 150px) !important; background: radial-gradient(60% 75% at 50% 42%, rgba(4,16,28,0.86), rgba(4,16,28,0) 78%) !important; }
+    /* Globe/home view: decorative legend + hover-hint don't fit a phone; keep
+       the globe + hero + a centered schedule CTA. */
+    .globe-legend { display: none !important; }
+    .globe-hint { display: none !important; }
+    .globe-cta { left: 0 !important; right: 0 !important; bottom: 20px !important; max-width: none !important; align-items: center !important; text-align: center !important; padding: 0 18px !important; }
   }
 </style>
 </helmet>
@@ -104,7 +108,7 @@
       <div style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
         <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: #fff; line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: #fff; line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
           <sc-if value="{{ dayIsToday }}" hint-placeholder-val="{{ false }}">
             <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #04101c; background: {{ accent }}; padding: 5px 12px; border-radius: 999px;">TODAY</span>
           </sc-if>
@@ -116,9 +120,9 @@
       <div ref="{{ displayRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
         <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: {{ accent }};">Group {{ fGroup }}</span>
         <div style="display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 40px);">
-          <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fA }}</span>
-          <span style="font-family: 'Inter', sans-serif; font-weight: 700; font-size: clamp(2.2rem, 6vw, 5rem); line-height: 0.82; letter-spacing: -0.02em; color: {{ fScoreColor }}; white-space: nowrap;">{{ fScore }}</span>
-          <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fB }}</span>
+          <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fA }}</span>
+          <span style="font-family: var(--mun-font-sans); font-weight: 700; font-size: clamp(2.2rem, 6vw, 5rem); line-height: 0.82; letter-spacing: -0.02em; color: {{ fScoreColor }}; white-space: nowrap;">{{ fScore }}</span>
+          <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fB }}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.85); font-size: clamp(14px, 1.6vw, 18px);">
           <span style="display: flex; align-items: center; gap: 9px;"><img src="{{ fAFlag }}" alt="" style="width: 28px; height: 19px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);">{{ fAName }}</span>
@@ -181,7 +185,7 @@
       <div class="pane-standings" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: row; gap: 36px; padding: 92px 48px 36px; box-sizing: border-box;">
         <div class="standings-rail" style="width: 290px; flex: none; display: flex; flex-direction: column; gap: 6px;">
           <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
-          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: #fff; line-height: 1;">Standings</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: #fff; line-height: 1;">Standings</span>
           <span class="rail-desc" style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 12px; max-width: 230px; line-height: 1.55;">Live group tables across all 12 groups. Hover a team to trace it on the globe below.</span>
         </div>
         <div class="standings-main" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
@@ -226,7 +230,7 @@
       <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 22px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
           <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
-          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: #fff; line-height: 1;">Projected Bracket</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: #fff; line-height: 1;">Projected Bracket</span>
           <span style="font-size: 12px; color: rgba(255,255,255,0.45);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
         </div>
         <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
@@ -293,7 +297,7 @@
             </div>
             <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px;">
               <span style="font-size: 10px; letter-spacing: 0.2em; color: rgba(255,255,255,0.45);">PROJECTED CHAMPION</span>
-              <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 44px; color: #fff; letter-spacing: -0.03em; line-height: 1;">{{ champCode }}</span>
+              <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: 44px; color: #fff; letter-spacing: -0.03em; line-height: 1;">{{ champCode }}</span>
               <span style="font-size: 13px; color: {{ accent }};">{{ champName }}</span>
             </div>
           </div>
@@ -360,26 +364,18 @@
 
       <div data-anim="rise" data-delay="220" style="position: absolute; top: 120px; left: 0; right: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 0 20px; pointer-events: none;">
         <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; white-space: nowrap; color: rgba(255,255,255,0.55);">FIFA World Cup 26</span>
-        <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.3rem, 2.6vw, 2rem); color: rgba(255,255,255,0.9);">{{ kicker }}</span>
+        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.3rem, 2.6vw, 2rem); color: rgba(255,255,255,0.9);">{{ kicker }}</span>
       </div>
 
-      <div style="position: absolute; bottom: 13%; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
+      <div class="globe-hint" style="position: absolute; bottom: 13%; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
         <div data-anim="fade" data-delay="900" style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 999px; animation: hintPulse 2.6s ease-in-out infinite;">
           <span style="width: 18px; height: 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.7); display: inline-block;"></span>
           <span style="font-size: 13px; color: rgba(255,255,255,0.85); white-space: nowrap;">Hover any nation to trace its road through the group stage</span>
         </div>
       </div>
 
-      <div data-anim="fade" data-delay="700" style="position: absolute; bottom: 56px; left: 40px; z-index: 50;">
-        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5);">Confederations</span>
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
-          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="6">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="width: 9px; height: 9px; border-radius: 999px; background: {{ l.color }}; box-shadow: 0 0 10px {{ l.color }};"></span>
-              <span style="font-size: 13px; color: rgba(255,255,255,0.8); letter-spacing: 0.02em;">{{ l.label }}</span>
-            </div>
-          </sc-for>
-        </div>
+      <div class="globe-legend" data-anim="fade" data-delay="700" style="position: absolute; bottom: 56px; left: 40px; z-index: 50;">
+        <x-import component-from-global-scope="MundialUI.ConfederationLegend" hint-size="180px,210px"></x-import>
       </div>
     </sc-if>
 
@@ -387,7 +383,7 @@
       <div ref="{{ countryRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
         <span style="font-size: clamp(13px, 1.4vw, 17px); font-weight: 600; letter-spacing: 0.36em; text-transform: uppercase; color: {{ confedColor }}; text-align: center; max-width: 80vw;">{{ countryName }}</span>
         <img src="{{ countryFlag }}" alt="" style="width: 64px; height: 43px; border-radius: 5px; object-fit: cover; box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.22);">
-        <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; letter-spacing: -0.04em; color: rgba(236,245,252,0.95); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ countryCode }}</span>
+        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; letter-spacing: -0.04em; color: rgba(236,245,252,0.95); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ countryCode }}</span>
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px;">Group {{ groupLabel }}</span>
           <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: {{ confedColor }}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); padding: 6px 14px; border-radius: 999px;">{{ confedLabel }}</span>
@@ -397,8 +393,8 @@
 
     <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
       <div style="position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-top: 72px; box-sizing: border-box; pointer-events: none;">
-        <span style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: rgba(236,245,252,0.92); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
-        <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: rgba(255,255,255,0.72); text-align: center;">One trophy. One summer across North America.</span>
+        <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(4rem, 16vw, 14rem); line-height: 0.82; letter-spacing: -0.045em; color: rgba(236,245,252,0.92); text-shadow: 0 12px 60px rgba(0,0,0,0.5);">48 Nations</span>
+        <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: rgba(255,255,255,0.72); text-align: center;">One trophy. One summer across North America.</span>
       </div>
     </sc-if>
 
@@ -420,13 +416,13 @@
     </sc-if>
 
     <sc-if value="{{ globeIdle }}" hint-placeholder-val="{{ true }}">
-      <div data-anim="fade" data-delay="820" style="position: absolute; bottom: 56px; right: 48px; z-index: 50; max-width: 300px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; text-align: right;">
+      <div class="globe-cta" data-anim="fade" data-delay="820" style="position: absolute; bottom: 56px; right: 48px; z-index: 50; max-width: 300px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; text-align: right;">
         <div style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 26px; color: #fff; line-height: 1;">Jun 11 &ndash; Jul 19, 2026</span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 26px; color: #fff; line-height: 1;">Jun 11 &ndash; Jul 19, 2026</span>
           <span style="font-size: 14px; color: rgba(255,255,255,0.8);">104 matches &middot; 16 host cities &middot; 12 groups</span>
           <span style="font-size: 13px; color: rgba(255,255,255,0.55);">Opening match: Mexico v South Africa</span>
         </div>
-        <button style="background: {{ accent }}; color: #fff; font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
+        <button style="background: {{ accent }}; color: #fff; font-size: 14px; font-weight: 500; padding: 12px 28px; border: none; border-radius: 999px; cursor: pointer; font-family: var(--mun-font-sans); white-space: nowrap; transition: transform 0.2s, background 0.2s, box-shadow 0.2s;" style-hover="background: {{ accentHover }}; transform: scale(1.03); box-shadow: 0 10px 30px {{ accentGlow }};" style-active="transform: scale(0.95);">Full Schedule</button>
       </div>
     </sc-if>
 

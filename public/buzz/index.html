@@ -18,9 +18,26 @@
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
   ::-webkit-scrollbar-track{background:transparent}
   @keyframes mun-blip{0%,100%{opacity:.45}50%{opacity:1}}
+
+  /* Layout (desktop default) — overridden for phones below. */
+  .bz-root{height:100vh;overflow:hidden;padding:24px 26px 26px;gap:18px}
+  .bz-tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;flex:none}
+  .bz-main{display:grid;grid-template-columns:minmax(360px,2fr) 3fr;gap:18px;flex:1;min-height:0}
+  .bz-globe-wrap{position:relative;flex:1;min-height:0}
+
+  /* Phone: stack everything, scroll the page, give the globe real height and
+     let touch-drag spin it (instead of scrolling) within its own area. */
+  @media (max-width:760px){
+    .bz-root{height:auto;min-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 26px;gap:14px}
+    .bz-tiles{grid-template-columns:repeat(2,1fr);gap:10px}
+    .bz-main{grid-template-columns:1fr;flex:none;gap:14px}
+    .bz-globe-wrap{flex:none;height:62vh;min-height:340px;touch-action:none}
+    .bz-title{font-size:23px !important}
+    .bz-tile{min-height:92px !important}
+  }
 </style>
 </helmet>
-<div class="mun-root" style="height:100vh;width:100%;overflow:hidden;padding:24px 26px 26px;display:flex;flex-direction:column;gap:18px;font-family:var(--mun-font-sans)">
+<div class="mun-root bz-root" style="width:100%;display:flex;flex-direction:column;font-family:var(--mun-font-sans)">
 
   <header style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;flex:none">
     <div style="display:flex;align-items:center;gap:18px">
@@ -28,7 +45,7 @@
       <div style="width:1px;height:36px;background:var(--mun-border)"></div>
       <div>
         <div style="font-size:11px;font-weight:600;letter-spacing:var(--mun-tracking-eyebrow);text-transform:uppercase;color:var(--mun-fg-faint)">X API · Counts → Buzz</div>
-        <div style="font-family:var(--mun-font-display);font-style:italic;font-size:27px;color:var(--mun-fg-display);line-height:1.1;margin-top:3px">Buzz Monitor</div>
+        <div class="bz-title" style="font-family:var(--mun-font-display);font-style:italic;font-size:27px;color:var(--mun-fg-display);line-height:1.1;margin-top:3px">Buzz Monitor</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:11px;padding:9px 17px;border-radius:var(--mun-radius-pill);background:{{ connBg }};border:1px solid {{ connBorder }}">
@@ -38,9 +55,9 @@
     </div>
   </header>
 
-  <section style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;flex:none">
+  <section class="bz-tiles">
     <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="5">
-      <div style="background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-height:104px">
+      <div class="bz-tile" style="background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-height:104px">
         <div style="font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mun-fg-faint)">{{ t.label }}</div>
         <div style="display:flex;align-items:baseline;gap:7px">
           <span style="font-size:25px;font-weight:700;color:{{ t.tone }};line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap">{{ t.value }}</span>
@@ -56,7 +73,7 @@
     </sc-for>
   </section>
 
-  <main style="display:grid;grid-template-columns:minmax(360px,2fr) 3fr;gap:18px;flex:1;min-height:0">
+  <main class="bz-main">
 
     <div style="display:flex;flex-direction:column;gap:14px;min-height:0;background:var(--mun-surface-1);border:1px solid var(--mun-border);border-radius:var(--mun-radius-lg);padding:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
@@ -100,7 +117,7 @@
         </div>
         <div style="font-size:11.5px;color:var(--mun-fg-subtle)">per-nation volume → marker intensity</div>
       </div>
-      <div style="position:relative;flex:1;min-height:0">
+      <div class="bz-globe-wrap">
         <x-import component-from-global-scope="MundialUI.Globe" nations="{{ nations }}" arcs="{{ noArcs }}" focus-code="{{ noFocus }}" auto-rotate="{{ true }}" hint-size="100%,100%"></x-import>
         <sc-if value="{{ hasHot }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute;left:18px;bottom:18px;width:262px;max-width:60%;background:rgba(4,16,28,.62);backdrop-filter:blur(var(--mun-blur));-webkit-backdrop-filter:blur(var(--mun-blur));border:1px solid {{ hotBorder }};border-radius:var(--mun-radius-md);padding:13px 14px;pointer-events:none;display:flex;flex-direction:column;gap:10px">

@@ -46,6 +46,12 @@
   html, body { margin: 0; padding: 0; }
   body { font-family: var(--mun-font-sans, 'IBM Plex Sans', system-ui, sans-serif); background: var(--mun-bg, #04101c); }
   @keyframes hintPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
+  @keyframes bzLive { 0%, 100% { box-shadow: 0 0 0 0 var(--mun-accent-glow); opacity: 1; } 50% { box-shadow: 0 0 0 5px transparent; opacity: 0.55; } }
+  @keyframes bzSpin { to { transform: rotate(360deg); } }
+  .bz-livedot { animation: bzLive 1.6s ease-in-out infinite; }
+  .bz-spin { animation: bzSpin 0.8s linear infinite; }
+  .bz-board::-webkit-scrollbar { width: 5px; }
+  .bz-board::-webkit-scrollbar-thumb { background: var(--mun-surface-4); border-radius: 3px; }
   .mday-scroll::-webkit-scrollbar { width: 5px; }
   .mday-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
   .bk-wrap::-webkit-scrollbar { height: 6px; }
@@ -53,7 +59,10 @@
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
     .nav-brand { display: none !important; }
-    .nav-pills { position: static !important; left: auto !important; transform: none !important; width: 100% !important; display: flex !important; justify-content: center !important; }
+    .nav-pills { position: static !important; left: auto !important; transform: none !important; width: 100% !important; display: flex !important; justify-content: safe center !important; flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .nav-pills::-webkit-scrollbar { display: none !important; }
+    /* buzz: header + full-width leaderboard over the dimmed live globe */
+    .pane-buzz { padding: 78px 14px 18px !important; }
     /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
     .pane-standings { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
@@ -237,6 +246,67 @@
       </div>
     </sc-if>
 
+    <!-- ============ BUZZ VIEW ============ -->
+    <sc-if value="{{ isBuzz }}" hint-placeholder-val="{{ false }}">
+      <div class="pane-buzz" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; padding: 92px 24px 28px; box-sizing: border-box;">
+        <div class="bz-head" style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; flex: none;">
+          <span style="display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle);">
+            <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>
+            Live Buzz
+          </span>
+          <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: var(--mun-fg-display); line-height: 1;">Who the world is watching</span>
+          <span style="font-size: 13px; color: var(--mun-fg-subtle);">Top nations by chatter right now &middot; {{ buzzSource }}</span>
+        </div>
+
+        <sc-if value="{{ buzzReady }}" hint-placeholder-val="{{ true }}">
+          <div class="bz-board" style="width: 100%; max-width: 720px; margin-top: 22px; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--mun-fg-faint); padding-bottom: 4px;">
+              <span style="color: var(--mun-accent); font-weight: 600;">{{ buzzLiveCount }}</span> nations buzzing &middot; updated {{ buzzUpdated }}
+            </div>
+            <sc-for list="{{ buzzLeader }}" as="r" hint-placeholder-count="12">
+              <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 26px 30px 1fr 40px; align-items: center; gap: 12px; padding: 11px 16px; background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); cursor: pointer; transition: background 0.16s;" style-hover="background: var(--mun-surface-3);">
+                <span style="font-size: 13px; font-weight: 700; text-align: center; color: {{ r.rankColor }};">{{ r.rank }}</span>
+                <img src="{{ r.flag }}" alt="" style="width: 30px; height: 20px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                  <span style="display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--mun-fg);">{{ r.code }}</span>
+                    <span style="font-size: 13px; color: var(--mun-fg-muted); overflow: hidden; text-overflow: ellipsis;">{{ r.name }}</span>
+                    <sc-if value="{{ r.hot }}" hint-placeholder-val="{{ false }}"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--mun-accent); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 1px 7px;">HOT</span></sc-if>
+                  </span>
+                  <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;">
+                    <span style="position: absolute; inset: 0 auto 0 0; width: {{ r.pct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span>
+                  </span>
+                </div>
+                <span style="font-size: 14px; font-weight: 700; color: var(--mun-fg-strong); text-align: right;">{{ r.score }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ buzzLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+            <span class="bz-spin" style="width: 26px; height: 26px; border-radius: var(--mun-radius-pill); border: 2px solid var(--mun-border-strong); border-top-color: var(--mun-accent);"></span>
+            <span style="font-size: 13px; color: var(--mun-fg-subtle);">Tuning into the chatter&hellip;</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ buzzEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; max-width: 360px;">
+            <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.5rem; color: var(--mun-fg-strong);">All quiet&hellip; for now</span>
+            <span style="font-size: 13px; color: var(--mun-fg-subtle);">No buzz registered yet. It climbs as kickoff nears and posts start flowing.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ buzzError }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; max-width: 360px;">
+            <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.5rem; color: var(--mun-fg-strong);">Lost the signal</span>
+            <span style="font-size: 13px; color: var(--mun-fg-subtle);">Couldn&rsquo;t reach the buzz feed just now.</span>
+            <button onClick="{{ retryBuzz }}" style="font-size: 13px; font-weight: 600; color: var(--mun-fg); background: var(--mun-surface-3); border: 1px solid var(--mun-border-strong); border-radius: var(--mun-radius-pill); padding: 8px 20px; cursor: pointer;">Try again</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <!-- ============ GLOBE VIEW ============ -->
     <sc-if value="{{ isGlobe }}" hint-placeholder-val="{{ true }}">
 
@@ -350,9 +420,10 @@ class Component extends DCLogic {
     this.buzzGroup = null;
     this.buzzShell = null;
     this.buzzUniforms = null;
-    this.buzzByCode = {};   // code -> { score, spike } target from /api/buzz.json
+    this.buzzByCode = {};   // code -> { score, spike, rank } target from /api/buzz.json
     this.buzzDisp = {};     // code -> eased display values
     this._buzzLastT = 0;
+    this.buzzMeta = { status: 'loading', updatedAt: null, source: null, window: null };
 
     this.confed = {
       AFC:      { label: 'AFC',      color: '#ff7fb0' },
@@ -649,19 +720,26 @@ class Component extends DCLogic {
 
   _loadBuzz() {
     this._buzzStopped = false;
+    // Buzz feed status for the Buzz view: 'loading' until the first response,
+    // then 'live' on success or 'error' when the fetch fails.
+    this.buzzMeta = this.buzzMeta || { status: 'loading', updatedAt: null, source: null, window: null };
     const poll = () => {
       if (this._buzzStopped) return;
       this._buzzAbort = new AbortController();
       fetch('/api/buzz.json', { signal: this._buzzAbort.signal })
-        .then(r => r.ok ? r.json() : null)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error('bad status')))
         .then(data => {
           if (data && Array.isArray(data.buzz)) {
             const map = {};
-            data.buzz.forEach(b => { map[b.code] = { score: b.score || 0, spike: b.spike || 0 }; });
+            data.buzz.forEach(b => { map[b.code] = { score: b.score || 0, spike: b.spike || 0, rank: b.rank || 0 }; });
             this.buzzByCode = map;
+            this.buzzMeta = { status: 'live', updatedAt: data.updatedAt || null, source: data.source || null, window: data.window || null };
+            // Keep the Buzz leaderboard genuinely live: re-render it on each poll
+            // while it's the active view (the globe markers already ease every frame).
+            if (this.currentView() === 'buzz') this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 });
           }
         })
-        .catch(() => {})
+        .catch(() => { if (this.buzzMeta && this.buzzMeta.status !== 'live') this.buzzMeta = { ...this.buzzMeta, status: 'error' }; })
         // Don't resurrect the loop after unmount: bail if stopped.
         .finally(() => { if (!this._buzzStopped) this._buzzTimer = setTimeout(poll, 4000); });
     };
@@ -981,8 +1059,8 @@ class Component extends DCLogic {
   applyBuzzVisibility() {
     if (!this.buzzGroup) return;
     const v = this.currentView();
-    // The buzz layer reads best on the full globe and on matchday.
-    this.buzzGroup.visible = (v === 'globe' || v === 'matchday');
+    // The buzz layer reads best on the full globe, matchday, and (by definition) the Buzz view.
+    this.buzzGroup.visible = (v === 'globe' || v === 'matchday' || v === 'buzz');
   }
 
   // Per-frame: ease displayed buzz toward server targets, then upload only the
@@ -1025,7 +1103,8 @@ class Component extends DCLogic {
     const v = this.currentView();
     const md = v === 'matchday';
     const legend = v === 'standings' || v === 'bracket';
-    const showGlobe = v === 'globe' || md || legend;
+    const buzz = v === 'buzz';
+    const showGlobe = v === 'globe' || md || legend || buzz;
     this.markers.forEach((m) => { m.grp.visible = showGlobe; });
     this.hitMeshes.forEach((h) => { h.visible = v === 'globe'; });
   }
@@ -1049,7 +1128,7 @@ class Component extends DCLogic {
       const sz = Math.min(0.34 * vh, 300);
       s = sz / full; cx = 36 + sz / 2; cy = vh - 64 - sz / 2; z = 60; op = 1;
     } else {
-      s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : 1);
+      s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : (v === 'buzz' ? 0.5 : 1));
     }
     const tx = cx - vw / 2, ty = cy - vh / 2;
     this.gx += (tx - this.gx) * 0.12;
@@ -1425,6 +1504,34 @@ class Component extends DCLogic {
     const isMatchday = this.state.view === 'matchday';
     const isStandings = this.state.view === 'standings';
     const isBracket = this.state.view === 'bracket';
+    const isBuzz = this.state.view === 'buzz';
+
+    // ---- buzz view (live leaderboard from /api/buzz.json, polled into buzzByCode) ----
+    const bm = this.buzzMeta || { status: 'loading' };
+    const buzzRows = Object.keys(this.buzzByCode)
+      .map((code) => ({ code, name: (this.byCode[code] ? this.byCode[code].name : code), score: this.buzzByCode[code].score || 0, spike: this.buzzByCode[code].spike || 0, confed: (this.byCode[code] ? this.byCode[code].confed : null) }))
+      .sort((a, b) => b.score - a.score);
+    const buzzTop = buzzRows.filter((r) => r.score > 0.001).slice(0, 16);
+    const buzzMax = buzzTop.length ? buzzTop[0].score : 1;
+    const buzzLeader = buzzTop.map((r, idx) => ({
+      rank: String(idx + 1),
+      rankColor: idx < 3 ? 'var(--mun-accent)' : 'var(--mun-fg-faint)',
+      code: r.code, name: r.name, flag: this.flagUrl(r.code),
+      confedColor: (r.confed && this.confed[r.confed]) ? this.confed[r.confed].color : 'var(--mun-blue)',
+      pct: Math.max(6, Math.round((r.score / (buzzMax || 1)) * 100)) + '%',
+      score: String(Math.round(r.score * 100)),
+      hot: r.spike > 0.15 || idx === 0,
+      onEnter: () => this.setLegendTeam(r.code),
+      onLeave: () => this.clearLegend()
+    }));
+    const buzzStatus = bm.status || 'loading';
+    const buzzLoading = buzzStatus === 'loading';
+    const buzzError = buzzStatus === 'error';
+    const buzzEmpty = buzzStatus === 'live' && buzzTop.length === 0;
+    const buzzReady = buzzStatus === 'live' && buzzTop.length > 0;
+    const buzzUpdated = bm.updatedAt ? new Date(bm.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const buzzWindow = bm.window || 'recent';
+    const buzzSource = bm.source === 'counts' ? 'X post volume' : (bm.source || 'live signal');
 
     // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
     const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
@@ -1505,6 +1612,17 @@ class Component extends DCLogic {
       isMatchday: isMatchday,
       isStandings: isStandings,
       isBracket: isBracket,
+      isBuzz: isBuzz,
+      buzzLeader: buzzLeader,
+      buzzLoading: buzzLoading,
+      buzzError: buzzError,
+      buzzEmpty: buzzEmpty,
+      buzzReady: buzzReady,
+      buzzLiveCount: String(buzzTop.length),
+      buzzUpdated: buzzUpdated,
+      buzzWindow: buzzWindow,
+      buzzSource: buzzSource,
+      retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,
       legendTitle: isBracket ? 'Knockout path' : 'Group locator',
       legendHint: isBracket ? 'Hover a match to trace it' : 'Hover a team to locate it',
@@ -1513,7 +1631,7 @@ class Component extends DCLogic {
       showStandings: () => this.setView('standings'),
       showBracket: () => this.setView('bracket'),
       brandSize: 26,
-      navItems: [{ id: 'globe', label: 'Globe' }, { id: 'matchday', label: 'Matchday' }, { id: 'standings', label: 'Standings' }, { id: 'bracket', label: 'Bracket' }],
+      navItems: [{ id: 'buzz', label: 'Buzz' }, { id: 'globe', label: 'Globe' }, { id: 'matchday', label: 'Matchday' }, { id: 'standings', label: 'Standings' }, { id: 'bracket', label: 'Bracket' }],
       navValue: this.currentView(),
       navOnChange: (id) => this.setView(id),
       onSliderDown: this.onSliderDown,

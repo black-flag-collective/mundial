@@ -294,7 +294,7 @@
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelName }} isn&rsquo;t in today&rsquo;s matches, so we&rsquo;re not querying X for it right now — we only poll the nations playing today to keep cost bounded. Its bar is ambient interest.</div>
+                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelName }} isn&rsquo;t in a live match right now, so we&rsquo;re not querying X for it &mdash; to keep cost bounded we only poll nations while their match is live. Its bar shows ambient interest (popularity + match-day buzz), not live X volume.</div>
                 </sc-if>
                 <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">Live X polling is paused right now, so this is the simulated demo signal. When the feed is active you&rsquo;ll see the exact X query and post volume for {{ xSelName }} here.</div>
@@ -1763,10 +1763,10 @@ class Component extends DCLogic {
     const buzzIsLive = bm.source === 'counts';
     const xh = this.xHealth || {};
     const xWindowMin = xh.windowMin || 10;
-    const buzzSource = buzzIsLive ? ('real X post volume · last ' + xWindowMin + ' min') : 'simulated demo signal';
+    const buzzSource = buzzIsLive ? ('live X volume · in-play nations · last ' + xWindowMin + ' min') : 'simulated demo signal';
     const buzzHowText = buzzIsLive
-      ? ('Every few minutes we ask the X (Twitter) API how many recent posts mention each nation playing today — only the volume, never the post text — and rank them live. Nations not in today’s matches show ambient interest. No post content is fetched or stored, so it stays cheap (a few hundred requests/day, hard-capped).')
-      : ('Live mode pulls real post volume from the X (Twitter) API for the nations playing today. Right now it’s showing the free simulated signal (X polling is paused or off) — it switches to live automatically when the feed is active.');
+      ? ('While a match is live, we ask the X (Twitter) API how many recent posts mention each nation in it — volume only, never the post text — and rank them live. Nations not currently in a live match show ambient interest (popularity + match-day buzz), so the board stays full. No post content is fetched or stored, and we only poll during live windows, so it stays cheap (a few hundred requests/day, hard-capped).')
+      : ('Live mode pulls real X (Twitter) post volume for each nation while its match is live. Right now it’s showing the free simulated signal (X polling is paused or off) — it switches to live automatically when a match kicks off.');
     // "What we're grabbing from X" for the selected nation (board click sets buzzFocusCode).
     const xSel = this.state.buzzFocusCode || null;
     const xPer = (xh.perTeam && xSel) ? xh.perTeam[xSel] : null;

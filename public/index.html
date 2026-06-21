@@ -53,8 +53,7 @@
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
     .nav-brand { display: none !important; }
-    .nav-pills { position: static !important; left: auto !important; transform: none !important; gap: 2px !important; padding: 5px !important; width: 100%; justify-content: space-between !important; }
-    .nav-pills button { padding: 7px 10px !important; font-size: 12px !important; flex: 1; }
+    .nav-pills { position: static !important; left: auto !important; transform: none !important; width: 100% !important; display: flex !important; justify-content: center !important; }
     /* standings + bracket: globe is a prominent top band, content scrolls below it */
     .pane-standings { top: 42vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
@@ -71,6 +70,14 @@
     .globe-legend { display: none !important; }
     .globe-hint { display: none !important; }
     .globe-cta { left: 0 !important; right: 0 !important; bottom: 20px !important; max-width: none !important; align-items: center !important; text-align: center !important; padding: 0 18px !important; }
+    /* Matchday → clean stacked column on a phone: centered header, full-width
+       scrollable fixtures, timeline at the bottom. The giant centered
+       featured-match backdrop overlaps the cards on mobile, so hide it (the
+       selected match is highlighted in the list). */
+    .md-featured { display: none !important; }
+    .md-kicker { top: 60px !important; left: 0 !important; right: 0 !important; max-width: none !important; align-items: center !important; text-align: center !important; padding: 0 16px !important; }
+    .md-slate { top: 156px !important; left: 0 !important; right: 0 !important; bottom: 92px !important; width: auto !important; padding: 0 14px !important; }
+    .md-slider { bottom: 18px !important; width: calc(100% - 28px) !important; }
   }
 </style>
 </helmet>
@@ -105,7 +112,7 @@
     <!-- ============ MATCHDAY VIEW ============ -->
     <sc-if value="{{ isMatchday }}" hint-placeholder-val="{{ false }}">
 
-      <div style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
+      <div class="md-kicker" style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
         <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.5); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.5rem, 3vw, 2.3rem); color: #fff; line-height: 1;">{{ dayDow }}, {{ dayLong }}</span>
@@ -117,65 +124,23 @@
       </div>
 
       <!-- featured match -->
-      <div ref="{{ displayRef }}" style="position: absolute; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
-        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: {{ accent }};">Group {{ fGroup }}</span>
-        <div style="display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 40px);">
-          <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fA }}</span>
-          <span style="font-family: var(--mun-font-sans); font-weight: 700; font-size: clamp(2.2rem, 6vw, 5rem); line-height: 0.82; letter-spacing: -0.02em; color: {{ fScoreColor }}; white-space: nowrap;">{{ fScore }}</span>
-          <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: clamp(3.4rem, 11vw, 9rem); line-height: 0.82; letter-spacing: -0.04em; color: rgba(236,245,252,0.96); text-shadow: 0 12px 60px rgba(0,0,0,0.55);">{{ fB }}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.85); font-size: clamp(14px, 1.6vw, 18px);">
-          <span style="display: flex; align-items: center; gap: 9px;"><img src="{{ fAFlag }}" alt="" style="width: 28px; height: 19px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);">{{ fAName }}</span>
-          <span style="opacity: 0.4;">&middot;</span>
-          <span style="display: flex; align-items: center; gap: 9px;">{{ fBName }}<img src="{{ fBFlag }}" alt="" style="width: 28px; height: 19px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);"></span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: {{ fStatusColor }}; background: {{ fStatusBg }}; border: 1px solid {{ fStatusBorder }}; padding: 5px 13px; border-radius: 999px;">{{ fStatus }}</span>
-          <span style="font-size: 13px; color: rgba(255,255,255,0.5);">{{ fVenue }}</span>
-        </div>
+      <div ref="{{ displayRef }}" class="md-featured" style="position: absolute; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
+        <x-import component-from-global-scope="MundialUI.FeaturedMatch" group="{{ fGroup }}" team-a="{{ fTeamA }}" team-b="{{ fTeamB }}" state="{{ fState }}" score="{{ fScoreStr }}" status="{{ fStatus }}" venue="{{ fVenue }}" hint-size="560px,300px"></x-import>
       </div>
 
       <!-- day slate (right) -->
-      <div style="position: absolute; top: 104px; right: 44px; bottom: 132px; z-index: 50; width: 388px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="md-slate" style="position: absolute; top: 104px; right: 44px; bottom: 132px; z-index: 50; width: 388px; display: flex; flex-direction: column; gap: 10px;">
         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5);">{{ dayShort }} &middot; All Fixtures</span>
         <div class="mday-scroll" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px;">
           <sc-for list="{{ dayList }}" as="m" hint-placeholder-count="4">
-            <div onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" style="cursor: pointer; padding: 12px 14px; border-radius: 14px; background: {{ m.cardBg }}; border: 1px solid {{ m.cardBorder }}; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background 0.18s, border-color 0.18s;" style-hover="background: rgba(255,255,255,0.12);">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.45);">GROUP {{ m.group }}</span>
-                <span style="font-size: 12px; font-weight: 600; color: {{ m.resultColor }};">{{ m.statusMini }}</span>
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                <span style="display: flex; align-items: center; gap: 7px; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;"><img src="{{ m.aFlag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-weight: 700; flex: none;">{{ m.aCode }}</span><span style="overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></span>
-                <span style="font-size: 15px; font-weight: 700; color: {{ m.aScoreColor }}; min-width: 14px; text-align: right;">{{ m.aScore }}</span>
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 5px;">
-                <span style="display: flex; align-items: center; gap: 7px; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;"><img src="{{ m.bFlag }}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);"><span style="font-weight: 700; flex: none;">{{ m.bCode }}</span><span style="overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></span>
-                <span style="font-size: 15px; font-weight: 700; color: {{ m.bScoreColor }}; min-width: 14px; text-align: right;">{{ m.bScore }}</span>
-              </div>
-            </div>
+            <x-import component-from-global-scope="MundialUI.MatchCard" group="{{ m.group }}" state="{{ m.state }}" status="{{ m.status }}" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" selected="{{ m.selected }}" onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" hint-size="360px,96px"></x-import>
           </sc-for>
         </div>
       </div>
 
       <!-- date timeline slider -->
-      <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(660px, 82vw); display: flex; flex-direction: column; gap: 12px;">
-        <div ref="{{ sliderTrackRef }}" onPointerDown="{{ onSliderDown }}" onPointerMove="{{ onSliderMove }}" onPointerUp="{{ onSliderUp }}" style="position: relative; height: 30px; display: flex; align-items: center; cursor: pointer; touch-action: none;">
-          <div style="position: absolute; left: 6px; right: 6px; height: 3px; background: rgba(255,255,255,0.16); border-radius: 2px;"></div>
-          <div style="position: absolute; left: 6px; height: 3px; background: {{ accent }}; border-radius: 2px; width: {{ fillW }};"></div>
-          <sc-for list="{{ daysUI }}" as="d" hint-placeholder-count="6">
-            <div onClick="{{ d.onClick }}" style="position: absolute; left: {{ d.pct }}; top: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-              <span style="width: {{ d.dotSize }}; height: {{ d.dotSize }}; border-radius: 999px; background: {{ d.dotBg }}; border: 2px solid {{ d.dotBorder }};"></span>
-            </div>
-          </sc-for>
-          <div style="position: absolute; left: {{ fillW }}; transform: translate(-50%, 0); width: 18px; height: 18px; border-radius: 999px; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.55); pointer-events: none;"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 0 2px;">
-          <sc-for list="{{ daysUI }}" as="d" hint-placeholder-count="6">
-            <span style="font-size: 11px; font-weight: 500; color: {{ d.labelColor }};">{{ d.short }}</span>
-          </sc-for>
-        </div>
-        <span style="text-align: center; font-size: 12px; color: rgba(255,255,255,0.45);">Drag back through the tournament to replay every result</span>
+      <div class="md-slider" style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(660px, 82vw);">
+        <x-import component-from-global-scope="MundialUI.DayTimeline" days="{{ timelineDays }}" value="{{ timelineValue }}" onChange="{{ timelineOnChange }}" caption="{{ timelineCaption }}" hint-size="640px,80px"></x-import>
       </div>
 
     </sc-if>
@@ -1593,17 +1558,13 @@ class Component extends DCLogic {
       const isSel = idx === fi;
       const aWin = ft && m.as > m.bs, bWin = ft && m.bs > m.as;
       return {
+        // MatchCard props
         group: m.g,
-        aCode: m.a, bCode: m.b,
-        aFlag: this.flagUrl(m.a), bFlag: this.flagUrl(m.b),
-        aName: nm(m.a), bName: nm(m.b),
-        aScore: ft ? String(m.as) : '', bScore: ft ? String(m.bs) : '',
-        aScoreColor: aWin ? accent : 'rgba(255,255,255,0.85)',
-        bScoreColor: bWin ? accent : 'rgba(255,255,255,0.85)',
-        statusMini: ft ? 'FT' : (m.time || 'KO'),
-        resultColor: ft ? 'rgba(255,255,255,0.55)' : accent,
-        cardBg: isSel ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.05)',
-        cardBorder: isSel ? accent : 'rgba(255,255,255,0.12)',
+        state: ft ? 'final' : 'upcoming',
+        status: ft ? 'FT' : (m.time || 'Kick-off'),
+        teamA: { code: m.a, name: nm(m.a), score: ft ? m.as : undefined },
+        teamB: { code: m.b, name: nm(m.b), score: ft ? m.bs : undefined },
+        selected: isSel,
         onClick: () => this.setFeatured(idx),
         onEnter: () => { if (window.__mundial) window.__mundial.mhover = idx; },
         onLeave: () => { if (window.__mundial && window.__mundial.mhover === idx) window.__mundial.mhover = -1; }
@@ -1691,6 +1652,10 @@ class Component extends DCLogic {
       dayIsToday: !!day.today,
       dayCount: String(dms.length),
       fGroup: fm.g,
+      fState: fFT ? 'final' : 'upcoming',
+      fTeamA: { code: fm.a, name: nm(fm.a) },
+      fTeamB: { code: fm.b, name: nm(fm.b) },
+      fScoreStr: fFT ? (fm.as + ' – ' + fm.bs) : '',
       fA: fm.a, fB: fm.b,
       fAFlag: this.flagUrl(fm.a), fBFlag: this.flagUrl(fm.b),
       fAName: nm(fm.a), fBName: nm(fm.b),
@@ -1703,7 +1668,11 @@ class Component extends DCLogic {
       fVenue: fm.venue || ('Group ' + fm.g),
       fillW: fillW,
       daysUI: daysUI,
-      dayList: dayList
+      dayList: dayList,
+      timelineDays: this.days.map(function (d) { return d.short; }),
+      timelineValue: sel,
+      timelineOnChange: (i) => this.setDay(i),
+      timelineCaption: 'Drag back through the tournament to replay every result'
     };
   }
 }

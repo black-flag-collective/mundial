@@ -8,11 +8,11 @@ with utility classes. All color/space/type comes from CSS custom-property
 ## Setup
 
 1. Load the stylesheet once: `import '@mundial/ui/styles';` (it brings the
-   tokens and the Inter + Playfair Display fonts). Nothing renders correctly
-   styled without it.
+   tokens and the IBM Plex Sans + IBM Plex Serif fonts). Nothing renders
+   correctly styled without it.
 2. Wrap the app (or any Mundial surface) in an element with the **`mun-root`**
-   class — it sets the dark background (`--mun-bg`), the Inter font, and the
-   base text color. Components are designed to sit on that dark field.
+   class — it sets the dark background (`--mun-bg`), the IBM Plex Sans font, and
+   the base text color. Components are designed to sit on that dark field.
 3. `<Globe>` renders into its parent box — give it a **sized container**
    (e.g. `width/height: 100%` of a positioned parent); it has no intrinsic size.
 
@@ -29,7 +29,7 @@ don't invent class names — components own their classes.
   `--mun-surface-active`; hairlines `--mun-border`, `--mun-border-strong`.
 - **Radii:** `--mun-radius-pill`, `--mun-radius-lg`, `--mun-radius-md`,
   `--mun-radius-sm`. **Type:** `--mun-font-sans`, `--mun-font-display`
-  (Playfair, used italic for display headings).
+  (IBM Plex Serif, used italic for display headings).
 - **Confederations:** `--mun-confed-uefa | -conmebol | -caf | -concacaf | -afc | -ofc`.
 
 ## Where the truth lives

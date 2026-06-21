@@ -1,5 +1,9 @@
 # mundial.buzz
 
+[![CI](https://github.com/black-flag-collective/mundial-buzz/actions/workflows/ci.yml/badge.svg)](https://github.com/black-flag-collective/mundial-buzz/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A520-43853d.svg)](https://nodejs.org)
+
 A live companion to the **FIFA World Cup 2026** (Canada · Mexico · USA,
 Jun 11 – Jul 19) — a 3D globe of all 48 nations paired with day-by-day results,
 computed group tables, a projected knockout bracket, and a real-time "buzz"
@@ -94,6 +98,13 @@ project/        original HTML/CSS/JS design prototypes (kept for reference)
 chats/          design-iteration transcripts (kept for reference)
 ```
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup and
+the PR flow, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). For security issues,
+please follow [SECURITY.md](SECURITY.md) rather than opening a public issue.
+
 ## License
 
 [MIT](LICENSE) © Black Flag Collective
+

@@ -2,6 +2,29 @@
   "name": "mundial-buzz",
   "version": "1.0.0",
   "private": true,
+  "description": "A live companion to the FIFA World Cup 2026 — a 3D globe of all 48 nations with day-by-day results, group tables, a projected bracket, and a real-time buzz layer.",
+  "license": "MIT",
+  "author": "Black Flag Collective",
+  "homepage": "https://mundial-buzz.fly.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/black-flag-collective/mundial-buzz.git"
+  },
+  "bugs": {
+    "url": "https://github.com/black-flag-collective/mundial-buzz/issues"
+  },
+  "keywords": [
+    "world-cup",
+    "fifa",
+    "world-cup-2026",
+    "football",
+    "soccer",
+    "threejs",
+    "globe",
+    "webgl",
+    "express",
+    "visualization"
+  ],
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

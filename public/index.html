@@ -48,6 +48,8 @@
   @keyframes hintPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
   @keyframes bzLive { 0%, 100% { box-shadow: 0 0 0 0 var(--mun-accent-glow); opacity: 1; } 50% { box-shadow: 0 0 0 5px transparent; opacity: 0.55; } }
   @keyframes bzSpin { to { transform: rotate(360deg); } }
+  @keyframes bzToastIn { from { opacity: 0; transform: translateY(-10px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .bz-toast { animation: bzToastIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
   .bz-livedot { animation: bzLive 1.6s ease-in-out infinite; }
   .bz-spin { animation: bzSpin 0.8s linear infinite; }
   @media (prefers-reduced-motion: reduce) {
@@ -267,7 +269,7 @@
               <span style="color: var(--mun-accent); font-weight: 600;">{{ buzzLiveCount }}</span> nations buzzing &middot; updated {{ buzzUpdated }}
             </div>
             <sc-for list="{{ buzzLeader }}" as="r" hint-placeholder-count="12">
-              <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 26px 30px 1fr 40px; align-items: center; gap: 12px; padding: 11px 16px; background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); cursor: pointer; transition: background 0.16s;" style-hover="background: var(--mun-surface-3);">
+              <div class="{{ r.rowClass }}" onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" onClick="{{ r.onEnter }}" style="display: grid; grid-template-columns: 26px 30px 1fr 40px; align-items: center; gap: 12px; padding: 11px 16px; background: {{ r.rowBg }}; border: 1px solid {{ r.rowBorder }}; border-radius: var(--mun-radius-md); cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: var(--mun-surface-3);">
                 <span style="font-size: 13px; font-weight: 700; text-align: center; color: {{ r.rankColor }};">{{ r.rank }}</span>
                 <img src="{{ r.flag }}" alt="" style="width: 30px; height: 20px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
                 <div style="min-width: 0; display: flex; flex-direction: column; gap: 5px;">
@@ -327,6 +329,18 @@
 
       <div class="globe-legend" data-anim="fade" data-delay="700" style="position: absolute; bottom: 56px; left: 40px; z-index: 50;">
         <x-import component-from-global-scope="MundialUI.ConfederationLegend" hint-size="180px,210px"></x-import>
+      </div>
+    </sc-if>
+
+    <!-- cross-view surge toast: a spike reads on the globe too, not just the board -->
+    <sc-if value="{{ surgeToastShow }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 86px; left: 0; right: 0; z-index: 60; display: flex; justify-content: center; pointer-events: none; padding: 0 16px;">
+        <div class="bz-toast" style="display: flex; align-items: center; gap: 10px; background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 8px 16px; border-radius: var(--mun-radius-pill);">
+          <span style="font-size: 13px; font-weight: 800; color: var(--mun-accent);">&#9650;</span>
+          <img src="{{ surgeToastFlag }}" alt="" style="width: 20px; height: 13px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag); flex: none;">
+          <span style="font-size: 13px; font-weight: 700; color: var(--mun-fg); white-space: nowrap;">{{ surgeToastCode }}</span>
+          <span style="font-size: 13px; color: var(--mun-fg-strong); white-space: nowrap;">is surging</span>
+        </div>
       </div>
     </sc-if>
 
@@ -689,7 +703,9 @@ class Component extends DCLogic {
   setView(v) {
     if (this.state.view === v) return;
     if (window.__mundial) { window.__mundial.view = v; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; window.__mundial.mhover = -1; }
-    this.setState({ view: v, hoverIdx: -1 });
+    const patch = { view: v, hoverIdx: -1 };
+    if (v !== 'buzz') patch.buzzFocusCode = null;  // drop the click-through highlight when leaving the board
+    this.setState(patch);
     this.hoverIdx = -1;
   }
 
@@ -762,8 +778,29 @@ class Component extends DCLogic {
           if (data && Array.isArray(data.buzz)) {
             const map = {};
             data.buzz.forEach(b => { map[b.code] = { score: b.score || 0, spike: b.spike || 0, rank: b.rank || 0 }; });
+            // Detect a fresh surge (rising edge) for the cross-view toast: a nation
+            // whose spike just jumped high and wasn't already surging last poll.
+            const prev = this._prevSpike || {};
+            let surge = null;
+            data.buzz.forEach(b => {
+              const sp = b.spike || 0;
+              if (sp >= 0.35 && (prev[b.code] || 0) < 0.2 && (!surge || (b.score || 0) > surge.score)) {
+                surge = { code: b.code, score: b.score || 0 };
+              }
+            });
+            this._prevSpike = {}; data.buzz.forEach(b => { this._prevSpike[b.code] = b.spike || 0; });
             this.buzzByCode = map;
             this.buzzMeta = { status: 'live', updatedAt: data.updatedAt || null, source: data.source || null, window: data.window || null };
+            // Fire a surge toast on the Globe view (rate-limited), so a spike reads
+            // across views, not just on the board's SURGING flag.
+            const now = Date.now();
+            if (surge && !this._reduceMotion && this.currentView() === 'globe' && now - (this._lastToastT || 0) > 6000) {
+              this._lastToastT = now;
+              const nm = this.byCode[surge.code] ? this.byCode[surge.code].name : surge.code;
+              this.setState({ surgeToast: { code: surge.code, name: nm } });
+              clearTimeout(this._toastTimer);
+              this._toastTimer = setTimeout(() => this.setState({ surgeToast: null }), 3400);
+            }
             // Keep the Buzz leaderboard genuinely live: re-render it on each poll
             // while it's the active view (the globe markers already ease every frame).
             if (this.currentView() === 'buzz') this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 });
@@ -808,6 +845,7 @@ class Component extends DCLogic {
     }
     if (this.rafRef) cancelAnimationFrame(this.rafRef);
     if (this._chipTimer) clearInterval(this._chipTimer);
+    if (this._toastTimer) clearTimeout(this._toastTimer);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
     this._buzzTimer = null;
@@ -828,6 +866,14 @@ class Component extends DCLogic {
       this.applyViewMarkers();
       this.rebuildArcs();
       this.playEntrance();
+    }
+    // Click-through from the globe: scroll the focused row into view on the board.
+    if (this.state.view === 'buzz' && this.state.buzzFocusCode &&
+        (prevState.buzzFocusCode !== this.state.buzzFocusCode || prevState.view !== this.state.view)) {
+      requestAnimationFrame(() => {
+        const el = this.rootRef.current && this.rootRef.current.querySelector('.bz-focused');
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: this._reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      });
     }
     if (this.state.view === 'matchday') {
       if (prevState.selectedDay !== this.state.selectedDay) { this.hoverMatchIdx = -1; this.rebuildArcs(); }
@@ -947,6 +993,7 @@ class Component extends DCLogic {
       this.dragging = true; this.dragMoved = false;
       this.lastPX = e.clientX; this.lastPY = e.clientY;
       this.velLon = 0; this.velLat = 0;
+      this._tapStartHover = this.hoverIdx;   // remember what we tapped (down resets hover)
       this.hoverIdx = -1;
       renderer.domElement.style.cursor = 'grabbing';
       try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) {}
@@ -964,6 +1011,15 @@ class Component extends DCLogic {
       this.dragging = false;
       renderer.domElement.style.cursor = 'grab';
       try { renderer.domElement.releasePointerCapture(e.pointerId); } catch (err) {}
+      // Tap (not a drag) on a nation in the Globe view → jump to the Buzz board,
+      // focused on that nation. The reverse of board-row → globe rotation.
+      if (!this.dragMoved && this._tapStartHover >= 0 && this.currentView() === 'globe') {
+        const code = this.countries[this._tapStartHover].code;
+        this.setView('buzz');             // clears legendFocus…
+        this.setLegendTeam(code);         // …so set it after, to rotate the globe to the nation
+        this.setState({ buzzFocusCode: code });
+      }
+      this._tapStartHover = -1;
     };
     renderer.domElement.style.cursor = 'grab';
     renderer.domElement.style.touchAction = 'none'; // let us own swipe gestures on mobile
@@ -1159,7 +1215,7 @@ class Component extends DCLogic {
       const sz = Math.min(0.34 * vh, 300);
       s = sz / full; cx = 36 + sz / 2; cy = vh - 64 - sz / 2; z = 60; op = 1;
     } else {
-      s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : (v === 'buzz' ? 0.5 : 1));
+      s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : (v === 'buzz' ? 0.4 : 1));
     }
     const tx = cx - vw / 2, ty = cy - vh / 2;
     this.gx += (tx - this.gx) * 0.12;
@@ -1429,12 +1485,19 @@ class Component extends DCLogic {
       target = this.faceQuat(c.lat, c.lon);
       this.idleLon = c.lon; this.idleLat = c.lat;
       focusT = 0.5;
+    } else if (_v === 'buzz' && this._topBuzzCode && this.byCode[this._topBuzzCode]) {
+      // Idle on the Buzz view: gently orbit the dimmed globe toward the #1 buzzer.
+      const c = this.byCode[this._topBuzzCode];
+      target = this.faceQuat(c.lat, c.lon);
+      this.idleLon = c.lon; this.idleLat = c.lat;
+      focusT = 0.12;
     } else {
       if (autoRotate) this.idleLon += 0.12;
       target = this.faceQuat(this.idleLat, this.idleLon);
       focusT = 0.12;
     }
-    this.globe.quaternion.slerp(target, this.dragging ? 0.45 : (boardFocus ? 0.1 : 0.08));
+    const buzzIdleOrbit = (_v === 'buzz' && !boardFocus && this.hoverIdx < 0 && !this.dragging && !coasting);
+    this.globe.quaternion.slerp(target, this.dragging ? 0.45 : (boardFocus ? 0.1 : (buzzIdleOrbit ? 0.03 : 0.08)));
     this.focusS += (focusT - this.focusS) * 0.05;
     this.camera.position.z = 439 - this.focusS * 101;
 
@@ -1578,6 +1641,9 @@ class Component extends DCLogic {
       pct: Math.max(6, Math.round((r.score / (buzzMax || 1)) * 100)) + '%',
       score: String(Math.round(r.score * 100)),
       surging: r.spike > 0.1,
+      rowClass: this.state.buzzFocusCode === r.code ? 'bz-focused' : 'bz-row',
+      rowBg: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-soft)' : 'var(--mun-surface-2)',
+      rowBorder: this.state.buzzFocusCode === r.code ? 'var(--mun-accent-border)' : 'var(--mun-border-soft)',
       onEnter: () => this.setLegendTeam(r.code),
       onLeave: () => this.clearLegend()
     }));
@@ -1587,6 +1653,7 @@ class Component extends DCLogic {
     // Expose the chip's nation to the render loop so its globe marker lights up in
     // sync — the eye connects "chip says KSA" with the lit dot on the globe.
     this._chipCode = buzzChip ? buzzChip.code : null;
+    this._topBuzzCode = buzzLeader[0] ? buzzLeader[0].code : null;  // for the idle Buzz-view orbit
     const buzzStatus = bm.status || 'loading';
     const buzzLoading = buzzStatus === 'loading';
     const buzzError = buzzStatus === 'error';
@@ -1740,6 +1807,10 @@ class Component extends DCLogic {
       buzzTop1Flag: buzzChip ? buzzChip.flag : '',
       buzzTop1Score: buzzChip ? buzzChip.score : '',
       buzzChipRank: buzzChip ? ('#' + buzzChip.rank) : '',
+      surgeToastShow: isGlobe && !!this.state.surgeToast,
+      surgeToastName: this.state.surgeToast ? this.state.surgeToast.name : '',
+      surgeToastCode: this.state.surgeToast ? this.state.surgeToast.code : '',
+      surgeToastFlag: this.state.surgeToast ? this.flagUrl(this.state.surgeToast.code) : '',
       hasHoverBuzz: !!(c && this.buzzByCode[c.code] && this.buzzByCode[c.code].score > 0.001),
       hoverBuzzRank: (c && this.buzzByCode[c.code] && this.buzzByCode[c.code].rank) ? ('#' + this.buzzByCode[c.code].rank) : '',
       hoverBuzzScore: (c && this.buzzByCode[c.code]) ? String(Math.round((this.buzzByCode[c.code].score || 0) * 100)) : '0',

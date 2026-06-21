@@ -166,6 +166,15 @@ check('counts: computeTrend reads rising / steady / falling', () => {
   assert.ok(computeTrend([{ tweet_count: 50 }, { tweet_count: 50 }, { tweet_count: 2 }]).trend < -0.3, 'falling');
   assert.strictEqual(computeTrend([]).trend, 0, 'no data → flat');
 });
+check('counts: computeTrend also yields free peak/current/minutes from the series', () => {
+  const s = computeTrend([{ tweet_count: 8 }, { tweet_count: 40 }, { tweet_count: 12 }]);
+  assert.strictEqual(s.peak, 40, 'peak = busiest minute');
+  assert.strictEqual(s.current, 12, 'current = latest minute');
+  assert.deepStrictEqual(s.minutes, [8, 40, 12], 'raw per-minute series for a sparkline');
+  const empty = computeTrend([]);
+  assert.strictEqual(empty.peak, 0);
+  assert.deepStrictEqual(empty.minutes, []);
+});
 check('counts: liveContext polls only teams in their kickoff window', () => {
   const now = Date.parse('2026-06-22T21:30:00Z'); // 30m into FRA v IRQ
   const matches = {

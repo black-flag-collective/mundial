@@ -291,6 +291,12 @@
                     <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
                     <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
                     <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <sc-if value="{{ xHasSpark }}" hint-placeholder-val="{{ true }}">
+                        <svg viewBox="0 0 132 26" preserveAspectRatio="none" style="width: 132px; height: 26px; flex: none;"><polyline points="{{ xSelSpark }}" fill="none" stroke="var(--mun-accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+                      </sc-if>
+                      <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
+                    </div>
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
@@ -1813,6 +1819,21 @@ class Component extends DCLogic {
     // For a selected nation that isn't being polled live, explain *when* its
     // match is (kicks off later / played earlier / not today) from kickoff data.
     const xSelInactiveText = xSel ? this.buzzMatchNote(xSel) : '';
+    // Extra detail mined from the same counts response (no extra X cost): the
+    // peak + current per-minute rate, and a sparkline of the per-minute series.
+    const xMinutes = (xPer && Array.isArray(xPer.minutes)) ? xPer.minutes : [];
+    const xSelPeak = xPer ? String(xPer.peak || 0) : '0';
+    const xSelNow = xPer ? String(xPer.current || 0) : '0';
+    const xHasSpark = xMinutes.length >= 2;
+    let xSelSpark = '';
+    if (xHasSpark) {
+      const W = 132, H = 26, P = 2, n = xMinutes.length, max = Math.max(1, ...xMinutes);
+      xSelSpark = xMinutes.map((v, i) => {
+        const x = P + (W - 2 * P) * (i / (n - 1));
+        const y = P + (H - 2 * P) * (1 - v / max);
+        return (Math.round(x * 10) / 10) + ',' + (Math.round(y * 10) / 10);
+      }).join(' ');
+    }
 
     // ---- standings (MundialUI.StandingsTable: rows are numeric StandingRow[]) ----
     const onTeamHover = (code) => { if (code) this.setLegendTeam(code); else this.clearLegend(); };
@@ -1922,6 +1943,10 @@ class Component extends DCLogic {
       xSelQuery: xPer ? xPer.query : '',
       xSelCount: xPer ? String(xPer.count) : '0',
       xSelWindow: String(xWindowMin),
+      xSelPeak: xSelPeak,
+      xSelNow: xSelNow,
+      xHasSpark: xHasSpark,
+      xSelSpark: xSelSpark,
       closeXInspect: () => this.setState({ buzzFocusCode: null }),
       retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,

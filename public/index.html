@@ -180,123 +180,57 @@
         <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
           <div ref="{{ bracketInnerRef }}" class="bk-inner" style="display: flex; align-items: stretch; gap: 9px; height: 100%;">
 
-          <div style="display: flex; flex-direction: column; min-width: 150px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R32</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ leftR32 }}" as="m" hint-placeholder-count="8">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="R32">
+            <sc-for list="{{ leftR32 }}" as="m" hint-placeholder-count="8">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
+
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="R16">
+            <sc-for list="{{ leftR16 }}" as="m" hint-placeholder-count="4">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
+
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="QF">
+            <sc-for list="{{ leftQF }}" as="m" hint-placeholder-count="2">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
+
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="SF">
+            <sc-for list="{{ leftSF }}" as="m" hint-placeholder-count="1">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
+
+          <div class="bk-final" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 200px; padding: 0 6px;">
+            <x-import component-from-global-scope="MundialUI.ChampionCard" final="{{ championFinal }}" champion="{{ champion }}"></x-import>
           </div>
 
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R16</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ leftR16 }}" as="m" hint-placeholder-count="4">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="SF">
+            <sc-for list="{{ rightSF }}" as="m" hint-placeholder-count="1">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
 
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">QF</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ leftQF }}" as="m" hint-placeholder-count="2">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="QF">
+            <sc-for list="{{ rightQF }}" as="m" hint-placeholder-count="2">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
 
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">SF</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around;">
-              <sc-for list="{{ leftSF }}" as="m" hint-placeholder-count="1">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="R16">
+            <sc-for list="{{ rightR16 }}" as="m" hint-placeholder-count="4">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
 
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 188px; gap: 16px; padding: 0 6px;">
-            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.24em; color: {{ accent }};">FINAL</span>
-            <div onMouseEnter="{{ finalM.onEnter }}" onMouseLeave="{{ finalM.onLeave }}" onClick="{{ finalM.onEnter }}" style="width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; overflow: hidden; cursor: pointer;">
-              <div style="display: flex; align-items: center; gap: 6px; padding: 9px 10px 9px 0; border-left: 4px solid {{ finalM.aBar }};"><img src="{{ finalM.aFlag }}" alt="" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);"><span style="font-size: 15px; font-weight: {{ finalM.aWeight }}; color: {{ finalM.aColor }}; width: 36px; text-align: center;">{{ finalM.aCode }}</span><span style="font-size: 12px; color: {{ finalM.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ finalM.aName }}</span></div>
-              <div style="height: 1px; background: rgba(255,255,255,0.12);"></div>
-              <div style="display: flex; align-items: center; gap: 6px; padding: 9px 10px 9px 0; border-left: 4px solid {{ finalM.bBar }};"><img src="{{ finalM.bFlag }}" alt="" style="width: 24px; height: 16px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);"><span style="font-size: 15px; font-weight: {{ finalM.bWeight }}; color: {{ finalM.bColor }}; width: 36px; text-align: center;">{{ finalM.bCode }}</span><span style="font-size: 12px; color: {{ finalM.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ finalM.bName }}</span></div>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px;">
-              <span style="font-size: 10px; letter-spacing: 0.2em; color: rgba(255,255,255,0.45);">PROJECTED CHAMPION</span>
-              <span style="font-family: var(--mun-font-sans); font-weight: 800; font-size: 44px; color: #fff; letter-spacing: -0.03em; line-height: 1;">{{ champCode }}</span>
-              <span style="font-size: 13px; color: {{ accent }};">{{ champName }}</span>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">SF</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around;">
-              <sc-for list="{{ rightSF }}" as="m" hint-placeholder-count="1">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 6px 8px 6px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">QF</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ rightQF }}" as="m" hint-placeholder-count="2">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; min-width: 138px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R16</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ rightR16 }}" as="m" hint-placeholder-count="4">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; min-width: 150px;">
-            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 8px;">R32</span>
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;">
-              <sc-for list="{{ rightR32 }}" as="m" hint-placeholder-count="8">
-                <div onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; cursor: pointer; transition: background 0.16s, border-color 0.16s;" style-hover="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.24);">
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.aBar }};"><img src="{{ m.aFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.aWeight }}; color: {{ m.aColor }}; width: 30px; text-align: center;">{{ m.aCode }}</span><span style="font-size: 11px; color: {{ m.aColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.aName }}</span></div>
-                  <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
-                  <div style="display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 0; border-left: 3px solid {{ m.bBar }};"><img src="{{ m.bFlag }}" alt="" style="width: 17px; height: 12px; border-radius: 2px; object-fit: cover; flex: none; margin-left: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16);"><span style="font-size: 12px; font-weight: {{ m.bWeight }}; color: {{ m.bColor }}; width: 30px; text-align: center;">{{ m.bCode }}</span><span style="font-size: 11px; color: {{ m.bColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.bName }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
+          <x-import component-from-global-scope="MundialUI.BracketColumn" label="R32">
+            <sc-for list="{{ rightR32 }}" as="m" hint-placeholder-count="8">
+              <x-import component-from-global-scope="MundialUI.BracketMatch" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" onClick="{{ m.onEnter }}"></x-import>
+            </sc-for>
+          </x-import>
 
           </div>
         </div>
@@ -586,16 +520,11 @@ class Component extends DCLogic {
   }
 
   mkM(m, accent) {
+    // Shape for MundialUI.BracketMatch / ChampionCard (the component owns the
+    // winner highlight / dim styling from the `winner` flag).
     return {
-      aFlag: this.flagUrl(m.a), bFlag: this.flagUrl(m.b),
-      aCode: m.a, aName: this.byCode[m.a].name, aWin: m.w === m.a,
-      aColor: m.w === m.a ? '#ffffff' : 'rgba(255,255,255,0.4)',
-      aBar: m.w === m.a ? accent : 'transparent',
-      aWeight: m.w === m.a ? '700' : '500',
-      bCode: m.b, bName: this.byCode[m.b].name, bWin: m.w === m.b,
-      bColor: m.w === m.b ? '#ffffff' : 'rgba(255,255,255,0.4)',
-      bBar: m.w === m.b ? accent : 'transparent',
-      bWeight: m.w === m.b ? '700' : '500',
+      teamA: { code: m.a, name: this.byCode[m.a].name, winner: m.w === m.a },
+      teamB: { code: m.b, name: this.byCode[m.b].name, winner: m.w === m.b },
       onEnter: () => this.setLegendMatch(m.a, m.b),
       onLeave: () => this.clearLegend()
     };
@@ -1608,6 +1537,8 @@ class Component extends DCLogic {
       bracketInnerRef: this.bracketInnerRef,
       finalM: this.mkM(B.final, accent),
       champCode: B.champ, champName: champ ? champ.name : '',
+      championFinal: (() => { const f = this.mkM(B.final, accent); return { teamA: f.teamA, teamB: f.teamB, onMouseEnter: f.onEnter, onMouseLeave: f.onLeave, onClick: f.onEnter }; })(),
+      champion: { code: B.champ, name: champ ? champ.name : '' },
       // globe hover
       hovered: !!c,
       globeIdle: isGlobe && !c,

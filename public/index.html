@@ -50,6 +50,9 @@
   @keyframes bzSpin { to { transform: rotate(360deg); } }
   @keyframes bzToastIn { from { opacity: 0; transform: translateY(-10px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .bz-toast { animation: bzToastIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes mdLiveGlow { 0%,100% { filter: drop-shadow(0 0 0 var(--mun-accent-soft)); } 50% { filter: drop-shadow(0 0 22px var(--mun-accent-glow)); } }
+  .md-live { animation: mdLiveGlow 2.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .md-live { animation: none !important; } }
   .bz-livedot { animation: bzLive 1.6s ease-in-out infinite; }
   .bz-spin { animation: bzSpin 0.8s linear infinite; }
   @media (prefers-reduced-motion: reduce) {
@@ -140,7 +143,7 @@
       </div>
 
       <!-- featured match -->
-      <div ref="{{ displayRef }}" class="md-featured" style="position: absolute; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
+      <div ref="{{ displayRef }}" class="{{ fFeaturedClass }}" style="position: absolute; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
         <x-import component-from-global-scope="MundialUI.FeaturedMatch" group="{{ fGroup }}" team-a="{{ fTeamA }}" team-b="{{ fTeamB }}" state="{{ fState }}" score="{{ fScoreStr }}" status="{{ fStatus }}" venue="{{ fVenue }}" hint-size="560px,300px"></x-import>
       </div>
 
@@ -791,6 +794,12 @@ class Component extends DCLogic {
         this.setState({ buzzChipIdx: ((this.state.buzzChipIdx || 0) + 1) % 3 });
       }
     }, 3500);
+    // Tick the live match clock every 15s while a live match is on the matchday.
+    this._clockTimer = setInterval(() => {
+      if (this.currentView() !== 'matchday') return;
+      const dms = this.dayMatches[this.state.selectedDay] || [];
+      if (dms.some((m) => this.liveInfo(m).live)) this.setState({ liveTick: (this.state.liveTick || 0) + 1 });
+    }, 15000);
   }
 
   _loadBuzz() {
@@ -858,23 +867,59 @@ class Component extends DCLogic {
   }
 
   _loadLiveData() {
-    fetch('/api/data.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!data || !data.days || !data.dayMatches) return;
-        this.days = data.days;
-        this.dayMatches = data.dayMatches;
-        if (data.updatedAt) {
-          const d = new Date(data.updatedAt);
-          this.dataUpdatedAt = 'Updated ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-        const todayIdx = data.days.findIndex(d => d.today);
-        const sel = todayIdx >= 0 ? todayIdx : data.days.length - 1;
-        if (window.__mundial) window.__mundial.day = sel;
-        this.setState({ selectedDay: sel, featuredIdx: 0 });
-        this.rebuildArcs();
-      })
-      .catch(() => {});
+    let first = true;
+    const poll = () => {
+      if (this._buzzStopped) return;
+      fetch('/api/data.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !data.days || !data.dayMatches) return;
+          this.days = data.days;
+          this.dayMatches = data.dayMatches;
+          if (data.updatedAt) {
+            const d = new Date(data.updatedAt);
+            this.dataUpdatedAt = 'Updated ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+          if (first) {
+            first = false;
+            // Default to the real current day (where any live match is), matching by
+            // date like the counts poller — the static `today` flag isn't always set.
+            const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            let todayIdx = data.days.findIndex(d => d.short === todayShort);
+            if (todayIdx < 0) todayIdx = data.days.findIndex(d => d.today);
+            const sel = todayIdx >= 0 ? todayIdx : data.days.length - 1;
+            // If a match today is live, feature it.
+            const todayMs = data.dayMatches[sel] || [];
+            let fidx = todayMs.findIndex(m => this.liveInfo(m).live);
+            if (fidx < 0) fidx = 0;
+            if (window.__mundial) window.__mundial.day = sel;
+            this.setState({ selectedDay: sel, featuredIdx: fidx });
+          } else {
+            // Live refresh: re-render so live scores/clock update without resetting the user's day.
+            this.setState({ liveTick: (this.state.liveTick || 0) + 1 });
+          }
+          this.rebuildArcs();
+        })
+        .catch(() => {})
+        .finally(() => { if (!this._buzzStopped) this._liveDataTimer = setTimeout(poll, 25000); });
+    };
+    poll();
+  }
+
+  // A match is live from explicit data state, or computed from its kickoff (`ko`)
+  // window for an as-yet-unmarked fixture. Clock is the data `min` or wall-minutes
+  // since kickoff (approximate — the free data feed isn't second-by-second).
+  liveInfo(m) {
+    if (!m || m.st === 'FT') return { live: false, clock: '', score: '' };
+    let live = m.st === 'LIVE';
+    let mins = (m.min != null) ? m.min : null;
+    if (m.ko) {
+      const el = Math.floor((Date.now() - new Date(m.ko).getTime()) / 60000);
+      if (el >= 0 && el <= 130) { live = true; if (mins == null) mins = el; }
+    }
+    if (!live) return { live: false, clock: '', score: '' };
+    const clock = (mins == null) ? 'LIVE' : (mins >= 90 ? "90+'" : mins + "'");
+    return { live: true, clock: clock, score: (m.as || 0) + ' – ' + (m.bs || 0) };
   }
 
   componentWillUnmount() {
@@ -891,6 +936,8 @@ class Component extends DCLogic {
     if (this._chipTimer) clearInterval(this._chipTimer);
     if (this._toastTimer) clearTimeout(this._toastTimer);
     if (this._xHealthTimer) clearTimeout(this._xHealthTimer);
+    if (this._liveDataTimer) clearTimeout(this._liveDataTimer);
+    if (this._clockTimer) clearInterval(this._clockTimer);
     this._buzzStopped = true;
     if (this._buzzTimer) clearTimeout(this._buzzTimer);
     this._buzzTimer = null;
@@ -1751,18 +1798,20 @@ class Component extends DCLogic {
     const fm = dms[fi] || { g: '', a: '', b: '', st: 'UP' };
     const nm = (code) => (this.byCode[code] ? this.byCode[code].name : '');
     const fFT = fm.st === 'FT';
+    const fLive = this.liveInfo(fm);
 
     const dayList = dms.map((m, idx) => {
       const ft = m.st === 'FT';
+      const li = this.liveInfo(m);
       const isSel = idx === fi;
-      const aWin = ft && m.as > m.bs, bWin = ft && m.bs > m.as;
+      const showScore = ft || li.live;
       return {
-        // MatchCard props
+        // MatchCard props ('final' state renders the score; live shows it too)
         group: m.g,
-        state: ft ? 'final' : 'upcoming',
-        status: ft ? 'FT' : (m.time || 'Kick-off'),
-        teamA: { code: m.a, name: nm(m.a), score: ft ? m.as : undefined },
-        teamB: { code: m.b, name: nm(m.b), score: ft ? m.bs : undefined },
+        state: showScore ? 'final' : 'upcoming',
+        status: li.live ? ('● LIVE ' + li.clock) : (ft ? 'FT' : 'Kick-off'),
+        teamA: { code: m.a, name: nm(m.a), score: showScore ? (m.as ?? 0) : undefined },
+        teamB: { code: m.b, name: nm(m.b), score: showScore ? (m.bs ?? 0) : undefined },
         selected: isSel,
         onClick: () => this.setFeatured(idx),
         onEnter: () => { if (window.__mundial) window.__mundial.mhover = idx; },
@@ -1898,16 +1947,18 @@ class Component extends DCLogic {
       dayIsToday: !!day.today,
       dayCount: String(dms.length),
       fGroup: fm.g,
-      fState: fFT ? 'final' : 'upcoming',
+      fState: (fFT || fLive.live) ? 'final' : 'upcoming',
+      fLive: fLive.live,
+      fFeaturedClass: fLive.live ? 'md-featured md-live' : 'md-featured',
       fTeamA: { code: fm.a, name: nm(fm.a) },
       fTeamB: { code: fm.b, name: nm(fm.b) },
-      fScoreStr: fFT ? (fm.as + ' – ' + fm.bs) : '',
+      fScoreStr: (fFT || fLive.live) ? ((fm.as ?? 0) + ' – ' + (fm.bs ?? 0)) : '',
       fA: fm.a, fB: fm.b,
       fAFlag: this.flagUrl(fm.a), fBFlag: this.flagUrl(fm.b),
       fAName: nm(fm.a), fBName: nm(fm.b),
-      fScore: fFT ? (fm.as + ' \u2013 ' + fm.bs) : 'vs',
-      fScoreColor: fFT ? accent : 'rgba(255,255,255,0.6)',
-      fStatus: fFT ? 'Full Time' : (fm.time || 'Kick-off'),
+      fScore: (fFT || fLive.live) ? ((fm.as ?? 0) + ' \u2013 ' + (fm.bs ?? 0)) : 'vs',
+      fScoreColor: (fFT || fLive.live) ? accent : 'rgba(255,255,255,0.6)',
+      fStatus: fLive.live ? ('\u25cf LIVE ' + fLive.clock) : (fFT ? 'Full Time' : (fm.time || 'Kick-off')),
       fStatusColor: fFT ? 'rgba(255,255,255,0.85)' : accent,
       fStatusBg: fFT ? 'rgba(255,255,255,0.1)' : this.hexToRgba(accent, 0.18),
       fStatusBorder: fFT ? 'rgba(255,255,255,0.2)' : this.hexToRgba(accent, 0.5),

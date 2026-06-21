@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # Server / root app dependencies
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for routine minor/patch bumps to keep noise low; majors stay
+      # separate so they can be reviewed on their own.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Design-system package (Storybook / Vite / TS toolchain)
+  - package-ecosystem: npm
+    directory: "/packages/mundial-ui"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions used by the CI / deploy / data workflows
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

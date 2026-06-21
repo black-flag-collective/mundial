@@ -6,8 +6,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_PATH = path.join(__dirname, 'data', 'matches.json');
 
+// Don't advertise the framework.
+app.disable('x-powered-by');
+
 // Ensure data directory exists
 fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
+
+// Baseline security headers on every response. Proportionate for a public,
+// read-only site: stop MIME-sniffing and clickjacking, trim the referrer, deny
+// unused device APIs, and pin HTTPS. (No strict CSP — the app is an inline-heavy
+// Design Component runtime pulling a few CDNs; a meaningful policy would need
+// 'unsafe-inline'/'unsafe-eval' and buy little, so it's deliberately omitted.)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), interest-cohort=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 
 // Canonical host: redirect www.mundial.buzz → mundial.buzz (preserving path + query).
 // The app is served over HTTPS (Fly force_https), so always redirect to https.

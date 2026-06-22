@@ -74,7 +74,7 @@ check('snapshot: sorted hottest-first with 1..n ranks and rounded values', () =>
   e.surge('BRA', 0.9);
   e.surge('ARG', 0.5);
   const snap = e.snapshot();
-  assert.strictEqual(snap.source, 'simulated');
+  assert.strictEqual(snap.source, 'idle', 'no live feed → idle source (server overrides to counts when live)');
   assert.ok(Array.isArray(snap.buzz) && snap.buzz.length === Object.keys(e.state).length);
   // Ranks are dense 1..n in sorted order.
   snap.buzz.forEach((b, i) => assert.strictEqual(b.rank, i + 1));

@@ -64,12 +64,15 @@
   .mday-scroll::-webkit-scrollbar-thumb { background: var(--mun-surface-active); border-radius: 3px; }
   .bk-wrap::-webkit-scrollbar { height: 6px; }
   .bk-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  /* Desktop: the mobile hamburger is hidden (also has inline display:none). */
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
-    .nav-brand { display: none !important; }
-    .nav-pills { position: static !important; left: auto !important; transform: none !important; flex: 1 1 auto !important; min-width: 0 !important; display: flex !important; justify-content: safe center !important; flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .nav-pills::-webkit-scrollbar { display: none !important; }
-    .nav-features { margin-left: 10px !important; padding: 6px 12px !important; font-size: 12px !important; flex: none; }
+    /* Title stays visible at all sizes — it's the anchor. Shrink it slightly. */
+    .nav-brand { display: flex !important; transform: scale(0.84); transform-origin: left center; }
+    /* Views + Features collapse into the menu sheet; hide the inline strip. */
+    .nav-pills { display: none !important; }
+    .nav-features { display: none !important; }
+    .nav-menu-btn { display: inline-flex !important; }
     /* buzz: header + full-width leaderboard over the dimmed live globe */
     .pane-buzz { padding: 78px 14px 18px !important; }
     /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
@@ -113,7 +116,32 @@
     </div>
 
     <a href="/features" class="nav-features" title="How every view works" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--mun-fg-muted); text-decoration: none; padding: 7px 15px; border: 1px solid var(--mun-border); border-radius: var(--mun-radius-pill); background: var(--mun-surface-2); white-space: nowrap; transition: color 0.16s, border-color 0.16s;" style-hover="color: var(--mun-fg); border-color: var(--mun-border-strong);">Features</a>
+
+    <!-- Mobile menu toggle (hidden on desktop via CSS). Collapses the views +
+         Features behind a single button so the title stays visible. -->
+    <button class="nav-menu-btn" onClick="{{ toggleMenu }}" aria-label="Menu" aria-haspopup="true" aria-expanded="{{ menuOpen }}" aria-controls="mobile-menu" style="display: none; align-items: center; justify-content: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--mun-border); border-radius: var(--mun-radius-pill); background: var(--mun-surface-2); cursor: pointer; color: var(--mun-fg);">
+      <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size: 20px; line-height: 1;">&#10005;</span>
+      </sc-if>
+      <sc-if value="{{ menuClosed }}" hint-placeholder-val="{{ true }}">
+        <span style="display: flex; flex-direction: column; gap: 4px; width: 18px;"><span style="height: 2px; background: currentColor; border-radius: 2px;"></span><span style="height: 2px; background: currentColor; border-radius: 2px;"></span><span style="height: 2px; background: currentColor; border-radius: 2px;"></span></span>
+      </sc-if>
+    </button>
   </nav>
+
+  <!-- Mobile menu sheet + backdrop. Backdrop sits below the nav (z 90) so the
+       toggle button stays clickable; the sheet (z 110) opens above the nav. -->
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="nav-menu-backdrop" onClick="{{ closeMenu }}" aria-hidden="true" style="position: fixed; inset: 0; z-index: 90; background: rgba(2,8,16,0.55); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);"></div>
+    <div id="mobile-menu" class="nav-menu" role="menu" aria-label="Views" style="position: fixed; top: 64px; left: 14px; right: 14px; z-index: 110; display: flex; flex-direction: column; gap: 2px; padding: 8px; background: var(--mun-surface-3); border: 1px solid var(--mun-border-strong); border-radius: var(--mun-radius-lg); box-shadow: 0 18px 50px rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);">
+      <sc-for list="{{ menuItems }}" as="it" hint-placeholder-count="5">
+        <button role="menuitem" onClick="{{ it.onClick }}" style="display: flex; align-items: center; gap: 11px; width: 100%; min-height: 48px; padding: 12px 14px; border: none; border-radius: var(--mun-radius-md); background: transparent; cursor: pointer; font-family: var(--mun-font-sans); font-size: 16px; font-weight: 600; text-align: left; color: {{ it.labelColor }};" style-hover="background: var(--mun-surface-active);">
+          <span style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: {{ it.dotColor }}; flex: none;"></span>{{ it.label }}
+        </button>
+      </sc-for>
+      <a href="/features" role="menuitem" style="display: flex; align-items: center; gap: 11px; width: 100%; min-height: 48px; padding: 12px 14px; border-radius: var(--mun-radius-md); text-decoration: none; box-sizing: border-box; margin-top: 4px; border-top: 1px solid var(--mun-border-soft); font-size: 16px; font-weight: 600; color: var(--mun-fg-muted);" style-hover="background: var(--mun-surface-active); color: var(--mun-fg);"><span style="width: 8px; height: 8px; flex: none;"></span>Features &rarr;</a>
+    </div>
+  </sc-if>
 
   <section style="position: relative; width: 100%; overflow: hidden; height: 100vh; background: var(--mun-bg);">
 
@@ -122,6 +150,12 @@
     <div ref="{{ globeWrapRef }}" style="position: absolute; top: 50%; left: 50%; width: min(118vmin, 1200px); height: min(118vmin, 1200px); transform-origin: center center; pointer-events: none;">
       <div ref="{{ globeMountRef }}" data-anim="pop" data-delay="320" style="width: 100%; height: 100%; cursor: crosshair;"></div>
     </div>
+
+    <!-- Readability scrim: targeted darkening behind the text zones (center
+         headline, bottom legend/hint/CTA, top nav/kicker) so overlaid white
+         type keeps strong contrast over the bright globe, without flattening
+         the globe everywhere. Sits above the globe canvas, below all text. -->
+    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 6; pointer-events: none; background-image: radial-gradient(62% 40% at 50% 50%, rgba(3,12,22,0.8) 0%, rgba(3,12,22,0.46) 46%, rgba(3,12,22,0) 72%), linear-gradient(to top, rgba(3,12,22,0.92) 0%, rgba(3,12,22,0.5) 14%, rgba(3,12,22,0) 32%), linear-gradient(to bottom, rgba(3,12,22,0.82) 0%, rgba(3,12,22,0.3) 9%, rgba(3,12,22,0) 19%);"></div>
 
     <sc-if value="{{ isLegendView }}" hint-placeholder-val="{{ false }}">
       <div class="legend-backing" style="position: absolute; bottom: -60px; left: -60px; width: 440px; height: 470px; z-index: 54; pointer-events: none; background: radial-gradient(closest-side at 47% 44%, rgba(4,16,28,0.94), rgba(4,16,28,0.66) 56%, rgba(4,16,28,0) 78%);"></div>
@@ -262,7 +296,12 @@
       <div class="pane-buzz" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; padding: 92px 24px 28px; box-sizing: border-box;">
         <div class="bz-head" style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; flex: none;">
           <span style="display: inline-flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle);">
-            <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>
+            <sc-if value="{{ buzzIsLive }}" hint-placeholder-val="{{ true }}">
+              <span class="bz-livedot" style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-accent);"></span>
+            </sc-if>
+            <sc-if value="{{ buzzIdle }}" hint-placeholder-val="{{ false }}">
+              <span style="width: 8px; height: 8px; border-radius: var(--mun-radius-pill); background: var(--mun-fg-faint);"></span>
+            </sc-if>
             {{ buzzEyebrow }}
           </span>
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(2rem, 3.4vw, 2.8rem); color: var(--mun-fg-display); line-height: 1;">Who the world is watching</span>
@@ -345,7 +384,7 @@
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelInactiveText }}</div>
                 </sc-if>
                 <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">Live X polling is paused right now, so this is the simulated demo signal. When the feed is active you&rsquo;ll see the exact X query and post volume for {{ xSelName }} here.</div>
+                  <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">No live X data for {{ xSelName }} right now — buzz is measured only while a match is live. When {{ xSelName }} is in a live match you&rsquo;ll see its exact X query and post volume here.</div>
                 </sc-if>
                 <sc-if value="{{ xSelHasTrends }}" hint-placeholder-val="{{ false }}">
                   <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -389,7 +428,7 @@
         <sc-if value="{{ buzzEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; max-width: 360px;">
             <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.5rem; color: var(--mun-fg-strong);">All quiet&hellip; for now</span>
-            <span style="font-size: 13px; color: var(--mun-fg-subtle);">No buzz registered yet. It climbs as kickoff nears and posts start flowing.</span>
+            <span style="font-size: 13px; color: var(--mun-fg-subtle);">Buzz is measured from live X post volume while a match is on. It fills in when the next match kicks off.</span>
           </div>
         </sc-if>
 
@@ -520,7 +559,7 @@ class Component extends DCLogic {
     this.sliderTrackRef = React.createRef();
     this.bracketWrapRef = React.createRef();
     this.bracketInnerRef = React.createRef();
-    this.state = { view: 'globe', hoverIdx: -1, selectedDay: 7, featuredIdx: 0 };
+    this.state = { view: 'globe', hoverIdx: -1, selectedDay: 7, featuredIdx: 0, menuOpen: false };
     this.mouse = { x: -1, y: -1, has: false };
     this.hoverIdx = -1;
     this.idleLon = -70;
@@ -891,6 +930,8 @@ class Component extends DCLogic {
             this._prevSpike = {}; data.buzz.forEach(b => { this._prevSpike[b.code] = b.spike || 0; });
             this.buzzByCode = map;
             this.buzzMeta = { status: 'live', updatedAt: data.updatedAt || null, source: data.source || null, window: data.window || null, oracle: !!data.oracle };
+            // Source can flip live↔idle between polls; show/hide the ripple layer accordingly.
+            this.applyBuzzVisibility();
             // Fire a surge toast on the Globe view (rate-limited), so a spike reads
             // across views, not just on the board's SURGING flag.
             const now = Date.now();
@@ -1054,16 +1095,17 @@ class Component extends DCLogic {
 
   // Helpful explainer for a nation that isn't being polled live right now: tells
   // the user *when* its match is (upcoming / earlier / not today) using kickoff
-  // (`ko`) data, so "ambient interest" never reads as a dead end.
+  // (`ko`) data. Buzz is real-signal-only, so a nation that isn't in a live
+  // match simply has no buzz yet — this explains when it will.
   buzzMatchNote(code) {
     const name = this.byCode[code] ? this.byCode[code].name : code;
-    const ambient = 'Its bar shows ambient interest — a popularity prior (seeded from the FIFA World Ranking) plus match-day state — not live X volume.';
+    const quiet = 'Buzz is measured only from live X post volume while its match is on, so it’s quiet for now.';
     const m = this.todayMatchFor(code);
     if (!m) {
-      return name + ' isn’t playing today, so we’re not querying X for it — to keep cost bounded we only poll nations while their match is live. ' + ambient;
+      return name + ' isn’t playing today, so we’re not querying X for it — to keep cost bounded we only poll nations while their match is live. ' + quiet;
     }
     if (this.liveInfo(m).live) {
-      return name + ' just kicked off — its live X volume will appear here within a minute or two. ' + ambient;
+      return name + ' just kicked off — its live X volume will appear here within a minute or two.';
     }
     const koMs = m.ko ? new Date(m.ko).getTime() : null;
     const now = Date.now();
@@ -1073,9 +1115,9 @@ class Component extends DCLogic {
       const rel = mins < 60 ? ('in ' + mins + ' min') : ('in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm');
       const opp = this.byCode[m.a === code ? m.b : m.a];
       const vs = opp ? (' vs ' + opp.name) : '';
-      return name + ' kicks off at ' + t + ' (' + rel + ')' + vs + ' — we’ll start pulling its live X volume then. For now its bar shows ambient interest (a popularity prior from the FIFA ranking + match-day state).';
+      return name + ' kicks off at ' + t + ' (' + rel + ')' + vs + ' — we’ll start pulling its live X volume then. ' + quiet;
     }
-    return name + ' played earlier today, so we’ve stopped polling it. ' + ambient;
+    return name + ' played earlier today, so we’ve stopped polling it. ' + quiet;
   }
 
   componentWillUnmount() {
@@ -1185,14 +1227,17 @@ class Component extends DCLogic {
     loader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg', (t) => {
       if (t.anisotropy !== undefined) t.anisotropy = 4;
       mat.map = t;
-      mat.color.set(0xffffff);
+      // Tint the blue-marble texture down to a cool, muted tone (instead of full
+      // white) so the bright daytime landmass doesn't compete with the white
+      // display text overlaid on it. The globe reads as a calm backdrop.
+      mat.color.set(0x7d96ad);
       mat.emissive.set(0x0a1422);
-      mat.emissiveIntensity = 0.35;
+      mat.emissiveIntensity = 0.3;
       mat.needsUpdate = true;
     });
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
     dir.position.set(-1.2, 0.9, 1.8);
     scene.add(dir);
 
@@ -1394,8 +1439,11 @@ class Component extends DCLogic {
   applyBuzzVisibility() {
     if (!this.buzzGroup) return;
     const v = this.currentView();
-    // The buzz layer reads best on the full globe, matchday, and (by definition) the Buzz view.
-    this.buzzGroup.visible = (v === 'globe' || v === 'matchday' || v === 'buzz');
+    // The ripple layer renders ONLY when real X buzz is flowing (source ===
+    // 'counts' — a live match polled by the counts poller). With no live feed
+    // the globe is a static confederation map: no ripples, no motion.
+    const hasRealBuzz = !!(this.buzzMeta && this.buzzMeta.source === 'counts');
+    this.buzzGroup.visible = hasRealBuzz && (v === 'globe' || v === 'matchday' || v === 'buzz');
   }
 
   // Per-frame: ease displayed buzz toward server targets, then upload only the
@@ -1947,10 +1995,10 @@ class Component extends DCLogic {
     const buzzCapped = !!bm.capped;
     const buzzFreshNote = buzzCapped ? ' · daily budget reached, holding last values'
       : (buzzPaused ? ' · live feed paused (rate-limited), holding last values' : '');
-    const buzzSource = (buzzIsLive ? ('live X volume · in-play nations · last ' + xWindowMin + ' min') : 'simulated demo signal') + buzzFreshNote;
+    const buzzSource = (buzzIsLive ? ('live X volume · in-play nations · last ' + xWindowMin + ' min') : 'idle · no live match') + buzzFreshNote;
     const buzzHowText = buzzIsLive
-      ? ('While a match is live, we ask the X (Twitter) API how many recent posts mention each nation in it — volume only, never the post text — and rank them live. Nations not currently in a live match show ambient interest — a popularity prior seeded from the FIFA World Ranking, scaled by match-day state — so the board stays full. No post content is fetched or stored, and we only poll during live windows, so it stays cheap (a few hundred requests/day, hard-capped).')
-      : ('Live mode pulls real X (Twitter) post volume for each nation while its match is live. Right now it’s showing the free simulated signal (X polling is paused or off) — it switches to live automatically when a match kicks off.');
+      ? ('While a match is live, we ask the X (Twitter) API how many recent posts mention each nation in it — volume only, never the post text — and rank them live. No post content is fetched or stored, and we only poll during live windows, so it stays cheap (a few hundred requests/day, hard-capped).')
+      : ('Buzz is measured from real X (Twitter) post volume only while a match is live — there is no simulated signal. Right now no match is in play (or the live X feed isn’t configured), so the board is quiet. It fills in automatically when the next match kicks off.');
     // "What we're grabbing from X" for the selected nation (board click sets buzzFocusCode).
     const xSel = this.state.buzzFocusCode || null;
     const xPer = (xh.perTeam && xSel) ? xh.perTeam[xSel] : null;
@@ -2124,8 +2172,8 @@ class Component extends DCLogic {
       buzzWindow: buzzWindow,
       buzzSource: buzzSource,
       buzzIsLive: buzzIsLive,
-      buzzSimulated: !buzzIsLive,
-      buzzEyebrow: buzzIsLive ? 'Live from X' : 'Buzz · simulated',
+      buzzIdle: !buzzIsLive,
+      buzzEyebrow: buzzIsLive ? 'Live from X' : 'Buzz · idle',
       buzzHowText: buzzHowText,
       buzzInfoOpen: !!this.state.buzzInfoOpen,
       toggleBuzzInfo: () => this.setState({ buzzInfoOpen: !this.state.buzzInfoOpen }),
@@ -2164,6 +2212,19 @@ class Component extends DCLogic {
       navItems: [{ id: 'buzz', label: 'Buzz' }, { id: 'globe', label: 'Globe' }, { id: 'matchday', label: 'Matchday' }, { id: 'standings', label: 'Standings' }, { id: 'bracket', label: 'Bracket' }],
       navValue: this.currentView(),
       navOnChange: (id) => this.setView(id),
+      // Mobile collapsible menu: title stays visible, views collapse behind a
+      // hamburger. menuItems carry their own active flag + close-on-select.
+      menuOpen: !!this.state.menuOpen,
+      menuClosed: !this.state.menuOpen,
+      toggleMenu: () => this.setState({ menuOpen: !this.state.menuOpen }),
+      closeMenu: () => this.setState({ menuOpen: false }),
+      menuItems: [{ id: 'buzz', label: 'Buzz' }, { id: 'globe', label: 'Globe' }, { id: 'matchday', label: 'Matchday' }, { id: 'standings', label: 'Standings' }, { id: 'bracket', label: 'Bracket' }].map((it) => ({
+        label: it.label,
+        active: this.currentView() === it.id,
+        dotColor: this.currentView() === it.id ? accent : 'transparent',
+        labelColor: this.currentView() === it.id ? 'var(--mun-fg-display)' : 'var(--mun-fg-strong)',
+        onClick: () => { this.setView(it.id); this.setState({ menuOpen: false }); }
+      })),
       onSliderDown: this.onSliderDown,
       onSliderMove: this.onSliderMove,
       onSliderUp: this.onSliderUp,

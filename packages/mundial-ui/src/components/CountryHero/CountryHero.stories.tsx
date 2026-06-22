@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CountryHero } from './CountryHero';
 import { CONFEDERATIONS } from '../../data/confederations';
 

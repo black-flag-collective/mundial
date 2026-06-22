@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { createRateLimiter, clientIp } = require('./scripts/rate-limit');
+const { PostHog, setupExpressRequestContext, setupExpressErrorHandler } = require('posthog-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -96,6 +97,13 @@ app.get('/analytics.js', (req, res) => {
   res.send(analyticsJs);
 });
 
+// Server-side PostHog analytics (posthog-node). Shares the same key/host as the
+// client snippet above. No-ops gracefully when POSTHOG_KEY is unset (local dev).
+const posthog = POSTHOG_KEY
+  ? new PostHog(POSTHOG_KEY, { host: POSTHOG_HOST, enableExceptionAutocapture: true })
+  : null;
+if (posthog) setupExpressRequestContext(posthog, app);
+
 app.use(express.static(path.join(__dirname, 'public'), {
   // Cache fingerprint-free assets for an hour, but always revalidate the app
   // shell so HTML/data changes ship immediately on the next request.
@@ -170,12 +178,32 @@ app.get('/api/predict', async (req, res) => {
     const signature = signatureOf(buzzSnap);
     const out = await oracle.predict({ context, signature, ip: clientIp(req), validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
+    if (posthog) {
+      const distinctId = req.headers['x-posthog-distinct-id'] || clientIp(req);
+      posthog.capture({
+        distinctId,
+        event: out.cached ? 'oracle_prediction_cached' : 'oracle_prediction_requested',
+        properties: {
+          champion: out.prediction && out.prediction.champion,
+          champion_name: out.prediction && out.prediction.championName,
+          generated_at: out.generatedAt,
+        },
+      });
+    }
   } catch (err) {
     // Known states (rate-limit 429, capped/unconfigured 503, unreadable 502)
     // carry user-safe messages; anything else is an unexpected 500 — log the
     // detail server-side, return a generic message so internals don't leak.
     const status = err.status || 500;
     if (status === 500) console.error('[oracle] predict failed:', err.message);
+    if (posthog) {
+      const distinctId = req.headers['x-posthog-distinct-id'] || clientIp(req);
+      if (status === 429) {
+        posthog.capture({ distinctId, event: 'oracle_request_rate_limited' });
+      } else if (status === 503) {
+        posthog.capture({ distinctId, event: 'oracle_daily_cap_reached' });
+      }
+    }
     res.status(status).json({ available: true, error: status === 500 ? 'the Oracle is unavailable right now' : err.message });
   }
 });
@@ -300,6 +328,7 @@ app.get('/api/buzz/stream', (req, res) => {
   // Cap concurrent streams so a client can't open thousands and exhaust sockets/
   // memory. Beyond the cap, ask them to retry shortly.
   if (sseClients.size >= SSE_MAX) {
+    if (posthog) posthog.capture({ distinctId: req.headers['x-posthog-distinct-id'] || clientIp(req), event: 'buzz_stream_rejected', properties: { active_clients: sseClients.size, cap: SSE_MAX } });
     res.set('Retry-After', '30').status(503).json({ error: 'too many live connections, try again shortly' });
     return;
   }
@@ -314,6 +343,7 @@ app.get('/api/buzz/stream', (req, res) => {
   for (const post of recentPosts) res.write(`data: ${JSON.stringify(post)}\n\n`);
 
   sseClients.add(res);
+  if (posthog) posthog.capture({ distinctId: req.headers['x-posthog-distinct-id'] || clientIp(req), event: 'buzz_stream_connected', properties: { active_clients: sseClients.size } });
   const cleanup = () => { clearInterval(ping); sseClients.delete(res); };
   // Keep-alive ping; if the socket is already gone the write throws — clean up.
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch { cleanup(); } }, 20000);
@@ -402,6 +432,7 @@ app.get('/api/data.json', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ error: 'not found' });
 });
+if (posthog) setupExpressErrorHandler(posthog, app);
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[server] unhandled error:', err && err.stack ? err.stack : err);
@@ -466,6 +497,7 @@ function shutdown(sig) {
   console.log(`[server] ${sig} received — releasing X stream and shutting down`);
   try { xStreamController.abort(); } catch { /* already aborted */ }
   for (const res of sseClients) { try { res.end(); } catch { /* client gone */ } }
+  if (posthog) posthog.shutdown().catch(() => {});
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 4000).unref();
 }

@@ -272,8 +272,67 @@
           </sc-if>
 
           <sc-if value="{{ showOracleBtn }}" hint-placeholder-val="{{ false }}">
-            <span onClick="{{ askOracle }}" style="margin-top: 6px; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 7px 16px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleBtnLabel }}</span>
+            <span onClick="{{ startOracle }}" style="margin-top: 6px; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 7px 16px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleBtnLabel }}</span>
           </sc-if>
+
+          <!-- Make-your-call flow: the user commits a champion + biggest threat + -->
+          <!-- confidence, then the Oracle answers with its OWN independent pick, -->
+          <!-- shown head-to-head. The shareable artifact is "my call vs the Oracle". -->
+          <sc-if value="{{ oraclePicking }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 10px; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 10px; text-align: left; background: var(--mun-surface-2); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 15px 17px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mun-accent);">&#128302; Make your call</span>
+                <span onClick="{{ cancelOracle }}" style="font-size: 11px; color: var(--mun-fg-subtle); cursor: pointer;">cancel</span>
+              </div>
+
+              <div onClick="{{ pickChampion }}" style="display: flex; align-items: center; gap: 10px; padding: 9px 11px; background: var(--mun-bg); border: 1px solid {{ myChampBorder }}; border-radius: var(--mun-radius-sm); cursor: pointer;">
+                <span style="font-size: 11px; color: var(--mun-fg-faint); width: 86px; flex: none;">Your champion</span>
+                <sc-if value="{{ myHasChamp }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ myChampFlag }}" alt="" style="width: 24px; height: 16px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                </sc-if>
+                <span style="font-size: 13px; font-weight: 700; color: {{ myChampColor }}; flex: 1;">{{ myChampLabel }}</span>
+                <span style="font-size: 11px; color: var(--mun-accent);">{{ myChampAction }}</span>
+              </div>
+
+              <sc-if value="{{ myHasChamp }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ pickThreat }}" style="display: flex; align-items: center; gap: 10px; padding: 9px 11px; background: var(--mun-bg); border: 1px solid {{ myThreatBorder }}; border-radius: var(--mun-radius-sm); cursor: pointer;">
+                  <span style="font-size: 11px; color: var(--mun-fg-faint); width: 86px; flex: none;">Biggest threat</span>
+                  <sc-if value="{{ myHasThreat }}" hint-placeholder-val="{{ false }}">
+                    <img src="{{ myThreatFlag }}" alt="" style="width: 24px; height: 16px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                  </sc-if>
+                  <span style="font-size: 13px; font-weight: 700; color: {{ myThreatColor }}; flex: 1;">{{ myThreatLabel }}</span>
+                  <span style="font-size: 11px; color: var(--mun-accent);">{{ myThreatAction }}</span>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ myHasThreat }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; color: var(--mun-fg-faint);">How sure are you?</span>
+                  <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+                    <sc-for list="{{ confidenceOpts }}" as="c" hint-placeholder-count="3">
+                      <span onClick="{{ c.onSelect }}" style="font-size: 12px; font-weight: 700; color: {{ c.color }}; background: {{ c.bg }}; border: 1px solid {{ c.border }}; border-radius: var(--mun-radius-pill); padding: 6px 13px; cursor: pointer;">{{ c.label }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ canConsult }}" hint-placeholder-val="{{ false }}">
+                <span onClick="{{ consultOracle }}" style="align-self: flex-start; margin-top: 2px; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--mun-bg); background: var(--mun-accent); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 8px 18px; cursor: pointer;">&#128302; Consult the Oracle</span>
+              </sc-if>
+
+              <sc-if value="{{ oraclePickerOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--mun-border-soft); padding-top: 10px;">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--mun-fg-subtle);">{{ pickerTitle }}</span>
+                  <div style="max-height: 188px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px;">
+                    <sc-for list="{{ oraclePickGrid }}" as="t" hint-placeholder-count="24">
+                      <span onClick="{{ t.onSelect }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{ t.color }}; background: {{ t.bg }}; border: 1px solid {{ t.border }}; border-radius: var(--mun-radius-pill); padding: 4px 9px 4px 5px; cursor: pointer;"><img src="{{ t.flag }}" alt="" style="width: 20px; height: 13px; border-radius: 2px; object-fit: cover;">{{ t.code }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ oracleLoading }}" hint-placeholder-val="{{ false }}">
             <span style="margin-top: 6px; font-size: 12px; color: var(--mun-fg-subtle);">Reading the world&rsquo;s buzz&hellip;</span>
           </sc-if>
@@ -282,19 +341,36 @@
           </sc-if>
 
           <sc-if value="{{ oracleDone }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top: 10px; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 9px; text-align: left; background: var(--mun-surface-2); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 15px 17px;">
-              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mun-accent);">&#128302; The Buzz Oracle predicts</span>
-              <div style="display: flex; align-items: center; gap: 11px;">
-                <img src="{{ oracleChampFlag }}" alt="" style="width: 38px; height: 25px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
-                <div style="display: flex; flex-direction: column;">
-                  <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.5rem; color: var(--mun-fg-display); line-height: 1.1;">{{ oracleChampName }} lift the trophy</span>
-                  <span style="font-size: 12px; color: var(--mun-fg-subtle);">projected final &middot; {{ oracleFinal }}</span>
+            <div style="margin-top: 10px; width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 11px; text-align: left; background: var(--mun-surface-2); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-md); padding: 15px 17px;">
+              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mun-accent);">&#128302; Your call vs the Oracle</span>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 11px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 11px 12px;">
+                  <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mun-fg-faint);">Your call</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ myChampFlag }}" alt="" style="width: 30px; height: 20px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                    <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.15rem; color: var(--mun-fg-display); line-height: 1.05;">{{ myChampName }}</span>
+                  </div>
+                  <span style="font-size: 11px; color: var(--mun-fg-subtle);">threat &middot; {{ myThreatName }}</span>
+                  <span style="font-size: 11px; color: var(--mun-fg-muted);">{{ myConfidenceLabel }}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; background: var(--mun-bg); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-sm); padding: 11px 12px;">
+                  <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mun-accent);">&#128302; The Oracle</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ oracleChampFlag }}" alt="" style="width: 30px; height: 20px; border-radius: var(--mun-radius-flag); object-fit: cover; box-shadow: var(--mun-shadow-flag);">
+                    <span style="font-family: var(--mun-font-display); font-style: italic; font-size: 1.15rem; color: var(--mun-fg-display); line-height: 1.05;">{{ oracleChampName }}</span>
+                  </div>
+                  <span style="font-size: 11px; color: var(--mun-fg-subtle);">threat &middot; {{ oracleThreatName }}</span>
+                  <span style="font-size: 11px; color: var(--mun-fg-muted);">proj. final {{ oracleFinal }}</span>
                 </div>
               </div>
-              <span style="font-size: 14px; color: var(--mun-fg); line-height: 1.45;">&ldquo;{{ oracleHotTake }}&rdquo;</span>
+              <span style="font-size: 13px; font-weight: 700; color: {{ oracleVerdictColor }};">{{ oracleAgreeNote }}</span>
+              <span style="font-size: 13px; color: var(--mun-fg); line-height: 1.45;">&ldquo;{{ oracleHotTake }}&rdquo;</span>
               <span style="font-size: 12px; color: var(--mun-fg-muted); line-height: 1.5;">{{ oracleEvidence }}</span>
               <span style="font-size: 10px; color: var(--mun-fg-faint); letter-spacing: 0.04em;">mundial.buzz &middot; an AI read of X buzz, results &amp; trends &middot; {{ oracleCachedNote }}</span>
-              <span onClick="{{ shareOracle }}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 6px 14px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleShareLabel }}</span>
+              <div style="display: flex; gap: 8px;">
+                <span onClick="{{ shareOracle }}" style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--mun-fg-display); background: var(--mun-accent-soft); border: 1px solid var(--mun-accent-border); border-radius: var(--mun-radius-pill); padding: 6px 14px; cursor: pointer;" style-hover="background: var(--mun-surface-3);">{{ oracleShareLabel }}</span>
+                <span onClick="{{ startOracle }}" style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--mun-fg-subtle); background: transparent; border: 1px solid var(--mun-border-strong); border-radius: var(--mun-radius-pill); padding: 6px 14px; cursor: pointer;">Make another call</span>
+              </div>
             </div>
           </sc-if>
         </div>
@@ -989,10 +1065,36 @@ class Component extends DCLogic {
     return { live: true, clock: clock, score: (m.as || 0) + ' – ' + (m.bs || 0) };
   }
 
-  // On-demand: ask the Buzz Oracle for a prediction (one cheap, server-cached
-  // AI call). Guarded against double-taps; result/err kept off-state for render.
-  askOracle() {
+  // ── Buzz Oracle: "make your call" flow ──────────────────────────────────
+  // The user commits a champion + biggest threat + confidence, then the Oracle
+  // answers with its OWN independent, data-grounded pick (the existing cached
+  // /api/predict call — no extra cost), shown head-to-head. The shareable
+  // artifact is "my call vs the Oracle's" — that's what's worth sending on.
+  CONF_OPTS = [
+    { key: 'lock', label: '🔒 Lock it in', say: 'Locked in' },
+    { key: 'hopeful', label: '🙏 Hopeful', say: 'Hopeful' },
+    { key: 'heart', label: '❤️ Heart over head', say: 'Heart over head' },
+  ];
+
+  startOracle() {
+    this.setState({ oracleStatus: 'picking', oraclePickTarget: null, myChampion: null, myThreat: null, myConfidence: null });
+  }
+  cancelOracle() { this.setState({ oracleStatus: 'idle', oraclePickTarget: null }); }
+  openOraclePicker(target) { this.setState({ oraclePickTarget: target }); }
+  chooseOraclePick(code) {
+    if (this.state.oraclePickTarget === 'threat') { this.setState({ myThreat: code, oraclePickTarget: null }); return; }
+    // Picking (or changing) the champion can't leave it standing as its own threat.
+    const patch = { myChampion: code, oraclePickTarget: null };
+    if (this.state.myThreat === code) patch.myThreat = null;
+    this.setState(patch);
+  }
+  setOracleConfidence(key) { this.setState({ myConfidence: key }); }
+
+  // Fire the prediction (guarded against double-taps). The Oracle's pick is
+  // independent of the user's — we just render the two side by side.
+  consultOracle() {
     if (this._oracleLoading) return;
+    if (!this.state.myChampion || !this.state.myThreat || !this.state.myConfidence) return;
     this._oracleLoading = true;
     this.setState({ oracleStatus: 'loading' });
     fetch('/api/predict')
@@ -1010,14 +1112,21 @@ class Component extends DCLogic {
       .catch(() => { this._oracleLoading = false; this._oracleErr = 'Could not reach the Oracle.'; this.setState({ oracleStatus: 'error' }); });
   }
 
-  // Share the current prediction: native share sheet on mobile, clipboard
-  // fallback elsewhere (with a brief "Copied!" confirmation). The shared text
-  // carries the mundial.buzz link — that's the viral loop.
+  // Share text carries BOTH calls + the mundial.buzz link — that's the viral
+  // loop. Native share sheet on mobile, clipboard fallback elsewhere.
   oracleShareText() {
     const p = this._oracle || {};
-    const score = p.finalScore ? ` (${p.finalScore}${p.runnerUp ? ' vs ' + p.runnerUp : ''})` : '';
-    const take = p.hotTake ? ` “${p.hotTake}”` : '';
-    return `🔮 The Buzz Oracle calls it: ${p.championName || p.champion} to win the 2026 World Cup${score}.${take} — read live from the world’s X buzz at https://mundial.buzz`;
+    const nm = (c) => (this.byCode[c] ? this.byCode[c].name : c) || '';
+    const myC = nm(this.state.myChampion);
+    const myT = nm(this.state.myThreat);
+    const conf = (this.CONF_OPTS.find((o) => o.key === this.state.myConfidence) || {}).say || '';
+    const oc = p.championName || p.champion || '';
+    const agree = this.state.myChampion && p.champion && this.state.myChampion === p.champion;
+    const mine = `🔮 My 2026 World Cup call: ${myC} to lift it${myT ? ` (biggest threat: ${myT})` : ''}${conf ? ` — ${conf.toLowerCase()}` : ''}.`;
+    const oracle = agree
+      ? ` The Buzz Oracle agrees — it backs ${oc} too.`
+      : ` The Buzz Oracle disagrees: it backs ${oc}${p.finalScore ? ` (${p.finalScore})` : ''}.`;
+    return `${mine}${oracle} Make your own call at https://mundial.buzz`;
   }
   shareOracle() {
     if (!this._oracle) return;
@@ -1933,14 +2042,60 @@ class Component extends DCLogic {
     const buzzIsLive = bm.source === 'counts';
     const xh = this.xHealth || {};
     const xWindowMin = xh.windowMin || 10;
-    // ---- Buzz Oracle (on-demand prediction) ----
+    // ---- Buzz Oracle: make-your-call flow ----
     const oracleStatus = this.state.oracleStatus || 'idle';
     const oracleAvailable = !!bm.oracle;
+    const oraclePicking = oracleStatus === 'picking';
     const oracleLoading = oracleStatus === 'loading';
     const oracleDone = oracleStatus === 'done' && !!this._oracle;
     const oracleErr = oracleStatus === 'error';
     const op = this._oracle || {};
-    const oracleBtnLabel = oracleLoading ? 'Consulting the buzz…' : (oracleDone ? 'Ask again' : '\u{1F52E} Ask the Oracle');
+    const oNameOf = (c) => (c && this.byCode[c] ? this.byCode[c].name : (c || ''));
+    const myChampion = this.state.myChampion || null;
+    const myThreat = this.state.myThreat || null;
+    const myConfidence = this.state.myConfidence || null;
+    const myHasChamp = !!myChampion;
+    const myHasThreat = !!myThreat;
+    const pickTarget = this.state.oraclePickTarget || null;
+    const oraclePickerOpen = oraclePicking && !!pickTarget;
+    // One shared team grid (alphabetical). When choosing the threat, the
+    // already-picked champion is removed so it can't be picked against itself.
+    const pickExclude = pickTarget === 'threat' ? myChampion : null;
+    const pickSelected = pickTarget === 'threat' ? myThreat : myChampion;
+    const oraclePickGrid = oraclePickerOpen
+      ? this.countries
+          .filter((c) => c.code !== pickExclude)
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((c) => {
+            const on = c.code === pickSelected;
+            return {
+              code: c.code, flag: this.flagUrl(c.code),
+              color: on ? 'var(--mun-bg)' : 'var(--mun-fg)',
+              bg: on ? 'var(--mun-accent)' : 'var(--mun-surface-3)',
+              border: on ? 'var(--mun-accent)' : 'var(--mun-border-soft)',
+              onSelect: () => this.chooseOraclePick(c.code),
+            };
+          })
+      : [];
+    const confidenceOpts = (oraclePicking && myHasThreat) ? this.CONF_OPTS.map((o) => {
+      const on = o.key === myConfidence;
+      return {
+        key: o.key, label: o.label,
+        color: on ? 'var(--mun-bg)' : 'var(--mun-fg)',
+        bg: on ? 'var(--mun-accent)' : 'var(--mun-surface-3)',
+        border: on ? 'var(--mun-accent)' : 'var(--mun-border-soft)',
+        onSelect: () => this.setOracleConfidence(o.key),
+      };
+    }) : [];
+    const canConsult = oraclePicking && myHasChamp && myHasThreat && !!myConfidence;
+    const oracleAgree = !!(myChampion && op.champion && myChampion === op.champion);
+    const oracleAgreeNote = !oracleDone ? '' : (oracleAgree
+      ? `🤝 You and the Oracle agree — ${oNameOf(op.champion)} all the way.`
+      : `⚔️ You're calling an upset — the Oracle backs ${oNameOf(op.champion)} over your ${oNameOf(myChampion)}.`);
+    const oracleVerdictColor = oracleAgree ? 'var(--mun-accent)' : 'var(--mun-fg-display)';
+    const myConfidenceLabel = (this.CONF_OPTS.find((o) => o.key === myConfidence) || {}).say || '';
+    const oracleBtnLabel = '\u{1F52E} Make your call';
     // Held data is honest about itself: while X has us paused (rate-limited) or the
     // daily budget is spent, the numbers are the last poll's, not fresh.
     const buzzPaused = !!bm.paused;
@@ -2098,23 +2253,56 @@ class Component extends DCLogic {
       buzzLeader: buzzLeader,
       trendStrip: trendStrip,
       hasTrends: hasTrends,
-      // Buzz Oracle
-      showOracleBtn: isBuzz && oracleAvailable && !oracleLoading,
+      // Buzz Oracle — make-your-call flow
+      showOracleBtn: isBuzz && oracleAvailable && oracleStatus === 'idle',
       oracleBtnLabel: oracleBtnLabel,
-      askOracle: () => this.askOracle(),
+      startOracle: () => this.startOracle(),
+      cancelOracle: () => this.cancelOracle(),
+      oraclePicking: oraclePicking,
+      // champion row
+      pickChampion: () => this.openOraclePicker('champion'),
+      myHasChamp: myHasChamp,
+      myChampFlag: myChampion ? this.flagUrl(myChampion) : '',
+      myChampLabel: myChampion ? oNameOf(myChampion) : 'Tap to choose',
+      myChampName: oNameOf(myChampion),
+      myChampColor: myChampion ? 'var(--mun-fg)' : 'var(--mun-fg-faint)',
+      myChampBorder: myChampion ? 'var(--mun-accent-border)' : 'var(--mun-border-soft)',
+      myChampAction: myChampion ? 'change' : 'choose',
+      // biggest-threat row
+      pickThreat: () => this.openOraclePicker('threat'),
+      myHasThreat: myHasThreat,
+      myThreatFlag: myThreat ? this.flagUrl(myThreat) : '',
+      myThreatLabel: myThreat ? oNameOf(myThreat) : 'Tap to choose',
+      myThreatName: oNameOf(myThreat),
+      myThreatColor: myThreat ? 'var(--mun-fg)' : 'var(--mun-fg-faint)',
+      myThreatBorder: myThreat ? 'var(--mun-accent-border)' : 'var(--mun-border-soft)',
+      myThreatAction: myThreat ? 'change' : 'choose',
+      // confidence + consult
+      confidenceOpts: confidenceOpts,
+      canConsult: canConsult,
+      consultOracle: () => this.consultOracle(),
+      myConfidenceLabel: myConfidenceLabel,
+      // shared team picker
+      oraclePickerOpen: oraclePickerOpen,
+      pickerTitle: pickTarget === 'threat' ? 'Who’s the biggest threat?' : 'Who lifts the trophy?',
+      oraclePickGrid: oraclePickGrid,
+      // states
       oracleLoading: oracleLoading,
       oracleDone: oracleDone,
       oracleErr: oracleErr,
       oracleErrMsg: this._oracleErr || '',
+      // head-to-head result
       oracleChampFlag: op.champion ? this.flagUrl(op.champion) : '',
-      oracleChampCode: op.champion || '',
       oracleChampName: op.championName || op.champion || '',
-      oracleFinal: op.finalScore ? (op.finalScore + (op.runnerUp ? ' vs ' + op.runnerUp : '')) : '',
+      oracleThreatName: op.runnerUp ? oNameOf(op.runnerUp) : '—',
+      oracleFinal: op.finalScore || '—',
+      oracleAgreeNote: oracleAgreeNote,
+      oracleVerdictColor: oracleVerdictColor,
       oracleHotTake: op.hotTake || '',
       oracleEvidence: op.evidence || '',
       oracleCachedNote: op.cached ? 'the world’s current read' : 'fresh read',
       shareOracle: () => this.shareOracle(),
-      oracleShareLabel: this.state.oracleShared ? '✓ Copied!' : '\u{1F517} Share this prediction',
+      oracleShareLabel: this.state.oracleShared ? '✓ Copied!' : '\u{1F517} Share my call',
       buzzLoading: buzzLoading,
       buzzError: buzzError,
       buzzEmpty: buzzEmpty,

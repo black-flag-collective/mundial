@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { createRateLimiter, clientIp } = require('./scripts/rate-limit');
+const { PostHog, setupExpressRequestContext, setupExpressErrorHandler } = require('posthog-node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,6 +76,33 @@ setInterval(apiLimiter.prune, 60_000).unref();
 app.get('/healthz', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
+
+// Analytics bootstrap: serves the PostHog web snippet with the project key
+// injected from POSTHOG_KEY. Same on/off pattern as the Oracle and X buzz layer
+// — when the secret is unset (local dev, forks) this returns an inert no-op and
+// the site loads with zero analytics. The key (phc_…) is a publishable client
+// key, so shipping it to the browser is expected. Set it as a Fly secret in
+// prod / a GitHub Actions secret in CI, never committed. Served above static so
+// it wins over any real /analytics.js file and never touches the filesystem.
+const POSTHOG_KEY = process.env.POSTHOG_KEY || '';
+const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.i.posthog.com';
+const analyticsJs = POSTHOG_KEY
+  ? `!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);\nposthog.init(${JSON.stringify(POSTHOG_KEY)},{api_host:${JSON.stringify(POSTHOG_HOST)},defaults:'2025-05-24',person_profiles:'identified_only'});`
+  : '/* PostHog analytics disabled: POSTHOG_KEY is not set. */';
+app.get('/analytics.js', (req, res) => {
+  res.type('text/javascript; charset=utf-8');
+  // Key is injected from env at request time, so don't let proxies/browsers
+  // pin a stale copy after a secret rotation.
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(analyticsJs);
+});
+
+// Server-side PostHog analytics (posthog-node). Shares the same key/host as the
+// client snippet above. No-ops gracefully when POSTHOG_KEY is unset (local dev).
+const posthog = POSTHOG_KEY
+  ? new PostHog(POSTHOG_KEY, { host: POSTHOG_HOST, enableExceptionAutocapture: true })
+  : null;
+if (posthog) setupExpressRequestContext(posthog, app);
 
 app.use(express.static(path.join(__dirname, 'public'), {
   // Cache fingerprint-free assets for an hour, but always revalidate the app
@@ -150,12 +178,32 @@ app.get('/api/predict', async (req, res) => {
     const signature = signatureOf(buzzSnap);
     const out = await oracle.predict({ context, signature, ip: clientIp(req), validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
+    if (posthog) {
+      const distinctId = req.headers['x-posthog-distinct-id'] || clientIp(req);
+      posthog.capture({
+        distinctId,
+        event: out.cached ? 'oracle_prediction_cached' : 'oracle_prediction_requested',
+        properties: {
+          champion: out.prediction && out.prediction.champion,
+          champion_name: out.prediction && out.prediction.championName,
+          generated_at: out.generatedAt,
+        },
+      });
+    }
   } catch (err) {
     // Known states (rate-limit 429, capped/unconfigured 503, unreadable 502)
     // carry user-safe messages; anything else is an unexpected 500 — log the
     // detail server-side, return a generic message so internals don't leak.
     const status = err.status || 500;
     if (status === 500) console.error('[oracle] predict failed:', err.message);
+    if (posthog) {
+      const distinctId = req.headers['x-posthog-distinct-id'] || clientIp(req);
+      if (status === 429) {
+        posthog.capture({ distinctId, event: 'oracle_request_rate_limited' });
+      } else if (status === 503) {
+        posthog.capture({ distinctId, event: 'oracle_daily_cap_reached' });
+      }
+    }
     res.status(status).json({ available: true, error: status === 500 ? 'the Oracle is unavailable right now' : err.message });
   }
 });
@@ -280,6 +328,7 @@ app.get('/api/buzz/stream', (req, res) => {
   // Cap concurrent streams so a client can't open thousands and exhaust sockets/
   // memory. Beyond the cap, ask them to retry shortly.
   if (sseClients.size >= SSE_MAX) {
+    if (posthog) posthog.capture({ distinctId: req.headers['x-posthog-distinct-id'] || clientIp(req), event: 'buzz_stream_rejected', properties: { active_clients: sseClients.size, cap: SSE_MAX } });
     res.set('Retry-After', '30').status(503).json({ error: 'too many live connections, try again shortly' });
     return;
   }
@@ -294,6 +343,7 @@ app.get('/api/buzz/stream', (req, res) => {
   for (const post of recentPosts) res.write(`data: ${JSON.stringify(post)}\n\n`);
 
   sseClients.add(res);
+  if (posthog) posthog.capture({ distinctId: req.headers['x-posthog-distinct-id'] || clientIp(req), event: 'buzz_stream_connected', properties: { active_clients: sseClients.size } });
   const cleanup = () => { clearInterval(ping); sseClients.delete(res); };
   // Keep-alive ping; if the socket is already gone the write throws — clean up.
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch { cleanup(); } }, 20000);
@@ -382,6 +432,7 @@ app.get('/api/data.json', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ error: 'not found' });
 });
+if (posthog) setupExpressErrorHandler(posthog, app);
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[server] unhandled error:', err && err.stack ? err.stack : err);
@@ -446,6 +497,7 @@ function shutdown(sig) {
   console.log(`[server] ${sig} received — releasing X stream and shutting down`);
   try { xStreamController.abort(); } catch { /* already aborted */ }
   for (const res of sseClients) { try { res.end(); } catch { /* client gone */ } }
+  if (posthog) posthog.shutdown().catch(() => {});
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 4000).unref();
 }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-22T00:23:42.779Z",
+  "updatedAt": "2026-06-22T20:00:48.810Z",
   "days": [
     {
       "dow": "Thursday",
@@ -537,11 +537,10 @@
         "g": "J",
         "a": "ARG",
         "b": "AUT",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
         "ko": "2026-06-22T17:00:00Z",
-        "time": "6:00 PM ET",
         "venue": "AT&T Stadium, Arlington"
       },
       {

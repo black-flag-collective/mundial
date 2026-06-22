@@ -911,13 +911,37 @@ class Component extends DCLogic {
     });
   }
 
+  // Lightweight PostHog wrapper. No-ops when analytics is disabled: with no
+  // POSTHOG_KEY set, /analytics.js serves an empty stub and window.posthog is
+  // never defined, so every call here is skipped.
+  track(event, props) {
+    try { if (window.posthog) window.posthog.capture(event, props || {}); } catch (_) {}
+  }
+
+  // Map an in-app view to a virtual path. The five views share one URL (no
+  // history navigation), so PostHog never sees them as pageviews on its own —
+  // we send them explicitly. Distinct paths let Web Analytics list each view as
+  // its own page beside the real /buzz/ and /features/ pages. The in-app buzz
+  // board uses /buzz-board to stay distinct from the standalone /buzz/ monitor.
+  viewPath(v) {
+    return ({ globe: '/', matchday: '/matchday', standings: '/standings', bracket: '/bracket', buzz: '/buzz-board' }[v]) || '/';
+  }
+
   setView(v) {
     if (this.state.view === v) return;
+    const prevView = this.state.view;
     if (window.__mundial) { window.__mundial.view = v; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; window.__mundial.mhover = -1; }
     const patch = { view: v, hoverIdx: -1 };
     if (v !== 'buzz') patch.buzzFocusCode = null;  // drop the click-through highlight when leaving the board
     this.setState(patch);
     this.hoverIdx = -1;
+    // Analytics: record the switch as a virtual pageview and keep app_view as a
+    // super-property so every later event (incl. autocaptured clicks) is tagged
+    // with the view it happened in.
+    if (window.posthog) {
+      window.posthog.register({ app_view: v });
+      this.track('$pageview', { $current_url: window.location.origin + this.viewPath(v), view: v, previous_view: prevView });
+    }
   }
 
   setLegendTeam = (code) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = code ? [code] : null; window.__mundial.legendArc = null; };
@@ -959,6 +983,9 @@ class Component extends DCLogic {
     window.addEventListener('mousemove', this.onMove);
     this.onResize = () => { this.resize(); this.scaleBracket(); this.forceUpdate(); };
     window.addEventListener('resize', this.onResize);
+    // Tag the entry view so the initial pageview (already fired by the snippet
+    // for "/") and every subsequent event carry the active in-app view.
+    if (window.posthog) window.posthog.register({ app_view: this.state.view });
     this.initGlobe();
     this.loop();
     this.playEntrance();
@@ -1141,6 +1168,9 @@ class Component extends DCLogic {
     if (!this.state.myChampion || !this.state.myThreat || !this.state.myConfidence) return;
     this._oracleLoading = true;
     this.setState({ oracleStatus: 'loading' });
+    // Captures the user's own call (champion/threat/confidence) — context the
+    // server-side oracle_prediction_* events don't have.
+    this.track('oracle_consulted', { champion: this.state.myChampion, threat: this.state.myThreat, confidence: this.state.myConfidence });
     fetch('/api/predict')
       .then((r) => r.json().catch(() => null))
       .then((d) => {
@@ -1176,6 +1206,9 @@ class Component extends DCLogic {
     if (!this._oracle) return;
     const text = this.oracleShareText();
     const url = 'https://mundial.buzz';
+    // The viral loop — track shares and whether they agreed with the Oracle.
+    const o = this._oracle || {};
+    this.track('oracle_shared', { method: navigator.share ? 'native' : 'clipboard', champion: this.state.myChampion, oracle_champion: o.champion || null, agreed: !!(this.state.myChampion && o.champion && this.state.myChampion === o.champion) });
     if (navigator.share) { navigator.share({ title: 'mundial.buzz · Buzz Oracle', text, url }).catch(() => {}); return; }
     const confirm = () => {
       this.setState({ oracleShared: true });

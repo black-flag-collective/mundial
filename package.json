@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
+    "@posthog/ai": "^7.4.3",
     "express": "^5.2.1",
     "posthog-node": "^5.38.2"
   },

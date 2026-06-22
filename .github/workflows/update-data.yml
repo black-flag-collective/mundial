@@ -52,6 +52,9 @@ jobs:
       - name: Run updater
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional: set the POSTHOG_KEY repo secret to capture the updater's
+          # Claude call in PostHog AI observability. Empty → runs without it.
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
         run: node scripts/update-data.js
 
       - name: Commit changes if any

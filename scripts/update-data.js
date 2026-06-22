@@ -10,6 +10,8 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { PostHog } = require('posthog-node');
+const { Anthropic: PostHogAnthropic } = require('@posthog/ai');
 const fs = require('fs');
 const path = require('path');
 
@@ -125,13 +127,16 @@ function parseResponseJson(text) {
   return null;
 }
 
-async function updateData() {
+async function updateData({ phClient = null } = {}) {
   // maxRetries lets the SDK automatically back off and honor the API's
-  // `retry-after` header on transient 429/5xx responses.
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    maxRetries: 5
-  });
+  // `retry-after` header on transient 429/5xx responses. When a PostHog client
+  // is provided (POSTHOG_KEY set in CI), route through the @posthog/ai wrapper
+  // so the daily updater's web-search run is captured as an $ai_generation
+  // event (model, tokens, cost). The wrapper constructor takes no maxRetries —
+  // it's passed per-request on messages.create below instead.
+  const client = phClient
+    ? new PostHogAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY, posthog: phClient })
+    : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 5 });
 
   const current = loadCurrentData();
   if (!current) throw new Error('No existing matches.json found');
@@ -211,7 +216,7 @@ Rules:
   // "upcoming results" while keeping the token footprint small.
   let response;
   try {
-    response = await client.messages.create({
+    const createBody = {
       model: 'claude-sonnet-4-6',
       max_tokens: 3072,
       tools: [
@@ -222,7 +227,15 @@ Rules:
         }
       ],
       messages: [{ role: 'user', content: prompt }]
-    });
+    };
+    // PostHog metadata only when wrapped (plain SDK would forward these to the API).
+    if (phClient) {
+      createBody.posthogDistinctId = 'match-data-updater';
+      createBody.posthogProperties = { feature: 'match_data_updater', model: 'claude-sonnet-4-6' };
+    }
+    // maxRetries per-request so it applies on the wrapper too (its constructor
+    // takes none); honors the API's retry-after on transient 429/5xx.
+    response = await client.messages.create(createBody, { maxRetries: 5 });
   } catch (err) {
     // A persistent rate limit (after the SDK's own retries) is not a failure
     // worth going red over on a 30-min cron — skip this run and let the next
@@ -277,7 +290,15 @@ if (require.main === module) {
     console.error('Set ANTHROPIC_API_KEY before running this script.');
     process.exit(1);
   }
-  updateData().catch(err => { console.error(err); process.exit(1); });
+  // Opt-in AI observability: with POSTHOG_KEY set (as a GitHub Actions secret),
+  // the updater's Claude call is captured in PostHog. Without it, runs exactly
+  // as before. A short-lived CLI must flush before exit or queued events drop.
+  const phClient = process.env.POSTHOG_KEY
+    ? new PostHog(process.env.POSTHOG_KEY, { host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com' })
+    : null;
+  updateData({ phClient })
+    .catch(err => { console.error(err); process.exitCode = 1; })
+    .finally(async () => { if (phClient) await phClient.shutdown(); });
 }
 
 module.exports = { updateData, mergeUpdate };

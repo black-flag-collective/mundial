@@ -137,7 +137,7 @@ const utcDay = () => new Date().toISOString().slice(0, 10);
  * predict({ context, signature, ip }) → { prediction, cached } or throws an
  * error with `.status` (429 too soon, 503 capped/unconfigured).
  */
-function createOracle({ client, log = console } = {}) {
+function createOracle({ client, log = console, aiObservability = false } = {}) {
   const MODEL = process.env.X_PREDICT_MODEL || DEFAULT_MODEL;
   const MAX_TOKENS = Number(process.env.X_PREDICT_MAX_TOKENS) || 320;
   const CACHE_MS = Number(process.env.X_PREDICT_CACHE_MS) || 300_000;
@@ -149,7 +149,7 @@ function createOracle({ client, log = console } = {}) {
   let cache = null; // { at, sig, value }
   const lastByIp = new Map();
 
-  async function predict({ context, signature, ip = 'anon', validCodes, now = Date.now() } = {}) {
+  async function predict({ context, signature, ip = 'anon', distinctId, validCodes, now = Date.now() } = {}) {
     if (!client) { const e = new Error('Oracle unavailable (no API key)'); e.status = 503; throw e; }
     if (utcDay() !== day) { day = utcDay(); stats.callsToday = 0; stats.capped = false; }
 
@@ -175,12 +175,21 @@ function createOracle({ client, log = console } = {}) {
     }
 
     lastByIp.set(ip, now);
-    const resp = await client.messages.create({
+    const body = {
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: context || '' }],
-    });
+    };
+    // Attach PostHog AI-observability metadata ONLY when `client` is the
+    // @posthog/ai wrapper — the plain Anthropic SDK would forward these unknown
+    // fields straight to the API. Ties the $ai_generation to the same distinct
+    // ID as the oracle_* product events for this request.
+    if (aiObservability) {
+      body.posthogDistinctId = distinctId || ip;
+      body.posthogProperties = { feature: 'buzz_oracle', model: MODEL };
+    }
+    const resp = await client.messages.create(body);
     stats.callsToday++;
     stats.lastCallMs = now;
     const text = (resp && Array.isArray(resp.content)) ? resp.content.map((b) => b.text || '').join('') : '';

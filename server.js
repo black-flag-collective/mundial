@@ -176,7 +176,7 @@ app.get('/api/predict', async (req, res) => {
     const liveCodes = realActive ? cs.activeTeams : [];
     const context = buildContext({ matches, buzz: buzzSnap, trends: trendsPoller.snapshot(), liveCodes, realActive });
     const signature = signatureOf(buzzSnap);
-    const out = await oracle.predict({ context, signature, ip: clientIp(req), validCodes: fieldCodes(matches) });
+    const out = await oracle.predict({ context, signature, ip: clientIp(req), distinctId: req.headers['x-posthog-distinct-id'] || clientIp(req), validCodes: fieldCodes(matches) });
     res.json({ available: true, ...out });
     if (posthog) {
       const distinctId = req.headers['x-posthog-distinct-id'] || clientIp(req);
@@ -229,15 +229,28 @@ const trendsPoller = createTrendsPoller({});
 // and the UI hides the button. The client is created lazily to avoid requiring
 // the SDK at boot when there's no key.
 let oracleClient = null;
+let oracleObserved = false;
 if (process.env.ANTHROPIC_API_KEY) {
   try {
-    const Anthropic = require('@anthropic-ai/sdk');
-    oracleClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 2 });
+    if (posthog) {
+      // PostHog AI observability: route Oracle calls through the @posthog/ai
+      // wrapper so each prediction is captured as an $ai_generation event
+      // (model, token counts, cost, latency), tied to the same project and
+      // distinct IDs as the oracle_* events we already capture. (No maxRetries
+      // option on the wrapper — the underlying SDK still defaults to 2.)
+      const { Anthropic } = require('@posthog/ai');
+      oracleClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, posthog });
+      oracleObserved = true;
+    } else {
+      // No POSTHOG_KEY → plain SDK, no AI analytics (same opt-out as the rest).
+      const Anthropic = require('@anthropic-ai/sdk');
+      oracleClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 2 });
+    }
   } catch (err) {
     console.error('[oracle] SDK unavailable:', err.message);
   }
 }
-const oracle = createOracle({ client: oracleClient });
+const oracle = createOracle({ client: oracleClient, aiObservability: oracleObserved });
 
 // Aborting this on shutdown drops the X connection promptly so the single
 // allowed stream slot is released before a redeploy's new machine connects

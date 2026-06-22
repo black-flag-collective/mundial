@@ -1,4 +1,4 @@
-import type { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/react-vite';
 import '../src/styles/styles.css';
 
 // Mundial is designed on a dark field; default the canvas to the brand bg.
@@ -6,13 +6,18 @@ const preview: Preview = {
   parameters: {
     layout: 'centered',
     backgrounds: {
-      default: 'mundial',
-      values: [
-        { name: 'mundial', value: '#04101c' },
-        { name: 'light', value: '#ffffff' }
-      ]
+      options: {
+        mundial: { name: 'mundial', value: '#04101c' },
+        light: { name: 'light', value: '#ffffff' }
+      }
     },
     controls: { expanded: true }
+  },
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'mundial'
+    }
   }
 };
 

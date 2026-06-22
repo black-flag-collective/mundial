@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MatchCard } from './MatchCard';
 
 const meta: Meta<typeof MatchCard> = {

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Globe, type GlobeNation } from './Globe';
 import { TEAMS } from '../../data/teams';

@@ -1,29 +1,26 @@
 /**
- * Buzz engine — produces a live "social buzz" intensity per country for the
+ * Buzz engine — tracks a live "social buzz" intensity per country for the
  * globe's beacon layer.
  *
- * This is the SIMULATED source. It needs no external account and runs for free.
- * Buzz is synthesized from:
- *   - a rough per-country popularity weight (fan-base / social volume),
- *   - who is playing today / live (read from data/matches.json),
- *   - smooth procedural noise + live-match flares so the globe always feels alive,
- *   - goal events, when the running process observes a score change on disk.
+ * Buzz is driven ONLY by real, measured signal — there is no simulated/ambient
+ * fallback. With no live feed every score stays 0 and the globe is a static
+ * map; buzz lights up only when real data is fed in via:
+ *   - setSignals() / ingest() — rolling X (Twitter) post volume per country,
+ *     from the cost-bounded counts poller or the filtered stream
+ *     (see scripts/buzz-counts.js, scripts/x-stream*.js, server.js),
+ *   - fireGoal() — a goal event, when the running process observes a score
+ *     change on disk (data/matches.json).
  *
  * Note on goal spikes: fireGoal() only triggers when the *same* engine instance
  * sees matches.json change between reads. That happens in local dev or with an
  * in-process updater, but NOT in the current production model, where the data
  * is refreshed by a GitHub Action that commits matches.json and redeploys — each
- * deploy starts a fresh process with a reset baseline, so cross-restart deltas
- * are never observed. Live-match classification + procedural flares still drive
- * spikes around in-progress games; precise per-goal spikes need a persistent
- * baseline or a delta feed from the updater (not built here).
+ * deploy starts a fresh process, so cross-restart deltas are never observed.
+ * Precise per-goal spikes need a persistent baseline or a delta feed from the
+ * updater (not built here).
  *
- * It is intentionally source-agnostic: to wire in the real X API later, feed a
- * real per-country signal into the model — e.g. keep rolling tweet counts per
- * country and map them onto this.state[code].score / .spike inside tick() —
- * sourced from the X filtered stream (Pro) or recent-search polling (the
- * pay-per-use default). Everything downstream — the snapshot shape and the
- * globe layer — stays the same.
+ * The snapshot shape and the globe layer are unchanged whether the signal is
+ * present or absent — downstream only ever sees real intensities (or zeros).
  *
  * Privacy: only aggregate intensity per country is ever kept. No tweet text,
  * authors, or ids are stored.
@@ -35,13 +32,13 @@ const path = require('path');
 
 const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
 
-// Ambient "attention" weights (0..1) that drive the modeled glow so bigger
-// footballing nations hum louder than minnows. These are NOT hand-set: they're
-// derived from a citable source — the FIFA/Coca-Cola Men's World Ranking
-// (data/fifa-ranking.json) — used as a transparent proxy for baseline attention.
-// Real X post volume overrides this for nations in a live match. The weight is a
-// smooth descent from 1.0 (rank 1) into a uniform baseline for nations outside
-// the published top 20. See docs/METHODOLOGY.md.
+// Per-country "attention" weights (0..1), derived from a citable source — the
+// FIFA/Coca-Cola Men's World Ranking (data/fifa-ranking.json). The engine no
+// longer uses these to fabricate glow (buzz is real-signal-only); they are kept
+// as the canonical nation list (keys) and as a transparent normalization prior
+// referenced by the counts poller and the Oracle. A smooth descent from 1.0
+// (rank 1) into a uniform baseline for nations outside the top 20.
+// See docs/METHODOLOGY.md.
 const { CODE_NAME } = require('./x-build-rules');
 let RANKING = { ranks: {}, asOf: null, source: null };
 try { RANKING = require('../data/fifa-ranking.json'); } catch { /* no file → all baseline */ }
@@ -59,12 +56,7 @@ function buildPop(ranking = RANKING) {
 }
 
 const POP = buildPop();
-const DEFAULT_POP = POP_BASELINE;
-
 const CODES = Object.keys(POP);
-
-// Activity multipliers applied on top of popularity, by match state today.
-const MULT = { LIVE: 1.75, UP: 1.0, FT: 0.85, IDLE: 0.5 };
 
 function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
@@ -72,13 +64,11 @@ class BuzzEngine {
   constructor() {
     this.now = Date.now();
     this.state = {};
-    CODES.forEach((code, i) => {
-      this.state[code] = {
-        score: clamp01((POP[code] ?? DEFAULT_POP) * MULT.IDLE),
-        spike: 0,
-        phase: (i * 2.39996) % (Math.PI * 2), // golden-angle spread
-        drift: 0
-      };
+    CODES.forEach((code) => {
+      // Nations start dark. Buzz is driven ONLY by real external signal
+      // (ingest/surge/setSignals from the live X feed); with no feed every
+      // score stays 0 and the globe is a static map.
+      this.state[code] = { score: 0, spike: 0 };
     });
     this._lastScores = {};   // "dayIdx:matchIdx" -> { as, bs }
     this._dataMtime = 0;
@@ -96,7 +86,7 @@ class BuzzEngine {
       this.tick().catch(err => console.error('[buzz] tick failed:', err.message));
     }, this._tickMs);
     if (this._timer.unref) this._timer.unref();
-    console.log('[buzz] engine started (simulated / goal-derived source)');
+    console.log('[buzz] engine started (real-signal-only; idle until a live X feed or goal event)');
   }
 
   stop() { if (this._timer) { clearInterval(this._timer); this._timer = null; } }
@@ -205,40 +195,22 @@ class BuzzEngine {
       const now = Date.now();
       const dtMs = Math.min(now - this.now, 5000);
       this.now = now;
-      const t = now * 0.001;
 
       for (const code of CODES) {
         const s = this.state[code];
-        const stClass = this._classified[code] || 'IDLE';
-        const base = POP[code] ?? DEFAULT_POP;
 
-        // Smooth procedural chatter: slow sine + a gentle random walk.
-        s.drift += (Math.random() - 0.5) * 0.06;
-        s.drift = Math.max(-0.25, Math.min(0.25, s.drift * 0.92));
-        const noise = 0.55 + 0.3 * Math.sin(t * 0.27 + s.phase) + s.drift;
-
-        // Real external buzz (X counts) raises the floor: a nation with strong
-        // live volume glows at least that bright, while the procedural model
-        // still drives ambient motion and the no-signal default is unchanged.
+        // Buzz is driven ONLY by real external signal (X counts via
+        // setSignals/ingest; goal spikes via fireGoal/surge). With no live
+        // feed, ext is 0 and every score eases to 0 — no fabricated glow.
         const ext = this.signal[code] || 0;
-        const target = clamp01(Math.max(base * MULT[stClass] * noise, ext));
+        const target = clamp01(ext);
 
         // Ease the steady glow toward target (~3s time constant).
         const k = 1 - Math.exp(-dtMs / 3000);
         s.score += (target - s.score) * k;
 
-        // Live teams occasionally flare (near-miss, big chance, card).
-        if (stClass === 'LIVE' && Math.random() < 0.05) {
-          s.spike = clamp01(s.spike + 0.35 + Math.random() * 0.3);
-        } else if (Math.random() < 0.006 * (base + 0.35)) {
-          // Ambient viral moments: even outside live matches, a clip or headline
-          // about a popular nation occasionally pops. Scaled by popularity so the
-          // bigger fanbases surge more often. Keeps the surge cue alive in the
-          // simulated source (real X-counts spikes come through ingest()/setSignals).
-          s.spike = clamp01(s.spike + 0.3 + Math.random() * 0.3);
-        }
-
-        // Spikes decay over ~12s.
+        // Spikes decay over ~12s. They are only ever raised by real events
+        // (fireGoal/surge/ingest), never fabricated here.
         s.spike *= Math.pow(0.92, dtMs / this._tickMs);
         if (s.spike < 0.01) s.spike = 0;
       }
@@ -262,7 +234,9 @@ class BuzzEngine {
     return {
       updatedAt: new Date(this.now).toISOString(),
       window: 'live',
-      source: 'simulated',
+      // 'idle' when no real feed is driving buzz. The server overrides this to
+      // 'counts' when the live X poller is active and a match is in play.
+      source: 'idle',
       buzz
     };
   }

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BracketColumn } from './BracketColumn';
 import { BracketMatch } from '../BracketMatch/BracketMatch';
 

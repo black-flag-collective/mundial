@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-22T20:00:48.810Z",
+  "updatedAt": "2026-06-23T00:23:09.723Z",
   "days": [
     {
       "dow": "Thursday",
@@ -515,22 +515,20 @@
         "g": "I",
         "a": "FRA",
         "b": "IRQ",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
         "ko": "2026-06-22T21:00:00Z",
-        "time": "12:00 PM ET",
         "venue": "Lincoln Financial Field, Philadelphia"
       },
       {
         "g": "I",
         "a": "NOR",
         "b": "SEN",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 2,
+        "bs": 0,
+        "st": "FT",
         "ko": "2026-06-23T00:00:00Z",
-        "time": "3:00 PM ET",
         "venue": "MetLife Stadium, East Rutherford"
       },
       {
@@ -547,11 +545,10 @@
         "g": "J",
         "a": "JOR",
         "b": "ALG",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 0,
+        "bs": 0,
+        "st": "FT",
         "ko": "2026-06-23T03:00:00Z",
-        "time": "6:00 PM ET",
         "venue": "Levi's Stadium, Santa Clara"
       }
     ],

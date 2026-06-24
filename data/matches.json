@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T21:56:58.999Z",
+  "updatedAt": "2026-06-24T23:22:30.817Z",
   "days": [
     {
       "dow": "Thursday",
@@ -641,22 +641,20 @@
         "g": "C",
         "a": "SCO",
         "b": "BRA",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 0,
+        "bs": 3,
+        "st": "FT",
         "ko": "2026-06-24T22:00:00Z",
-        "time": "3:00 PM ET",
         "venue": "Hard Rock Stadium, Miami Gardens"
       },
       {
         "g": "C",
         "a": "MAR",
         "b": "HAI",
-        "as": null,
-        "bs": null,
-        "st": "UP",
+        "as": 3,
+        "bs": 2,
+        "st": "FT",
         "ko": "2026-06-24T22:00:00Z",
-        "time": "3:00 PM ET",
         "venue": "Mercedes-Benz Stadium, Atlanta"
       }
     ],

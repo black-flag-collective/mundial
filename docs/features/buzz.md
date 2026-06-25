@@ -36,7 +36,7 @@ generating the most chatter right now, ranked by a **buzz score**.
   side is winning the match's chatter). If the nation is trending, it also lists
   **its own trending topics** (the "why" behind its 🔥 badge). For a nation that isn't being polled
   live, it explains *when* its match is (kicks off later / played earlier / not
-  today) and notes its bar is ambient interest.
+  today), and notes that buzz is measured only while a match is live.
 
 ## States
 
@@ -49,9 +49,9 @@ generating the most chatter right now, ranked by a **buzz score**.
 
 ## How it stays live
 
-The board polls the buzz feed every ~4 seconds. The feed can be driven by real
-X (Twitter) activity (per-nation post volume → score and spikes) or by a
-built-in simulated source — the experience is identical either way. Only
+The board polls the buzz feed every ~4 seconds. The feed is driven **only** by
+real X (Twitter) activity (per-nation post volume → score and spikes) while a
+match is live; otherwise the board stays quiet — there is no simulated source. Only
 **aggregate intensity per country** is stored; no post text, authors, or
 account IDs.
 

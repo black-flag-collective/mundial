@@ -69,11 +69,12 @@ instead of pulling them — and only while a match is actually being played:
   on a sharp minute-over-minute jump — the goal-reaction pop — with no extra
   requests. Surfaced as `trend` per nation in `/api/buzz.json`.
 - **Hard daily cap** — a request budget with a circuit breaker that pauses polling
-  (buzz fades back to the free simulation) when hit.
+  (buzz fades to idle/zeros — there is no simulated signal) when hit.
 
 **Counts is the default** when a token is set — you don't turn it on, you'd turn
 it *off* by explicitly choosing the firehose (`X_BUZZ_MODE=stream`). Without a
-token, both paths are inert and the free simulation runs. Tune with:
+token, both paths are inert and buzz stays idle (zeros) — there is no simulated
+signal. Tune with:
 
 | Env | Default | Meaning |
 | :-- | :-- | :-- |
@@ -453,8 +454,8 @@ things per matched Post — both implemented in `server.js`:
    `postWeight()` — bounded to `[1, 8]` so a viral Post buzzes louder than a lone
    reply, but one mega-viral Post can't instantly max the spike. The engine's
    existing `tick()` decay means sustained X volume keeps a nation lit and a
-   burst (goal, controversy) flares it — turning the simulated beacon layer into
-   a real one.
+   burst (goal, controversy) flares it — lighting the beacon layer entirely from
+   real signal (it is dark until then).
 2. **Relays to browsers over SSE** at `GET /api/buzz/stream`, with a small
    ring buffer so a newly-connected client immediately gets recent Posts.
 
@@ -470,8 +471,8 @@ es.onmessage = (e) => {
 
 **Operational notes (already handled in code):**
 
-- **Token-gated.** No `X_BEARER_TOKEN` → the stream is inert and the simulated
-  buzz runs unchanged. Setting the token activates it on next boot.
+- **Token-gated.** No `X_BEARER_TOKEN` → the stream is inert and buzz stays idle
+  (zeros) — there is no simulated signal. Setting the token activates it on next boot.
 - **Single-connection limit.** Filtered Stream allows one concurrent connection.
   If you run multiple Fly machines, set `X_STREAM_DISABLED=1` on all but the
   primary so a second connection doesn't `429` and disconnect the first.

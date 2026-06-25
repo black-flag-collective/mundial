@@ -196,7 +196,7 @@ class BuzzEngine {
    * fixtures instead of going fully dark. It's a separate channel from
    * setSignals() so the two pollers never overwrite each other; tick() takes the
    * max of the two, so a live counts signal always dominates its own ambient
-   * floor. Fed by the trends poller (scripts/x-trends.js → GET /2/trends/by_woeid).
+   * floor. Fed by the trends poller (scripts/x-trends.js → GET /2/trends/by/woeid).
    */
   setAmbient(map) {
     const next = {};

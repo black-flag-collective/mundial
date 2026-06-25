@@ -148,7 +148,7 @@ set `X_BUZZ_MODE=stream` (and `X_STREAM_DISABLED` isn't `1`).
 
 ## Trends: what's trending per location
 
-Alongside the per-team *volume* signal, the **`GET /2/trends/by_woeid/{woeid}`**
+Alongside the per-team *volume* signal, the **`GET /2/trends/by/woeid/{woeid}`**
 endpoint gives the actual **trending topics** (name + post count) for a place —
 the "what the world is watching" layer. It's billed **per location**, so polling
 worldwide + the three host nations is a handful of requests per cycle, wholly

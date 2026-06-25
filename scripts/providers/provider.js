@@ -19,33 +19,66 @@
  * this contract (Dependency Inversion).
  */
 
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-/**
- * Format an ISO timestamp to the app's day label, e.g. "Jun 19". Formatted in
- * UTC to match how the seed data already groups matches by `ko` (a UTC ISO
- * string) — using local time could shift a late-night kickoff to the wrong day.
- */
-function toDayShort(iso) {
+// Matchdays are grouped in US-Eastern, the natural "tournament day" for a
+// CONCACAF-hosted World Cup: a 9pm-ET kickoff (≈ 01:00–02:00Z the next calendar
+// day in UTC) belongs to that evening's matchday, not the following one. Using
+// UTC would split a single night's slate across two day labels.
+const TZ = 'America/New_York';
+function partsET(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return `${SHORT_MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'long', month: 'short', day: 'numeric' });
+  const p = {};
+  for (const part of fmt.formatToParts(d)) p[part.type] = part.value;
+  return p; // { weekday: 'Friday', month: 'Jun', day: '19' }
 }
 
-/** Long form, e.g. "June 19" (UTC). */
+/** Day label, e.g. "Jun 19" (US-Eastern). */
+function toDayShort(iso) {
+  const p = partsET(iso);
+  return p ? `${p.month} ${p.day}` : null;
+}
+
+/** Long form, e.g. "June 19" (US-Eastern). */
 function toDayLong(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return `${LONG_MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  const month = new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'long' }).format(d);
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: TZ, day: 'numeric' }).format(d);
+  return `${month} ${day}`;
 }
 
-/** Day of week, e.g. "Friday" (UTC). */
+/** Day of week, e.g. "Friday" (US-Eastern). */
 function toDow(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return DOW[d.getUTCDay()];
+  const p = partsET(iso);
+  return p ? p.weekday : null;
+}
+
+/**
+ * Data-integrity invariant: a match cannot have a result before it kicks off.
+ * Demote any FT/LIVE entry whose `ko` is still in the future back to UP and drop
+ * its score. This self-heals fabricated/early results — which mergeUpdate's
+ * FT-immutability would otherwise freeze permanently — so a structured provider
+ * can fill the REAL result once the match is actually played. Mutates `data` in
+ * place; returns the number of matches reset. Matches without a `ko` are left
+ * untouched (their timing can't be verified).
+ */
+function demotePrematureResults(data, now = Date.now()) {
+  let reset = 0;
+  for (const day of (data && data.dayMatches) || []) {
+    for (const m of day || []) {
+      if ((m.st === 'FT' || m.st === 'LIVE') && m.ko) {
+        const ko = Date.parse(m.ko);
+        if (!Number.isNaN(ko) && ko > now) {
+          m.st = 'UP';
+          delete m.as;
+          delete m.bs;
+          reset++;
+        }
+      }
+    }
+  }
+  return reset;
 }
 
 /** Normalize a sports-API status string to the app's st: FT | LIVE | UP. */
@@ -113,4 +146,4 @@ const ROUND_LABELS = {
 };
 function roundLabel(round) { return ROUND_LABELS[round] || round || ''; }
 
-module.exports = { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage, roundLabel, ROUND_LABELS };
+module.exports = { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage, roundLabel, ROUND_LABELS, demotePrematureResults };

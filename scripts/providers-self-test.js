@@ -12,7 +12,7 @@
 const assert = require('node:assert');
 
 const { TEAM_CODES, CODE_SET, toFifa } = require('./providers/team-codes');
-const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage } = require('./providers/provider');
+const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage, demotePrematureResults } = require('./providers/provider');
 const { createSportsApiProvider, mapFixtures } = require('./providers/sports-api');
 const { createClaudeProvider } = require('./providers/claude-search');
 const { runProviders, hasContent } = require('./providers/runner');
@@ -26,13 +26,34 @@ const SILENT = { log() {}, warn() {}, error() {} };
 
 // ---- pure helpers -----------------------------------------------------------
 
-check('provider: toDayShort/Long/Dow format a UTC ISO date', () => {
-  assert.strictEqual(toDayShort('2026-06-19T18:00:00Z'), 'Jun 19');
+check('provider: toDayShort/Long/Dow group by US-Eastern matchday', () => {
+  assert.strictEqual(toDayShort('2026-06-19T18:00:00Z'), 'Jun 19'); // 2pm ET
   assert.strictEqual(toDayLong('2026-06-19T18:00:00Z'), 'June 19');
   assert.strictEqual(toDow('2026-06-19T18:00:00Z'), 'Friday');
-  // Late-night UTC kickoff stays on its UTC day (no local-tz drift).
-  assert.strictEqual(toDayShort('2026-06-19T23:30:00Z'), 'Jun 19');
+  // A kickoff after midnight UTC belongs to the prior Eastern matchday:
+  // 02:00Z Jun 26 = 10pm ET Jun 25 (Thursday) — not Jun 26.
+  assert.strictEqual(toDayShort('2026-06-26T02:00:00Z'), 'Jun 25');
+  assert.strictEqual(toDow('2026-06-26T02:00:00Z'), 'Thursday');
   assert.strictEqual(toDayShort('not-a-date'), null);
+});
+
+check('provider: demotePrematureResults — no result before kickoff', () => {
+  const now = Date.parse('2026-06-25T18:00:00Z');
+  const data = { dayMatches: [[
+    { g: 'A', a: 'BRA', b: 'ENG', as: 2, bs: 1, st: 'FT', ko: '2026-06-25T15:00:00Z' }, // past → keep
+    { g: 'B', a: 'ECU', b: 'GER', as: 0, bs: 2, st: 'FT', ko: '2026-06-25T20:00:00Z' }, // future FT → reset
+    { g: 'C', a: 'JPN', b: 'SWE', as: 1, bs: 1, st: 'LIVE', ko: '2026-06-26T02:00:00Z' }, // future LIVE → reset
+    { g: 'D', a: 'USA', b: 'TUR', st: 'UP', ko: '2026-06-27T00:00:00Z' }, // already UP → untouched
+    { round: 'F', a: 'ARG', b: 'FRA', as: 3, bs: 2, st: 'FT' }, // no ko → can't verify → keep
+  ]] };
+  const reset = demotePrematureResults(data, now);
+  assert.strictEqual(reset, 2, 'only the two future FT/LIVE entries reset');
+  const [past, fut1, fut2, up, noko] = data.dayMatches[0];
+  assert.strictEqual(past.st, 'FT'); assert.strictEqual(past.as, 2);
+  assert.strictEqual(fut1.st, 'UP'); assert.ok(!('as' in fut1) && !('bs' in fut1), 'future score dropped');
+  assert.strictEqual(fut2.st, 'UP'); assert.ok(!('as' in fut2));
+  assert.strictEqual(up.st, 'UP');
+  assert.strictEqual(noko.st, 'FT', 'no ko → left as-is');
 });
 
 check('provider: mapStatus normalizes API statuses to FT/LIVE/UP', () => {

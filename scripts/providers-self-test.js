@@ -108,6 +108,34 @@ check('sports-api: mapFixtures produces normalized shape and codes ⊆ TEAM_CODE
   assert.strictEqual(updated_matches[0].st, 'FT');
 });
 
+check('sports-api: a FINISHED/IN_PLAY fixture with missing scores never becomes a fake 0–0', () => {
+  // football-data.org can report a FINISHED match with null fullTime scores.
+  // It must NOT be written as FT 0–0 (mergeUpdate would then freeze it forever);
+  // it stays UP until a real score arrives.
+  const scoreless = [
+    { utcDate: '2026-06-21T19:00:00Z', status: 'FINISHED', group: 'GROUP_A',
+      homeTeam: { tla: 'GER', name: 'Germany' }, awayTeam: { tla: 'JPN', name: 'Japan' },
+      score: { fullTime: { home: null, away: null } } },
+    { utcDate: '2026-06-21T19:00:00Z', status: 'IN_PLAY', group: 'GROUP_C',
+      homeTeam: { tla: 'FRA', name: 'France' }, awayTeam: { tla: 'SEN', name: 'Senegal' },
+      score: {} },
+  ];
+  const { new_days, updated_matches } = mapFixtures(scoreless, SILENT);
+  const all = new_days.flatMap(d => d.matches);
+  assert.strictEqual(updated_matches.length, 0, 'no fabricated scores promoted');
+  for (const m of all) {
+    assert.strictEqual(m.st, 'UP', 'scoreless match kept UP');
+    assert.ok(!('as' in m) && !('bs' in m), 'no fake 0–0 written');
+  }
+});
+
+check('team-codes: RKS (Kosovo) is NOT mapped to KSA (never guess)', () => {
+  // Saudi Arabia resolves directly via its FIFA code; Kosovo must not be
+  // silently misclassified as Saudi Arabia.
+  assert.strictEqual(toFifa('KSA'), 'KSA');
+  assert.strictEqual(toFifa('RKS'), null, 'unknown/ambiguous token drops, never guesses');
+});
+
 check('sports-api: provider isAvailable gates on token + fetch', () => {
   assert.strictEqual(createSportsApiProvider({ token: '', fetch: () => {} }).isAvailable(), false);
   assert.strictEqual(createSportsApiProvider({ token: 'k', fetch: null }).isAvailable(), false);

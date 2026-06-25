@@ -51,12 +51,21 @@ function mapFixtures(fixtures, log = console) {
     const st = mapStatus(fx.status);
     const g = normalizeGroup(fx.group || fx.stage) || undefined;
     const ft = (fx.score && fx.score.fullTime) || {};
+    const hasScore = Number.isInteger(ft.home) && Number.isInteger(ft.away);
 
-    const match = { g, a, b, st, ko };
-    if (st === 'FT' || st === 'LIVE') {
-      match.as = Number.isInteger(ft.home) ? ft.home : 0;
-      match.bs = Number.isInteger(ft.away) ? ft.away : 0;
-      updated.push({ day_short: short, a, b, as: match.as, bs: match.bs, st });
+    // Only carry a score when the API actually gives us BOTH goal counts.
+    // football-data.org sometimes reports a FINISHED/IN_PLAY fixture with null
+    // fullTime scores; defaulting those to 0 would write a fake 0–0 — and because
+    // mergeUpdate() treats FT as immutable, that wrong score could never be
+    // corrected later. So a scoreless FT/LIVE is kept UP until a real score lands.
+    const match = { g, a, b, ko };
+    if ((st === 'FT' || st === 'LIVE') && hasScore) {
+      match.st = st;
+      match.as = ft.home;
+      match.bs = ft.away;
+      updated.push({ day_short: short, a, b, as: ft.home, bs: ft.away, st });
+    } else {
+      match.st = 'UP';
     }
 
     if (!dayMap.has(short)) {

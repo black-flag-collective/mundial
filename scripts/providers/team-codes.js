@@ -52,9 +52,12 @@ const ALIASES = {
   TURKEY: 'TUR',
   TURKIYE: 'TUR',
   'TÜRKIYE': 'TUR',
-  // Abbreviation overrides (where a provider's tla isn't our FIFA code)
-  ZAF: 'RSA',
-  RKS: 'KSA', // guard against a stray Saudi abbreviation
+  // Abbreviation overrides (where a provider's tla isn't our FIFA code).
+  // Saudi Arabia (KSA) already equals our FIFA code, so it resolves directly —
+  // no alias needed. Do NOT alias RKS here: RKS is Kosovo's code, and mapping it
+  // to KSA would silently mislabel Kosovo as Saudi Arabia. An unrecognized token
+  // returns null → the fixture is dropped, which is the correct "never guess".
+  ZAF: 'RSA', // ISO-3166 alpha-3 for South Africa (our FIFA code is RSA)
 };
 
 /**

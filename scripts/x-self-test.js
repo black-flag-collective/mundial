@@ -522,6 +522,27 @@ check('counts: a cycle error during a live match retries on the live tier, not i
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
+check('counts: a transient HTTP error holds last-known counts (team + pulse), not 0', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let healthy = true;
+  global.fetch = async () => (healthy
+    ? { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 300 }, data: [{ tweet_count: 150 }, { tweet_count: 150 }] }) }
+    : { ok: false, status: 503, headers: { get: () => null }, json: async () => ({}) });
+  const sigs = [];
+  const engine = { state: { BRA: {} }, setSignals(m) { sigs.push(m); }, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();                       // healthy: BRA lit, pulse total 300
+  assert.ok(sigs[sigs.length - 1].BRA > 0, 'team lit while healthy');
+  assert.strictEqual(poller.stats().tournamentTotal, 300, 'pulse total recorded');
+  const reqBefore = poller.stats().requestsToday;
+  healthy = false;
+  await poller.cycle();                        // 503 on both team and pulse
+  const st = poller.stats();
+  assert.ok(sigs[sigs.length - 1].BRA > 0, 'team holds its last signal on a transient error (not zeroed)');
+  assert.strictEqual(st.tournamentTotal, 300, 'pulse holds last heartbeat on a transient error (not 0)');
+  assert.ok(st.requestsToday > reqBefore, 'failed requests still count toward the daily cap');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
 check('counts: an idle cycle clears the stale tournament heartbeat', async () => {
   process.env.X_BEARER_TOKEN = 'test';
   global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 200 }, data: [{ tweet_count: 100 }, { tweet_count: 100 }] }) });

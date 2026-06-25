@@ -319,7 +319,9 @@ function createCountsPoller({ engine, log = console, context } = {}) {
         const resetMs = reset ? Number(reset) * 1000 : (retry ? Date.now() + Number(retry) * 1000 : Date.now() + 60_000);
         return { total: 0, series: [], rateLimited: true, resetMs };
       }
-      return { total: 0, series: [] };
+      // Other non-OK (5xx, etc.): flag it so callers can hold their last-known
+      // value instead of mistaking a failed request for real zero volume.
+      return { total: 0, series: [], httpError: true };
     }
     const body = await r.json().catch(() => ({}));
     const total = (body && body.meta && body.meta.total_tweet_count) || 0;
@@ -381,12 +383,20 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     let fetched = 0;
     for (const code of fetchCodes) {
-      const { total, series, rateLimited, resetMs } = await countFor(code);
+      const { total, series, rateLimited, resetMs, httpError } = await countFor(code);
       if (rateLimited) {
         // X rate-limited us — back off until its reset window, don't keep trying.
         pausedUntil = resetMs || (Date.now() + 60_000);
         stats.lastEvent = `rate-limited by X — pausing counts until ${new Date(pausedUntil).toLocaleTimeString()}`;
         break;
+      }
+      if (httpError) {
+        // Transient HTTP error: it was a real request (counts toward the cap and
+        // the slow-tier clock), but don't overwrite this nation's last-known count
+        // with a spurious 0 — hold the prior signal until a clean poll lands.
+        stats.requestsToday++;
+        lastFetchAt[code] = Date.now();
+        continue;
       }
       const s = computeTrend(series);
       lastCount[code] = total;
@@ -427,10 +437,16 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     const anyLive = liveCodes.length > 0;
     const pulseDue = PULSE_ENABLED && Date.now() >= pausedUntil && anyLive && (now - lastPulseAt >= SLOW_INTERVAL);
     if (pulseDue && stats.requestsToday + 1 <= DAILY_CAP) {
-      const { total, series, rateLimited, resetMs } = await countForQuery(PULSE_QUERY);
+      const { total, series, rateLimited, resetMs, httpError } = await countForQuery(PULSE_QUERY);
       if (rateLimited) {
         pausedUntil = resetMs || (Date.now() + 60_000);
         stats.lastEvent = `rate-limited by X — pausing counts until ${new Date(pausedUntil).toLocaleTimeString()}`;
+      } else if (httpError) {
+        // Transient HTTP error: count the request (and reset the pulse clock) but
+        // don't treat a failed request as 0 volume — holding the last heartbeat
+        // keeps dayScale stable instead of dimming the whole board on a blip.
+        stats.requestsToday++;
+        lastPulseAt = Date.now();
       } else {
         const ts = computeTrend(series);
         stats.requestsToday++;

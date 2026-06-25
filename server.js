@@ -155,10 +155,16 @@ app.get('/api/buzz.json', (req, res) => {
         if (perTeam[b.code]) b.trend = perTeam[b.code].trend;
       }
     } else if (snap.source === 'idle') {
-      // Stream mode (no counts poller): the ambient trends floor can still light
-      // the globe between matches, so report that honestly rather than 'idle'.
-      const ts = trendsPoller.stats();
-      if (ts && ts.ambientCount > 0) snap.source = 'trends';
+      // Stream mode (no counts poller): the firehose drives buzz (onXPost →
+      // ingest) whenever it's connected, so report 'stream' then; otherwise the
+      // ambient trends floor may light the globe between matches. Report honestly
+      // rather than always 'idle'.
+      if (xStats.streamConnected) {
+        snap.source = 'stream';
+      } else {
+        const ts = trendsPoller.stats();
+        if (ts && ts.ambientCount > 0) snap.source = 'trends';
+      }
     }
     res.json(snap);
   } catch (err) {

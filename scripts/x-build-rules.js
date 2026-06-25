@@ -45,9 +45,9 @@ const ALIASES = {
   KOR: ['Korea', 'Taegeuk Warriors'], NED: ['Holland', 'Oranje'],
   USA: ['United States of America', 'USMNT'], RSA: ['Bafana Bafana'],
   // Nicknames (one well-known form per nation)
-  ARG: ['Albiceleste'], FRA: ['Les Bleus'], ESP: ['La Roja'], ENG: ['Three Lions'],
-  JPN: ['Samurai Blue'], AUS: ['Socceroos'], MAR: ['Atlas Lions'], GHA: ['Black Stars'],
-  EGY: ['Pharaohs'], MEX: ['El Tri'], GER: ['Die Mannschaft'], SCO: ['Tartan Army'],
+  ARG: ['Albiceleste'], FRA: ['Les Bleus'], ESP: ['La Roja', 'España'], ENG: ['Three Lions'],
+  JPN: ['Samurai Blue'], AUS: ['Socceroos'], MAR: ['Atlas Lions', 'Maroc'], GHA: ['Black Stars'],
+  EGY: ['Pharaohs'], MEX: ['El Tri', 'México'], GER: ['Die Mannschaft', 'Deutschland'], SCO: ['Tartan Army'],
   IRN: ['Team Melli'], NZL: ['All Whites'], KSA: ['Green Falcons'], URU: ['La Celeste'],
   SEN: ['Lions of Teranga'], ALG: ['Les Fennecs'], TUN: ['Eagles of Carthage'],
 };

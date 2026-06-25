@@ -130,11 +130,20 @@ app.get('/api/buzz.json', (req, res) => {
     if (countsPoller) {
       const st = countsPoller.stats();
       const live = st.enabled && !st.capped && (st.activeTeams || []).length > 0;
-      snap.source = live ? 'counts' : 'idle';
+      // Honesty about what's driving the globe: 'counts' = real live X volume;
+      // otherwise 'trends' if the ambient (trending-nations) floor is lighting it
+      // up between matches; otherwise 'idle' (dark). The trends poller owns the
+      // ambient channel, so read its live count rather than the counts poller's.
+      const ts = trendsPoller.stats();
+      const ambientLit = !!(ts && ts.ambientCount > 0);
+      snap.source = live ? 'counts' : (ambientLit ? 'trends' : 'idle');
       snap.phase = st.phase || 'idle';
       snap.activeTeams = st.activeTeams || [];
       snap.lastPollMs = st.lastPollMs || null;
       snap.windowMin = st.windowMin || null;
+      // Tournament-wide chatter heartbeat (one slow-tier counts request while live).
+      if (st.tournamentTotal != null) snap.tournamentTotal = st.tournamentTotal;
+      if (st.tournamentTrend != null) snap.tournamentTrend = st.tournamentTrend;
       // Honesty flags: while paused (X rate-limited) or capped (daily budget hit)
       // the numbers are held from the last poll, not fresh — let the UI say so.
       snap.paused = !!st.rateLimited;
@@ -221,8 +230,10 @@ const { createTrendsPoller } = require('./scripts/x-trends');
 const { createOracle, buildContext, signatureOf, fieldCodes } = require('./scripts/predict');
 
 // X Trends (what's trending per location) runs alongside whichever buzz source —
-// it's a separate, per-location read, billed independently and very cheaply.
-const trendsPoller = createTrendsPoller({});
+// it's a separate, per-location read, billed independently and very cheaply. It
+// also feeds a low ambient glow into the buzz engine (nations trending on X light
+// up the globe between matches) — derived from the same poll, so no extra cost.
+const trendsPoller = createTrendsPoller({ engine: buzz });
 
 // Buzz Oracle — on-demand, cost-bounded AI tournament prediction. Only wired up
 // when an API key is present; otherwise the endpoint reports it's unavailable

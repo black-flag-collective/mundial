@@ -9,9 +9,9 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
-const { parseTrends, isWorldCupTrend, createTrendsPoller } = require('./x-trends');
+const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -135,6 +135,7 @@ check('counts: dueForFetch — live every cycle, others on the slow tier', () =>
 });
 check('counts: live polled every cycle; cooldown holds its signal on the slow tier', async () => {
   process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1'; // isolate team-poll cadence from the tournament pulse
   let fetches = 0;
   global.fetch = async () => { fetches++; return { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 50 }, data: [{ tweet_count: 50 }] }) }; };
   const sigs = [];
@@ -148,7 +149,7 @@ check('counts: live polled every cycle; cooldown holds its signal on the slow ti
   assert.strictEqual(fetches - afterFirst, 1, 'second cycle fetches only the live team');
   const last = sigs[sigs.length - 1];
   assert.ok('ARG' in last && last.ARG > 0, 'cooldown team keeps its signal between slow polls');
-  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
 });
 check('counts: a 429 pauses polling until the reset window (no hammering)', async () => {
   process.env.X_BEARER_TOKEN = 'test';
@@ -321,6 +322,103 @@ check('trends: poller respects the daily cap (circuit breaker)', async () => {
   assert.strictEqual(calls, 0, 'no requests when the cycle would exceed the cap');
   assert.strictEqual(poller.stats().capped, true);
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_TRENDS_DAILY_CAP;
+});
+
+// --- Trends → ambient globe glow ---------------------------------------------
+check('trends: codeForTrend attributes a trend to the most specific nation', () => {
+  assert.strictEqual(codeForTrend('#BRA'), 'BRA');
+  assert.strictEqual(codeForTrend('Vamos Brasil!'), 'BRA');
+  assert.strictEqual(codeForTrend('South Korea fighting'), 'KOR'); // longest match wins over "Korea"
+  assert.strictEqual(codeForTrend('just some random topic'), null);
+});
+check('trends: trendsToAmbient yields a capped, normalized per-nation floor', () => {
+  const locations = [{ trends: [
+    { name: '#BRA', postCount: 100000, wc: true },
+    { name: 'Argentina', postCount: 25000, wc: true },
+    { name: 'taylor swift', postCount: 999999, wc: false }, // not WC → ignored
+  ] }];
+  const floor = trendsToAmbient(locations, 0.3);
+  assert.ok(floor.BRA === 0.3, 'busiest WC nation pinned to the cap');
+  assert.ok(floor.ARG > 0 && floor.ARG < 0.3, 'quieter nation gets a lower floor');
+  assert.ok(!('TSWIFT' in floor) && Object.keys(floor).length === 2, 'non-WC trends excluded');
+});
+check('trends: poller feeds the engine ambient channel (zero extra requests)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let got = null;
+  const engine = { state: { BRA: {}, ARG: {} }, setAmbient(m) { got = m; } };
+  global.fetch = async () => ({ ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();
+  assert.ok(got && got.BRA > 0, 'a trending nation lights up the ambient channel');
+  assert.strictEqual(poller.stats().ambientCount, 1);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+// --- Activity-adaptive cadence -----------------------------------------------
+check('counts: liveDelay flexes fast↔calm by activity, knockouts always fast', () => {
+  const fast = 60_000, calm = 150_000;
+  assert.strictEqual(liveDelay(0, false, fast, calm), calm, 'flat match → calm ceiling');
+  assert.strictEqual(liveDelay(1, false, fast, calm), fast, 'rising surge → fast floor');
+  const mid = liveDelay(0.5, false, fast, calm);
+  assert.ok(mid > fast && mid < calm, 'mid activity interpolates');
+  assert.strictEqual(liveDelay(0, true, fast, calm), fast, 'knockout always polls fast');
+});
+check('counts: isKnockout distinguishes group letters from bracket labels', () => {
+  // Groups are single letters A–L; knockout rounds use multi-char labels.
+  assert.strictEqual(isKnockout('A'), false);
+  assert.strictEqual(isKnockout('L'), false);
+  assert.strictEqual(isKnockout('R32'), true);
+  assert.strictEqual(isKnockout('R16'), true);
+  assert.strictEqual(isKnockout('QF'), true);
+  assert.strictEqual(isKnockout('SF'), true);
+  // A single-letter final 'F' is indistinguishable from group F by label alone;
+  // it reads as a group here (a buzzing final still polls fast via the activity
+  // adapter). The bracket data should use a multi-char label like 'FIN' to force it.
+  assert.strictEqual(isKnockout('FIN'), true);
+});
+check('counts: liveContext flags a live knockout match (koLive)', () => {
+  const now = Date.parse('2026-07-10T21:30:00Z');
+  const groups = liveContext({ now, matchMin: 150, matches: { dayMatches: [[
+    { a: 'FRA', b: 'IRQ', g: 'C', ko: '2026-07-10T21:00:00Z' },
+  ]] } });
+  assert.strictEqual(groups.koLive, false, 'group match → not knockout');
+  const ko = liveContext({ now, matchMin: 150, matches: { dayMatches: [[
+    { a: 'FRA', b: 'IRQ', g: 'QF', ko: '2026-07-10T21:00:00Z' },
+  ]] } });
+  assert.strictEqual(ko.koLive, true, 'quarter-final → knockout');
+});
+check('counts: a rising live match raises liveActivity', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({
+    meta: { total_tweet_count: 60 }, data: [{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();
+  assert.ok(poller.stats().liveActivity > 0.3, 'a sharp minute-over-minute jump reads as lively');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
+});
+
+// --- Tournament-wide pulse ---------------------------------------------------
+check('counts: tournament pulse fires once per slow tier while live, off when idle', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const queries = [];
+  global.fetch = async (url) => {
+    queries.push(decodeURIComponent(String(url)));
+    return { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 200 }, data: [{ tweet_count: 100 }, { tweet_count: 100 }] }) };
+  };
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();
+  const pulses = queries.filter((q) => !q.includes('"Brazil"')).length;
+  assert.strictEqual(pulses, 1, 'exactly one tournament-wide pulse on the first live cycle');
+  assert.strictEqual(poller.stats().tournamentTotal, 200, 'pulse total surfaced in stats');
+  // Idle cycle issues no requests at all (pulse included).
+  const before = queries.length;
+  const idle = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: [], phase: 'idle', phases: {} }) });
+  await idle.cycle();
+  assert.strictEqual(queries.length, before, 'no pulse (or any request) when nothing is live');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
 (async () => {

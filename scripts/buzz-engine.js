@@ -8,6 +8,9 @@
  *   - setSignals() / ingest() — rolling X (Twitter) post volume per country,
  *     from the cost-bounded counts poller or the filtered stream
  *     (see scripts/buzz-counts.js, scripts/x-stream*.js, server.js),
+ *   - setAmbient() — a low background glow for nations trending on X but not in
+ *     a live match, from the trends poller (see scripts/x-trends.js); keeps the
+ *     globe breathing between fixtures, always dimmer than a live signal,
  *   - fireGoal() — a goal event, when the running process observes a score
  *     change on disk (data/matches.json).
  *
@@ -77,6 +80,7 @@ class BuzzEngine {
     this._timer = null;
     this._ticking = false;
     this.signal = {};        // code -> external buzz level 0..1 (e.g. X counts); see setSignals()
+    this.ambient = {};       // code -> low background glow 0..1 (e.g. X trends); see setAmbient()
   }
 
   start() {
@@ -185,6 +189,25 @@ class BuzzEngine {
     this.signal = next;
   }
 
+  /**
+   * Replace the per-country AMBIENT signal in one shot (atomic — same shape and
+   * clamp as setSignals). This is a low background glow for nations that are
+   * *trending* on X but not in a live match, so the globe breathes between
+   * fixtures instead of going fully dark. It's a separate channel from
+   * setSignals() so the two pollers never overwrite each other; tick() takes the
+   * max of the two, so a live counts signal always dominates its own ambient
+   * floor. Fed by the trends poller (scripts/x-trends.js → GET /2/trends/by_woeid).
+   */
+  setAmbient(map) {
+    const next = {};
+    if (map) {
+      for (const code of Object.keys(map)) {
+        if (this.state[code]) next[code] = clamp01(map[code]);
+      }
+    }
+    this.ambient = next;
+  }
+
   async tick() {
     // Re-entrancy guard: setInterval can fire again before an awaited tick
     // resolves; skip overlapping runs so _lastScores / goal spikes stay consistent.
@@ -200,9 +223,12 @@ class BuzzEngine {
         const s = this.state[code];
 
         // Buzz is driven ONLY by real external signal (X counts via
-        // setSignals/ingest; goal spikes via fireGoal/surge). With no live
-        // feed, ext is 0 and every score eases to 0 — no fabricated glow.
-        const ext = this.signal[code] || 0;
+        // setSignals/ingest; goal spikes via fireGoal/surge; X trends via
+        // setAmbient). With no live feed and no trending presence, ext is 0 and
+        // every score eases to 0 — no fabricated glow. The live counts signal
+        // and the lower ambient (trends) floor are independent channels; we take
+        // the max so a live match always outshines its own ambient background.
+        const ext = Math.max(this.signal[code] || 0, this.ambient[code] || 0);
         const target = clamp01(ext);
 
         // Ease the steady glow toward target (~3s time constant).

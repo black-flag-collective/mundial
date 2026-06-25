@@ -58,16 +58,29 @@ instead of pulling them — and only while a match is actually being played:
   we poll only teams whose match is live (kickoff → +`MATCH_MIN`) plus a short
   post-match cooldown. **No live match → zero requests** (match state is read
   from disk for free), so a quiet tournament hour costs nothing.
-- **Tiered cadence** — nations in a **live** match refresh every cycle
-  (`LIVE_INTERVAL`, ~60s) so the globe pulses in near-real-time, while
-  **warmup/cooldown** nations refresh on a slower tier (`SLOW_INTERVAL`, ~5m) —
-  the budget goes where the action is. When nothing is live, a request-free
-  re-check (`IDLE_INTERVAL`, ~10m) just watches for the next kickoff. A slow-tier
-  nation keeps its last signal between refreshes, so the board stays stable.
+- **Activity-adaptive cadence** — nations in a **live** match refresh every cycle,
+  but the cycle interval itself flexes between a fast floor (`LIVE_INTERVAL`, ~60s)
+  and a calm ceiling (`LIVE_CALM_INTERVAL`, ~150s) by how lively the match is: a
+  flat 0–0 drifts calm to save requests, a rising surge snaps back to fast, and
+  **knockout** fixtures always poll fast. **Warmup/cooldown** nations refresh on a
+  slower tier (`SLOW_INTERVAL`, ~5m). When nothing is live, a request-free re-check
+  (`IDLE_INTERVAL`, ~10m) just watches for the next kickoff. A slow-tier nation
+  keeps its last signal between refreshes, so the board stays stable.
 - **Momentum, for free** — the counts response is per-minute, so each poll also
   yields a rising/falling **trend** per country and fires a **surge** (spike)
   on a sharp minute-over-minute jump — the goal-reaction pop — with no extra
   requests. Surfaced as `trend` per nation in `/api/buzz.json`.
+- **Tournament-wide pulse** — one extra counts request on the slow tier, **only
+  while a match is live**, for overall World-Cup chatter. Gives a global heartbeat
+  (`tournamentTotal`/`tournamentTrend`) and an absolute scale so a quiet day glows
+  dimmer than a final. Off with `X_COUNTS_PULSE_DISABLED=1`; never fires when idle,
+  so a no-match day still costs $0.
+- **Ambient glow between matches** — the trends poller (below) feeds a low
+  background glow into the buzz engine for nations trending on X, so the globe
+  breathes even when no match is live. It's derived from the trends poll, so it
+  adds **zero** requests; a live counts signal always outshines it. `/api/buzz.json`
+  reports `source:"trends"` when the globe is ambient-driven (vs. `"counts"` live,
+  `"idle"` dark).
 - **Hard daily cap** — a request budget with a circuit breaker that pauses polling
   (buzz fades back to the free simulation) when hit.
 
@@ -78,28 +91,34 @@ token, both paths are inert and the free simulation runs. Tune with:
 | Env | Default | Meaning |
 | :-- | :-- | :-- |
 | `X_BUZZ_MODE` | `counts` (with token) | set to `stream` to opt into the firehose instead |
-| `X_COUNTS_LIVE_INTERVAL_MS` | `60000` (60s) | poll cadence for nations in a **live** match |
-| `X_COUNTS_SLOW_INTERVAL_MS` | `300000` (5m) | poll cadence for **warmup/cooldown** nations |
+| `X_COUNTS_LIVE_INTERVAL_MS` | `60000` (60s) | fast floor for nations in a **live** match |
+| `X_COUNTS_LIVE_CALM_INTERVAL_MS` | `150000` (150s) | calm ceiling for a flat live match (adaptive cadence) |
+| `X_COUNTS_SLOW_INTERVAL_MS` | `300000` (5m) | poll cadence for **warmup/cooldown** nations + the pulse |
 | `X_COUNTS_IDLE_INTERVAL_MS` | `600000` (10m) | request-free re-check when nothing is live |
 | `X_COUNTS_WINDOW_MIN` | `10` | recent-volume window per poll |
 | `X_COUNTS_MATCH_MIN` | `150` | minutes after kickoff a match stays "live" |
 | `X_COUNTS_WARMUP_MIN` | `0` | pre-kickoff hype window (off by default) |
 | `X_COUNTS_COOLDOWN_MIN` | `30` | post-match reaction window |
+| `X_COUNTS_PULSE_DISABLED` | unset | set `1` to turn off the tournament-wide pulse |
 | `X_COUNTS_DAILY_CAP` | `2000` | max requests/UTC-day (circuit breaker) |
 
 ### What it costs
 
 Because spend is scoped to live windows, the bill tracks the schedule, not the
 clock. Per match the live tier dominates: 2 teams × (~150 min ÷ 60 s) ≈ **300
-requests**, plus a handful on the slow tier during the 30-min cooldown (2 teams ÷
-5 min ≈ 12). Call it **~310 requests/match**. A busy group-stage day (4 matches)
-≈ **1,250 requests/day**, under the 2,000 default cap; a whole 104-match
-tournament ≈ **30–35k requests**. At the pay-per-use counts price
-(~$0.005/request) that's a few dollars on a peak day and
-on the order of **~$150 for the entire World Cup** — and **$0 on days with no
-matches**. Want it cheaper? Raise `X_COUNTS_LIVE_INTERVAL_MS` (e.g. back to 90s),
-raise `X_COUNTS_SLOW_INTERVAL_MS`, or lower the cap; the circuit breaker
-guarantees you can't blow past the cap even if the schedule data is wrong.
+requests** at the fast floor — but the **adaptive cadence** drifts dull stretches
+toward the 150 s calm ceiling, so a typical match lands *below* that. Add a handful
+on the slow tier during the 30-min cooldown (2 teams ÷ 5 min ≈ 12) and the
+**tournament-wide pulse** (~1 req ÷ 5 min while live ≈ 30/match). Call it
+**~310–340 requests/match**. A busy group-stage day (4 matches) ≈ **1,300
+requests/day**, under the 2,000 default cap; a whole 104-match tournament ≈
+**32–37k requests**. At the pay-per-use counts price (~$0.005/request) that's a
+few dollars on a peak day and on the order of **~$165 for the entire World Cup**
+(the pulse adds ~$15) — and **$0 on days with no matches**. Want it cheaper? Raise
+`X_COUNTS_LIVE_INTERVAL_MS`/`X_COUNTS_LIVE_CALM_INTERVAL_MS`, raise
+`X_COUNTS_SLOW_INTERVAL_MS`, set `X_COUNTS_PULSE_DISABLED=1`, or lower the cap;
+the circuit breaker guarantees you can't blow past the cap even if the schedule
+data is wrong.
 
 If X **rate-limits** the counts endpoint (HTTP 429/420), the poller backs off
 until the server's `x-rate-limit-reset` window instead of retrying every cycle —
@@ -108,9 +127,12 @@ nothing and the board holds its last-known counts; `rateLimited` + `pausedUntilM
 surface the state.
 
 `GET /api/x/health` reports `{mode:"counts", phase, activeTeams, requestsToday,
-dailyCap, capped, rateLimited, pausedUntilMs, liveIntervalMs, slowIntervalMs,
+dailyCap, capped, rateLimited, pausedUntilMs, liveIntervalMs, liveCalmIntervalMs,
+liveActivity, nextDelayMs, tournamentTotal, tournamentTrend, slowIntervalMs,
 idleIntervalMs, windowMin, nextPollMs, perTeam, rateRemaining, lastEvent, …}` —
-`phase` is `live`/`warmup`/`cooldown`/`idle` and
+`phase` is `live`/`warmup`/`cooldown`/`idle`, `liveActivity` (0..1) is how lively
+the live matches are right now (it drives the adaptive cadence shown in
+`nextDelayMs`), `tournamentTotal`/`tournamentTrend` are the global pulse, and
 `perTeam[code]` carries the exact query, post count, normalized signal, trend,
 and — mined for free from the same per-minute response — the **peak** and
 **current** per-minute rate plus the raw **`minutes`** series (which the Buzz
@@ -148,6 +170,16 @@ a `#CODE`, or a keyword like "world cup"/"fifa") so the UI can filter the noise.
 Runs whenever `X_BEARER_TOKEN` is set (off with `X_TRENDS_DISABLED=1`); app-only
 Bearer auth, no token → inert and `/api/trends.json` returns an empty set. Knobs:
 `X_TRENDS_INTERVAL_MS` (default 10m), `X_TRENDS_DAILY_CAP` (800), `X_TRENDS_WOEIDS`.
+
+**Ambient globe glow (free).** Besides `/api/trends.json`, the trends poller feeds
+a low per-nation **ambient** signal into the buzz engine (`engine.setAmbient()`):
+each World-Cup-relevant trend is attributed to a nation (`codeForTrend()`), its
+post counts normalized and clamped to `X_TRENDS_AMBIENT_CAP` (default `0.3`, set
+`0` to disable). So nations trending on X breathe on the globe even between
+matches — derived from the trends we already pulled, so it costs **zero** extra
+requests. It's a separate engine channel from the live counts signal, which always
+outshines it (the engine takes the max of the two); `/api/buzz.json` reports
+`source:"trends"` when the globe is ambient-driven.
 
 ---
 

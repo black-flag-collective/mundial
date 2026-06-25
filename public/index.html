@@ -611,7 +611,10 @@
                 <span style="display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--mun-fg); font-weight: 600; white-space: nowrap;"><img src="{{ m.oppFlag }}" alt="" style="width: 22px; height: 15px; border-radius: var(--mun-radius-flag); object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);">vs <span style="color: {{ confedColor }};">{{ m.oppCode }}</span> &middot; {{ m.oppName }}</span>
                 <span style="font-size: 12px; color: var(--mun-fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.venue }}</span>
               </div>
-              <span style="font-size: 13px; font-weight: 600; color: var(--mun-fg-strong); white-space: nowrap;">{{ m.date }}</span>
+              <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap;">
+                <sc-if value="{{ m.score }}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; font-weight: 700; color: var(--mun-fg-strong);">{{ m.score }}</span></sc-if>
+                <span style="font-size: 12px; font-weight: 600; color: {{ m.statusColor }};">{{ m.status }}</span>
+              </span>
             </div>
           </sc-for>
         </div>
@@ -754,8 +757,6 @@ class Component extends DCLogic {
       POR: 'pt', UZB: 'uz', COL: 'co', COD: 'cd', ENG: 'gb-eng', CRO: 'hr', GHA: 'gh', PAN: 'pa'
     };
 
-    this.matches = this.buildMatches();
-
     // Match data is loaded live from /api/data.json (served from data/matches.json,
     // refreshed by the update-data workflow). Nothing is baked into the page — the
     // matchday/standings views render from the API only, so no stale or fabricated
@@ -829,68 +830,43 @@ class Component extends DCLogic {
     };
   }
 
-  buildMatches() {
-    const groups = {};
-    this.countries.forEach((c) => { (groups[c.group] = groups[c.group] || []).push(c.code); });
-    const known = {
-      'MEX_RSA': { date: 'Jun 11', venue: 'Estadio Azteca, Mexico City' },
-      'CZE_KOR': { date: 'Jun 12', venue: 'Estadio Guadalajara' },
-      'QAT_SUI': { date: 'Jun 13', venue: 'San Francisco Bay Area' },
-      'BRA_MAR': { date: 'Jun 13', venue: 'New York / New Jersey' },
-      'PAR_USA': { date: 'Jun 13', venue: 'SoFi Stadium, Los Angeles' },
-      'TUR_USA': { date: 'Jun 19', venue: 'Los Angeles Stadium' },
-      'AUS_PAR': { date: 'Jun 16', venue: 'San Francisco Bay Area' },
-      'CIV_CUW': { date: 'Jun 14', venue: 'Philadelphia Stadium' },
-      'ECU_GER': { date: 'Jun 14', venue: 'New York / New Jersey' },
-      'JPN_SWE': { date: 'Jun 15', venue: 'Dallas Stadium' },
-      'NED_TUN': { date: 'Jun 15', venue: 'Kansas City Stadium' },
-      'EGY_IRN': { date: 'Jun 15', venue: 'Seattle Stadium' },
-      'BEL_NZL': { date: 'Jun 15', venue: 'BC Place, Vancouver' },
-      'CPV_KSA': { date: 'Jun 14', venue: 'Houston Stadium' },
-      'CPV_ESP': { date: 'Jun 15', venue: 'Atlanta Stadium' },
-      'ESP_KSA': { date: 'Jun 20', venue: 'Atlanta Stadium' },
-      'ESP_URU': { date: 'Jun 24', venue: 'Guadalajara Stadium' },
-      'FRA_NOR': { date: 'Jun 26', venue: 'Boston Stadium' },
-      'IRQ_SEN': { date: 'Jun 26', venue: 'Toronto Stadium' },
-      'FRA_SEN': { date: 'Jun 16', venue: 'MetLife, New York / New Jersey' },
-      'IRQ_NOR': { date: 'Jun 16', venue: 'Gillette Stadium, Boston' },
-      'ALG_AUT': { date: 'Jun 22', venue: 'Kansas City Stadium' },
-      'ARG_JOR': { date: 'Jun 22', venue: 'Dallas Stadium' },
-      'ALG_ARG': { date: 'Jun 16', venue: 'Arrowhead, Kansas City' },
-      'AUT_JOR': { date: 'Jun 16', venue: "Levi's Stadium, SF Bay" },
-      'POR_UZB': { date: 'Jun 17', venue: 'Lumen Field, Seattle' },
-      'CRO_ENG': { date: 'Jun 17', venue: 'NRG Stadium, Houston' },
-      'COD_COL': { date: 'Jun 17', venue: 'Hard Rock Stadium, Miami' },
-      'GHA_PAN': { date: 'Jun 17', venue: 'Mercedes-Benz Stadium, Atlanta' },
-      'ENG_PAN': { date: 'Jun 27', venue: 'New York / New Jersey' },
-      'CRO_GHA': { date: 'Jun 27', venue: 'Philadelphia Stadium' },
-      'ENG_GHA': { date: 'Jun 23', venue: 'Boston Stadium' }
-    };
-    const order = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+  // Group fixtures for a nation, sourced from the live schedule (data/matches.json
+  // via /api/data.json) so dates, venues, and scores are always real \u2014 never a
+  // stale hardcoded guess. The date comes from the fixture's matchday bucket, so it
+  // matches the matchday slider exactly. 'TBD' only ever appears for a fixture that
+  // genuinely has no scheduled day. Scores/live state are surfaced here too, so the
+  // globe reflects the same live results as the matchday view: the hovered nation's
+  // tally is shown first ("vs OPP \u00b7 2 \u2013 1").
+  matchesFor(code) {
+    const country = this.byCode[code];
+    const grp = country ? country.group : null;
     const out = [];
-    Object.keys(groups).sort().forEach((g) => {
-      const t = groups[g];
-      order.forEach((pr) => {
-        const a = t[pr[0]], b = t[pr[1]];
-        const k = known[[a, b].sort().join('_')] || {};
-        out.push({ group: g, a: a, b: b, date: k.date || '', venue: k.venue || '' });
+    (this.dayMatches || []).forEach((day, di) => {
+      const label = (this.days[di] && this.days[di].short) || '';
+      (day || []).forEach((m) => {
+        if (m.a !== code && m.b !== code) return;
+        if (grp && m.g !== grp) return; // group-stage fixtures only (knockouts carry R32\u2026F)
+        const isA = m.a === code;
+        const oppCode = isA ? m.b : m.a;
+        const opp = this.byCode[oppCode];
+        const li = this.liveInfo(m);
+        const ft = m.st === 'FT';
+        const showScore = ft || li.live;
+        const mine = isA ? m.as : m.bs, theirs = isA ? m.bs : m.as;
+        out.push({
+          oppCode: oppCode,
+          oppFlag: this.flagUrl(oppCode),
+          oppName: opp ? opp.name : '',
+          venue: m.venue || ('Group ' + m.g + ' \u00b7 venue TBD'),
+          // Right-column: score (when live/final) over a caption. Upcoming fixtures
+          // show only the kickoff date, kept prominent like before.
+          score: showScore ? ((mine ?? 0) + ' \u2013 ' + (theirs ?? 0)) : '',
+          status: li.live ? ('\u25cf ' + li.clock) : (ft ? 'FT' : (label || 'TBD')),
+          statusColor: li.live ? 'var(--mun-accent)' : (showScore ? 'var(--mun-fg-subtle)' : 'var(--mun-fg-strong)')
+        });
       });
     });
     return out;
-  }
-
-  matchesFor(code) {
-    return this.matches.filter((m) => m.a === code || m.b === code).map((m) => {
-      const oppCode = m.a === code ? m.b : m.a;
-      const opp = this.byCode[oppCode];
-      return {
-        oppCode: oppCode,
-        oppFlag: this.flagUrl(oppCode),
-        oppName: opp ? opp.name : '',
-        date: m.date || 'TBD',
-        venue: m.venue || ('Group ' + m.group + ' \u00b7 venue TBD')
-      };
-    });
   }
 
   // Lightweight PostHog wrapper. No-ops when analytics is disabled: with no

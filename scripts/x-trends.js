@@ -86,7 +86,9 @@ function trendsToAmbient(locations, cap = 0.3) {
       if (!tr || !tr.wc) continue;
       const code = codeForTrend(tr.name);
       if (!code) continue;
-      const c = tr.postCount | 0;
+      // Numeric coercion without 32-bit truncation (`| 0` overflows/flips
+      // negative past ~2.1B), clamped to >=0 so a bad value can't mis-rank floors.
+      const c = Math.max(0, Number(tr.postCount) || 0);
       if (c > (byCode[code] || 0)) byCode[code] = c;
     }
   }
@@ -114,7 +116,7 @@ function isWorldCupTrend(name, names = WC_NAMES) {
 function parseTrends(body) {
   const data = (body && Array.isArray(body.data)) ? body.data : [];
   return data
-    .map((t) => ({ name: t.trend_name || t.name || '', postCount: (t.tweet_count | 0) || 0 }))
+    .map((t) => ({ name: t.trend_name || t.name || '', postCount: Math.max(0, Number(t.tweet_count) || 0) }))
     .filter((t) => t.name)
     .map((t) => ({ ...t, wc: isWorldCupTrend(t.name) }));
 }
@@ -136,7 +138,13 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
   const DAILY_CAP = Number(process.env.X_TRENDS_DAILY_CAP) || 800;
   const LOCATIONS = woeids || parseWoeidEnv(process.env.X_TRENDS_WOEIDS) || DEFAULT_WOEIDS;
   // Cap for the ambient glow trends feed into the buzz engine (0 disables it).
-  const AMBIENT_CAP = process.env.X_TRENDS_AMBIENT_CAP != null ? Number(process.env.X_TRENDS_AMBIENT_CAP) : 0.3;
+  // Validate: clamp a finite value to [0,1]; a non-numeric/NaN env falls back to
+  // the default rather than becoming NaN (which would silently disable ambient
+  // and leak ambientCap: NaN into stats).
+  const AMBIENT_CAP = (() => {
+    const v = Number(process.env.X_TRENDS_AMBIENT_CAP);
+    return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.3;
+  })();
 
   let day = utcDay();
   const stats = {

@@ -351,6 +351,14 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     if (!codes.length) {
       engine.setSignals({});
       stats.liveActivity = 0;
+      // The tournament-wide heartbeat is a live-only signal — clear it so the API
+      // doesn't report a stale pulse between matches, and reset lastPulseAt so the
+      // next live window always opens with a fresh pulse (not gated by SLOW_INTERVAL
+      // since the previous match). The decaying tournamentPeak is intentionally
+      // kept, so a new match is still scaled against recent tournament activity.
+      stats.tournamentTotal = null;
+      stats.tournamentTrend = null;
+      lastPulseAt = 0;
       stats.lastEvent = 'no live match — idle (no requests)';
       return;
     }

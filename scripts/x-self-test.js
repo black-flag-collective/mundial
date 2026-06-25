@@ -342,6 +342,30 @@ check('trends: codeForTrend never steals one nation’s name for another (alias-
   assert.strictEqual(codeForTrend('South Korea win'), 'KOR');
   assert.strictEqual(codeForTrend('South Africa win'), 'RSA');
 });
+check('trends: post counts above the 32-bit range don’t overflow (no `| 0` truncation)', () => {
+  const big = 3_000_000_000; // > 2^31; `| 0` would flip this negative
+  // parseTrends preserves it as a real number, not a truncated/negative int.
+  const parsed = parseTrends({ data: [{ trend_name: '#BRA', tweet_count: big }] });
+  assert.strictEqual(parsed[0].postCount, big, 'tweet_count kept without truncation');
+  // trendsToAmbient ranks a huge count above a small one (would invert if negative).
+  const floor = trendsToAmbient([{ trends: [
+    { name: '#BRA', postCount: big, wc: true },
+    { name: 'Argentina', postCount: 100, wc: true },
+  ] }], 0.3);
+  assert.ok(floor.BRA >= floor.ARG && floor.BRA > 0, 'huge count ranks at/above a small one, never negative');
+});
+check('trends: a non-numeric X_TRENDS_AMBIENT_CAP falls back to the default (not NaN)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_TRENDS_AMBIENT_CAP = 'not-a-number';
+  let got = null;
+  const engine = { state: { BRA: {} }, setAmbient(m) { got = m; } };
+  global.fetch = async () => ({ ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();
+  assert.strictEqual(poller.stats().ambientCap, 0.3, 'invalid cap → default 0.3, never NaN');
+  assert.ok(got && got.BRA > 0, 'ambient still feeds (NaN cap would have disabled it)');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_TRENDS_AMBIENT_CAP;
+});
 check('trends: trendsToAmbient yields a capped, normalized per-nation floor', () => {
   const locations = [{ trends: [
     { name: '#BRA', postCount: 100000, wc: true },
@@ -495,6 +519,22 @@ check('counts: a cycle error during a live match retries on the live tier, not i
   assert.ok(s.errors > 0, 'the fetch error was recorded');
   assert.ok(s.nextDelayMs >= 60_000 && s.nextDelayMs <= 150_000,
     `error during a live match retries on the live band, not the 10m idle tier (got ${s.nextDelayMs})`);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+check('counts: an idle cycle clears the stale tournament heartbeat', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 200 }, data: [{ tweet_count: 100 }, { tweet_count: 100 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  let phase = 'live';
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => (phase === 'live' ? { codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } } : { codes: [], phase: 'idle', phases: {} }) });
+  await poller.cycle();
+  assert.strictEqual(poller.stats().tournamentTotal, 200, 'pulse surfaced while live');
+  phase = 'idle';
+  await poller.cycle();
+  assert.strictEqual(poller.stats().tournamentTotal, null, 'idle clears the stale heartbeat (tournamentTotal)');
+  assert.strictEqual(poller.stats().tournamentTrend, null, 'idle clears tournamentTrend too');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 

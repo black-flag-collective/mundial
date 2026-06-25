@@ -280,6 +280,8 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     rateCap: null,
     rateResetMs: null,
     errors: 0,
+    lastErrorStatus: null, // HTTP status of the most recent failed counts request
+    lastErrorBody: null,   // short snippet of that error body (diagnostics)
     lastEvent: 'idle',
   };
   let day = utcDay();
@@ -310,6 +312,12 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     captureRate(r);
     if (!r.ok) {
       stats.errors++;
+      // Surface the real status + a short body snippet (parity with the trends
+      // poller) so a prod counts failure is self-explaining via /api/x/health —
+      // 403 (entitlement) vs 400 (bad query) vs 429 (rate) — instead of a silent
+      // dark globe during what should be a live match.
+      stats.lastErrorStatus = r.status;
+      try { stats.lastErrorBody = ((await r.text()) || '').slice(0, 200) || null; } catch { /* ignore */ }
       stats.lastEvent = `counts HTTP ${r.status}`;
       // Rate-limited (429) or capacity (420): honor the server's reset window so
       // we stop spending requests that only earn more 429s. Falls back to ~60s.

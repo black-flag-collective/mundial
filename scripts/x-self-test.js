@@ -170,6 +170,18 @@ check('counts: a 429 pauses polling until the reset window (no hammering)', asyn
   assert.strictEqual(calls, 1, 'no requests spent while paused');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
+check('counts: a failed request surfaces the HTTP status + body snippet in health', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({ ok: false, status: 403, headers: { get: () => null }, json: async () => ({}), text: async () => 'Client Forbidden: not enrolled in this product' });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const ctx = () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } });
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: ctx });
+  await poller.cycle();
+  const s = poller.stats();
+  assert.strictEqual(s.lastErrorStatus, 403, 'counts HTTP status surfaced for diagnostics');
+  assert.ok(s.lastErrorBody && s.lastErrorBody.includes('not enrolled'), 'counts error body snippet captured');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
 check('counts: liveContext reports per-nation phase', () => {
   const now = Date.parse('2026-06-22T21:30:00Z');
   const matches = { dayMatches: [[

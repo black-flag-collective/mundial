@@ -785,6 +785,7 @@ class Component extends DCLogic {
     this.countries.forEach((c) => { t[c.code] = { code: c.code, name: c.name, group: c.group, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, Pts: 0 }; });
     this.dayMatches.forEach((day) => day.forEach((m) => {
       if (m.st !== 'FT') return;
+      if (m.round) return; // knockout tie — never counts toward group tables
       const A = t[m.a], B = t[m.b];
       A.P++; B.P++; A.GF += m.as; A.GA += m.bs; B.GF += m.bs; B.GA += m.as;
       if (m.as > m.bs) { A.W++; B.L++; A.Pts += 3; }
@@ -2261,6 +2262,10 @@ class Component extends DCLogic {
     const fFT = fm.st === 'FT';
     const fLive = this.liveInfo(fm);
 
+    // Group ties show their letter; knockout ties show their round code (R16…F).
+    // (The DS MatchCard prefixes the badge with "GROUP" — making it read the round
+    // wording for knockouts is a design-system change, tracked separately.)
+    const roundName = (r) => ({ R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final', SF: 'Semi-final', '3P': 'Third place', F: 'Final' }[r] || r || '');
     const dayList = dms.map((m, idx) => {
       const ft = m.st === 'FT';
       const li = this.liveInfo(m);
@@ -2268,7 +2273,7 @@ class Component extends DCLogic {
       const showScore = ft || li.live;
       return {
         // MatchCard props ('final' state renders the score; live shows it too)
-        group: m.g,
+        group: m.g || m.round,
         state: showScore ? 'final' : 'upcoming',
         status: li.live ? ('● LIVE ' + li.clock) : (ft ? 'FT' : 'Kick-off'),
         teamA: { code: m.a, name: nm(m.a), score: showScore ? (m.as ?? 0) : undefined },
@@ -2486,7 +2491,7 @@ class Component extends DCLogic {
       dayShort: day.short,
       dayIsToday: !!day.today,
       dayCount: String(dms.length),
-      fGroup: fm.g,
+      fGroup: fm.g || fm.round,
       fState: (fFT || fLive.live) ? 'final' : 'upcoming',
       fLive: fLive.live,
       fFeaturedClass: fLive.live ? 'md-featured md-live' : 'md-featured',
@@ -2502,7 +2507,7 @@ class Component extends DCLogic {
       fStatusColor: fFT ? 'rgba(255,255,255,0.85)' : accent,
       fStatusBg: fFT ? 'rgba(255,255,255,0.1)' : this.hexToRgba(accent, 0.18),
       fStatusBorder: fFT ? 'rgba(255,255,255,0.2)' : this.hexToRgba(accent, 0.5),
-      fVenue: fm.venue || ('Group ' + fm.g),
+      fVenue: fm.venue || (fm.round ? roundName(fm.round) : ('Group ' + fm.g)),
       fillW: fillW,
       daysUI: daysUI,
       dayList: dayList,

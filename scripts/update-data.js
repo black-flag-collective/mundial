@@ -54,12 +54,17 @@ function mergeUpdate(current, update) {
   const data = JSON.parse(JSON.stringify(current)); // deep clone
   let changed = false;
 
-  // Group-stage invariant: each pair of teams meets exactly once, so a team-pair
-  // is a stable fixture id. We use it to dedupe — the same match must never be
-  // added on two different days (this is what produced the duplicate BRA–HAI).
+  // Fixture identity = the team-pair PLUS its context (group letter or knockout
+  // round). The pair alone isn't unique across the whole tournament: two teams
+  // from the same group can advance and meet again in a knockout tie (e.g. the
+  // final), so keying on the pair only would wrongly drop that rematch as a dup.
+  // Adding the context (g for group ties, round for knockout ties) keeps each
+  // distinct fixture while still deduping the same match reported on two days
+  // (this is what produced the duplicate BRA–HAI).
   const pairKey = (x, y) => [x, y].sort().join('_');
+  const fixtureKey = (m) => pairKey(m.a, m.b) + '|' + (m.g || m.round || '');
   const knownPairs = new Set();
-  data.dayMatches.forEach(ms => ms.forEach(m => knownPairs.add(pairKey(m.a, m.b))));
+  data.dayMatches.forEach(ms => ms.forEach(m => knownPairs.add(fixtureKey(m))));
 
   // Add new days (and fixtures on existing days), de-duplicating by fixture.
   if (Array.isArray(update.new_days)) {
@@ -67,7 +72,7 @@ function mergeUpdate(current, update) {
       if (!nd.day_short) continue;
       const fresh = (nd.matches || []).filter(m => {
         if (!m.a || !m.b) return false;
-        const k = pairKey(m.a, m.b);
+        const k = fixtureKey(m);
         if (knownPairs.has(k)) return false; // already scheduled elsewhere
         knownPairs.add(k);
         return true;
@@ -90,9 +95,12 @@ function mergeUpdate(current, update) {
       const dayIdx = data.days.findIndex(d => d.short === um.day_short);
       if (dayIdx < 0) continue;
       const matches = data.dayMatches[dayIdx];
-      const m = matches.find(x =>
-        (x.a === um.a && x.b === um.b) || (x.a === um.b && x.b === um.a)
-      );
+      const samePair = (x) => (x.a === um.a && x.b === um.b) || (x.a === um.b && x.b === um.a);
+      // Prefer a same-context match (group letter / knockout round) when the
+      // update carries one, so a knockout rematch never patches the group tie.
+      const umCtx = um.g || um.round;
+      const m = (umCtx && matches.find(x => samePair(x) && (x.g || x.round) === umCtx))
+        || matches.find(samePair);
       // Safety invariant: a confirmed final is immutable. Only patch matches that
       // are not yet FT, and only with a final/live result. This guards against a
       // source silently rewriting a good score (e.g. CAN–QAT flipping

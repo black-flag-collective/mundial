@@ -331,6 +331,17 @@ check('trends: codeForTrend attributes a trend to the most specific nation', () 
   assert.strictEqual(codeForTrend('South Korea fighting'), 'KOR'); // longest match wins over "Korea"
   assert.strictEqual(codeForTrend('just some random topic'), null);
 });
+check('trends: codeForTrend never steals one nation’s name for another (alias-edit guard)', () => {
+  // Every nation's own name, #CODE, and aliases must resolve to itself — guards
+  // against a future alias addition shadowing another nation via substring match.
+  for (const code of Object.keys(CODE_NAME)) {
+    assert.strictEqual(codeForTrend(CODE_NAME[code]), code, `${code} name maps to itself`);
+    assert.strictEqual(codeForTrend('#' + code), code, `#${code} maps to ${code}`);
+  }
+  // Shared-prefix nations stay distinct (longest-needle-first ordering).
+  assert.strictEqual(codeForTrend('South Korea win'), 'KOR');
+  assert.strictEqual(codeForTrend('South Africa win'), 'RSA');
+});
 check('trends: trendsToAmbient yields a capped, normalized per-nation floor', () => {
   const locations = [{ trends: [
     { name: '#BRA', postCount: 100000, wc: true },

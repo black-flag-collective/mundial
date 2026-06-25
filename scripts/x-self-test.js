@@ -448,6 +448,10 @@ check('counts: decayPeak lets a new high win but bleeds a stale blockbuster down
   for (let i = 0; i < 400; i++) peak = decayPeak(peak, 2000, 0.98); // a long quiet stretch
   assert.ok(peak <= 2000 + 1e-6, `stale peak bled down to recent volume (got ${Math.round(peak)})`);
   assert.strictEqual(decayPeak(NaN, NaN, 0.98), 0, 'NaN inputs → 0, never NaN');
+  // Extremes (the values X_COUNTS_PULSE_PEAK_DECAY exposes): 1 = never forget
+  // (all-time max), 0 = always track the current pulse (cross-match dimming off).
+  assert.strictEqual(decayPeak(500, 100, 1), 500, 'decay 1 → all-time max retained');
+  assert.strictEqual(decayPeak(500, 100, 0), 100, 'decay 0 → peak tracks the current pulse (dimming disabled)');
 });
 check('counts: an idle cycle resets liveActivity (no stale carry-over)', async () => {
   process.env.X_BEARER_TOKEN = 'test';

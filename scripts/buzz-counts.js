@@ -244,7 +244,12 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   // volume (≈ the last match) instead of ratcheting to an all-time max that would
   // permanently dim the board on a long-running process. A new high still wins
   // immediately. ~0.98/pulse ≈ a half-life of one match's worth of live polling.
-  const PEAK_DECAY = Math.min(1, Math.max(0, Number(process.env.X_COUNTS_PULSE_PEAK_DECAY) || 0.98));
+  // Respect an explicit 0 (disable cross-match dimming: peak always tracks the
+  // current pulse). `Number(env) || 0.98` would silently turn 0 into 0.98.
+  const PEAK_DECAY = (() => {
+    const v = Number(process.env.X_COUNTS_PULSE_PEAK_DECAY);
+    return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.98;
+  })();
 
   const resolveContext =
     context || (() => liveContext({ matchMin: MATCH_MIN, warmupMin: WARMUP_MIN, cooldownMin: COOLDOWN_MIN }));

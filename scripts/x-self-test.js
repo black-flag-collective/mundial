@@ -389,6 +389,17 @@ check('trends: poller feeds the engine ambient channel (zero extra requests)', a
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
+check('trends: requests hit the v2 /2/trends/by/woeid/{woeid} path (the 404 fix)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let calledUrl = null;
+  global.fetch = async (url) => { calledUrl = String(url); return { ok: true, json: async () => ({ data: [] }) }; };
+  const poller = createTrendsPoller({ log: { warn() {}, error() {} }, woeids: [{ woeid: 23424977, name: 'US' }] });
+  await poller.cycle();
+  assert.ok(/\/2\/trends\/by\/woeid\/23424977(\?|$)/.test(calledUrl), 'uses by/woeid (slash), not the 404-ing by_woeid: ' + calledUrl);
+  assert.ok(!calledUrl.includes('by_woeid'), 'no underscore form');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
 check('trends: a failed request surfaces the HTTP status + body snippet in health', async () => {
   process.env.X_BEARER_TOKEN = 'test';
   global.fetch = async () => ({ ok: false, status: 403, json: async () => ({}), text: async () => 'Client Forbidden: not enrolled in this product' });

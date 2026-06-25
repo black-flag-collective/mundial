@@ -49,7 +49,15 @@ function mapFixtures(fixtures, log = console) {
     if (!short) { dropped++; continue; }
 
     const st = mapStatus(fx.status);
-    const g = normalizeGroup(fx.group || fx.stage) || undefined;
+    // Group letter must come ONLY from fx.group, never fx.stage: WC2026 has 12
+    // groups A–L, and a stage like "FINAL" would normalize to "L" — silently
+    // assigning a knockout match to the real Group L and corrupting its standings.
+    // A fixture whose group can't be resolved to A–L is dropped: the matchday UI
+    // and standings are group-keyed, so a blank/wrong group is worse than omitting
+    // it. (Known limitation: knockout-stage fixtures carry no group and are not
+    // emitted by this structured provider yet — see docs/DATA-PIPELINE.md.)
+    const g = normalizeGroup(fx.group);
+    if (!g) { dropped++; continue; }
     const ft = (fx.score && fx.score.fullTime) || {};
     const hasScore = Number.isInteger(ft.home) && Number.isInteger(ft.away);
 

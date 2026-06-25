@@ -129,6 +129,21 @@ check('sports-api: a FINISHED/IN_PLAY fixture with missing scores never becomes 
   }
 });
 
+check('sports-api: group comes only from fx.group; stage-only fixtures are dropped (FINAL ≠ Group L)', () => {
+  // WC2026 groups run A–L, so "FINAL" must NOT normalize to the real Group L.
+  const knockout = [
+    { utcDate: '2026-07-19T19:00:00Z', status: 'FINISHED', stage: 'FINAL', // no group
+      homeTeam: { tla: 'BRA', name: 'Brazil' }, awayTeam: { tla: 'FRA', name: 'France' },
+      score: { fullTime: { home: 2, away: 1 } } },
+    { utcDate: '2026-07-11T19:00:00Z', status: 'TIMED', stage: 'QUARTER_FINALS',
+      homeTeam: { tla: 'ESP', name: 'Spain' }, awayTeam: { tla: 'GER', name: 'Germany' },
+      score: {} },
+  ];
+  const { new_days, updated_matches } = mapFixtures(knockout, SILENT);
+  assert.strictEqual(new_days.length, 0, 'no groupless fixtures emitted');
+  assert.strictEqual(updated_matches.length, 0, 'no groupless score promoted (would have hit Group L)');
+});
+
 check('team-codes: RKS (Kosovo) is NOT mapped to KSA (never guess)', () => {
   // Saudi Arabia resolves directly via its FIFA code; Kosovo must not be
   // silently misclassified as Saudi Arabia.

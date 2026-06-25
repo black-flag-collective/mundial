@@ -171,6 +171,12 @@
     <!-- ============ MATCHDAY VIEW ============ -->
     <sc-if value="{{ isMatchday }}" hint-placeholder-val="{{ false }}">
 
+      <sc-if value="{{ matchdayLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; color: var(--mun-fg-subtle); font-size: 14px; letter-spacing: 0.04em;">Loading fixtures&hellip;</div>
+      </sc-if>
+
+      <sc-if value="{{ matchdayReady }}" hint-placeholder-val="{{ false }}">
+
       <div class="md-kicker" style="position: absolute; top: 100px; left: 64px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; max-width: 44vw;">
         <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Group Stage</span>
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -201,6 +207,8 @@
       <div class="md-slider" style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(660px, 82vw);">
         <x-import component-from-global-scope="MundialUI.DayTimeline" days="{{ timelineDays }}" value="{{ timelineValue }}" onChange="{{ timelineOnChange }}" caption="{{ timelineCaption }}" hint-size="640px,80px"></x-import>
       </div>
+
+      </sc-if>
 
     </sc-if>
 
@@ -745,48 +753,15 @@ class Component extends DCLogic {
 
     this.matches = this.buildMatches();
 
-    // dated schedule (results are real, Jun 11-18 2026; current day = Jun 18)
-    this.days = [
-      { dow: 'Thursday', short: 'Jun 11', long: 'June 11' },
-      { dow: 'Friday', short: 'Jun 12', long: 'June 12' },
-      { dow: 'Saturday', short: 'Jun 13', long: 'June 13' },
-      { dow: 'Sunday', short: 'Jun 14', long: 'June 14' },
-      { dow: 'Monday', short: 'Jun 15', long: 'June 15' },
-      { dow: 'Tuesday', short: 'Jun 16', long: 'June 16' },
-      { dow: 'Wednesday', short: 'Jun 17', long: 'June 17' },
-      { dow: 'Thursday', short: 'Jun 18', long: 'June 18', today: true }
-    ];
-    this.dayMatches = [
-      [ { g: 'A', a: 'MEX', b: 'RSA', as: 2, bs: 0, st: 'FT', venue: 'Estadio Azteca, Mexico City' } ],
-      [ { g: 'A', a: 'KOR', b: 'CZE', as: 2, bs: 1, st: 'FT', venue: 'Estadio Guadalajara' },
-        { g: 'B', a: 'CAN', b: 'BIH', as: 1, bs: 1, st: 'FT', venue: 'BMO Field, Toronto' } ],
-      [ { g: 'D', a: 'USA', b: 'PAR', as: 4, bs: 1, st: 'FT', venue: 'SoFi Stadium, Los Angeles' },
-        { g: 'B', a: 'QAT', b: 'SUI', as: 1, bs: 1, st: 'FT', venue: 'San Francisco Bay Area' },
-        { g: 'C', a: 'BRA', b: 'MAR', as: 1, bs: 1, st: 'FT', venue: 'New York / New Jersey' } ],
-      [ { g: 'C', a: 'HAI', b: 'SCO', as: 0, bs: 1, st: 'FT', venue: 'Group C' },
-        { g: 'D', a: 'AUS', b: 'TUR', as: 2, bs: 0, st: 'FT', venue: 'Group D' },
-        { g: 'E', a: 'GER', b: 'CUW', as: 7, bs: 1, st: 'FT', venue: 'Group E' },
-        { g: 'F', a: 'NED', b: 'JPN', as: 2, bs: 2, st: 'FT', venue: 'Group F' } ],
-      [ { g: 'H', a: 'ESP', b: 'CPV', as: 0, bs: 0, st: 'FT', venue: 'Atlanta Stadium' },
-        { g: 'H', a: 'KSA', b: 'URU', as: 1, bs: 1, st: 'FT', venue: 'Group H' },
-        { g: 'G', a: 'EGY', b: 'BEL', as: 1, bs: 1, st: 'FT', venue: 'Group G' },
-        { g: 'E', a: 'CIV', b: 'ECU', as: 1, bs: 0, st: 'FT', venue: 'Group E' },
-        { g: 'F', a: 'SWE', b: 'TUN', as: 5, bs: 1, st: 'FT', venue: 'Group F' } ],
-      [ { g: 'I', a: 'FRA', b: 'SEN', as: 3, bs: 1, st: 'FT', venue: 'MetLife, New York / New Jersey' },
-        { g: 'G', a: 'IRN', b: 'NZL', as: 2, bs: 2, st: 'FT', venue: 'Group G' },
-        { g: 'I', a: 'IRQ', b: 'NOR', as: 0, bs: 2, st: 'FT', venue: 'Gillette Stadium, Boston' },
-        { g: 'J', a: 'ARG', b: 'ALG', as: 3, bs: 0, st: 'FT', venue: 'Arrowhead, Kansas City' },
-        { g: 'J', a: 'AUT', b: 'JOR', as: 2, bs: 1, st: 'FT', venue: "Levi's Stadium, SF Bay" } ],
-      [ { g: 'K', a: 'POR', b: 'UZB', as: 3, bs: 1, st: 'FT', venue: 'Lumen Field, Seattle' },
-        { g: 'L', a: 'ENG', b: 'CRO', as: 2, bs: 1, st: 'FT', venue: 'NRG Stadium, Houston' },
-        { g: 'K', a: 'COL', b: 'COD', as: 2, bs: 0, st: 'FT', venue: 'Hard Rock Stadium, Miami' },
-        { g: 'L', a: 'GHA', b: 'PAN', as: 1, bs: 1, st: 'FT', venue: 'Mercedes-Benz Stadium, Atlanta' } ],
-      [ { g: 'A', a: 'MEX', b: 'KOR', as: 2, bs: 1, st: 'FT', venue: 'Estadio Azteca, Mexico City' },
-        { g: 'A', a: 'RSA', b: 'CZE', as: 1, bs: 1, st: 'FT', venue: 'Estadio Guadalajara' },
-        { g: 'B', a: 'CAN', b: 'QAT', as: 2, bs: 0, st: 'FT', venue: 'BC Place, Vancouver' },
-        { g: 'B', a: 'SUI', b: 'BIH', st: 'UP', time: '6:00 PM ET', venue: 'BMO Field, Toronto' },
-        { g: 'C', a: 'BRA', b: 'HAI', st: 'UP', time: '9:00 PM ET', venue: 'SoFi Stadium, Los Angeles' } ]
-    ];
+    // Match data is loaded live from /api/data.json (served from data/matches.json,
+    // refreshed by the update-data workflow). Nothing is baked into the page — the
+    // matchday/standings views render from the API only, so no stale or fabricated
+    // score is ever shown. `_dataLoaded` gates a "loading" state until the first
+    // response lands (the globe, which needs only the static nation list, shows
+    // immediately).
+    this.days = [];
+    this.dayMatches = [];
+    this._dataLoaded = false;
 
     // rough strength order (FIFA ranking / title odds) used to project knockout winners
     this.rank = {
@@ -1090,6 +1065,7 @@ class Component extends DCLogic {
           if (!data || !data.days || !data.dayMatches) return;
           this.days = data.days;
           this.dayMatches = data.dayMatches;
+          this._dataLoaded = true;
           if (data.updatedAt) {
             const d = new Date(data.updatedAt);
             this.dataUpdatedAt = 'Updated ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -2274,7 +2250,10 @@ class Component extends DCLogic {
 
     // ---- matchday vals ----
     const sel = this.state.selectedDay;
-    const day = this.days[sel];
+    // Until the first /api/data.json response lands, days is empty: render a
+    // "loading" matchday rather than dereferencing an undefined day.
+    const matchdayReady = this._dataLoaded && this.days.length > 0;
+    const day = this.days[sel] || { dow: '', long: '', short: '', today: false };
     const dms = this.dayMatches[sel] || [];
     const fi = Math.max(0, Math.min(this.state.featuredIdx, dms.length - 1));
     const fm = dms[fi] || { g: '', a: '', b: '', st: 'UP' };
@@ -2301,7 +2280,7 @@ class Component extends DCLogic {
       };
     });
 
-    const lastIdx = this.days.length - 1;
+    const lastIdx = Math.max(1, this.days.length - 1);
     const fillW = (sel / lastIdx * 100) + '%';
     const daysUI = this.days.map((d, idx) => {
       const isSel = idx === sel;
@@ -2328,9 +2307,11 @@ class Component extends DCLogic {
       accentHover: this.darken(accent, 0.12),
       accentGlow: this.hexToRgba(accent, 0.3),
       kicker: this.props.kicker ?? 'Canada \u00b7 Mexico \u00b7 USA',
-      dataUpdated: this.dataUpdatedAt || 'Updated Jun 18',
+      dataUpdated: this.dataUpdatedAt || 'Updating…',
       isGlobe: isGlobe,
       isMatchday: isMatchday,
+      matchdayReady: isMatchday && matchdayReady,
+      matchdayLoading: isMatchday && !matchdayReady,
       isStandings: isStandings,
       isBracket: isBracket,
       isBuzz: isBuzz,

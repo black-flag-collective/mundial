@@ -11,7 +11,7 @@ const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
 const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -407,6 +407,17 @@ check('counts: absoluteScale dims by tournament volume, floored and never inflat
   assert.strictEqual(absoluteScale(10, 300), 0.35, 'very quiet → floored at 0.35');
   assert.strictEqual(absoluteScale(0, 300), 0.35, 'zero volume → still floored, never dark');
   assert.strictEqual(absoluteScale(400, 300), 1, 'total>peak (out of order) clamped to 1, never inflates');
+});
+check('counts: decayPeak lets a new high win but bleeds a stale blockbuster down', () => {
+  assert.strictEqual(decayPeak(0, 500, 0.98), 500, 'first sample sets the peak');
+  assert.strictEqual(decayPeak(500, 900, 0.98), 900, 'a fresh high wins immediately');
+  assert.ok(Math.abs(decayPeak(500, 100, 0.98) - 490) < 1e-9, 'no new high → old peak decays by the factor');
+  // A blockbuster peak must recalibrate toward sustained lower volume over time,
+  // so the board recovers instead of being dimmed forever.
+  let peak = 100000; // a past final
+  for (let i = 0; i < 400; i++) peak = decayPeak(peak, 2000, 0.98); // a long quiet stretch
+  assert.ok(peak <= 2000 + 1e-6, `stale peak bled down to recent volume (got ${Math.round(peak)})`);
+  assert.strictEqual(decayPeak(NaN, NaN, 0.98), 0, 'NaN inputs → 0, never NaN');
 });
 check('counts: an idle cycle resets liveActivity (no stale carry-over)', async () => {
   process.env.X_BEARER_TOKEN = 'test';

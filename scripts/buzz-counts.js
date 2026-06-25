@@ -167,6 +167,15 @@ function absoluteScale(total, peak, floor = 0.35) {
 }
 
 /**
+ * Update the rolling tournament-wide peak: a fresh high wins immediately,
+ * otherwise the previous peak bleeds down by `decay` so a past blockbuster
+ * doesn't permanently dim the board on a long-running process.
+ */
+function decayPeak(prevPeak, total, decay = 0.98) {
+  return Math.max(Number(total) || 0, (Number(prevPeak) || 0) * decay);
+}
+
+/**
  * Everything we can squeeze out of the per-minute counts series — all of it
  * ships with the same counts request, so these add zero extra cost:
  *   - trend:   latest minute vs the trailing baseline (−1..1; rising/falling)
@@ -231,6 +240,11 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   // dull day glows dimmer than a final. Off with X_COUNTS_PULSE_DISABLED=1.
   const PULSE_ENABLED = process.env.X_COUNTS_PULSE_DISABLED !== '1';
   const PULSE_QUERY = `${CONTEXT} -is:retweet`;
+  // The tournament-wide peak decays a little each pulse so it tracks *recent*
+  // volume (≈ the last match) instead of ratcheting to an all-time max that would
+  // permanently dim the board on a long-running process. A new high still wins
+  // immediately. ~0.98/pulse ≈ a half-life of one match's worth of live polling.
+  const PEAK_DECAY = Math.min(1, Math.max(0, Number(process.env.X_COUNTS_PULSE_PEAK_DECAY) || 0.98));
 
   const resolveContext =
     context || (() => liveContext({ matchMin: MATCH_MIN, warmupMin: WARMUP_MIN, cooldownMin: COOLDOWN_MIN }));
@@ -271,7 +285,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   const perTeamState = {}; // code -> { query, count, signal, trend }
   let pausedUntil = 0;    // ms epoch — when X rate-limited us, don't spend until this
   let lastPulseAt = 0;    // ms epoch of the last tournament-wide pulse request
-  let tournamentPeak = 0; // rolling busiest tournament-wide minute seen, for absolute scaling
+  let tournamentPeak = 0; // recent busiest tournament-wide volume (decays per pulse), for absolute scaling
 
   function captureRate(r) {
     const rem = r.headers.get('x-rate-limit-remaining');
@@ -410,7 +424,9 @@ function createCountsPoller({ engine, log = console, context } = {}) {
         lastPulseAt = Date.now();
         stats.tournamentTotal = total;
         stats.tournamentTrend = Math.round(ts.trend * 100) / 100;
-        if (total > tournamentPeak) tournamentPeak = total;
+        // Track the recent peak: a new high wins immediately, otherwise the old
+        // peak bleeds down so a past blockbuster doesn't dim the board forever.
+        tournamentPeak = decayPeak(tournamentPeak, total, PEAK_DECAY);
       }
     }
 
@@ -499,4 +515,4 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   return { start, stats: () => ({ ...stats }), cycle, activeTeamCodes, liveContext: resolveContext };
 }
 
-module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale };
+module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak };

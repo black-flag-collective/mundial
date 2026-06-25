@@ -462,7 +462,7 @@
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">{{ xSelInactiveText }}</div>
                 </sc-if>
-                <sc-if value="{{ xInspectSim }}" hint-placeholder-val="{{ false }}">
+                <sc-if value="{{ xInspectIdle }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 13px; color: var(--mun-fg-muted); text-align: left; line-height: 1.5;">No live X data for {{ xSelName }} right now — buzz is measured only while a match is live. When {{ xSelName }} is in a live match you&rsquo;ll see its exact X query and post volume here.</div>
                 </sc-if>
                 <sc-if value="{{ xSelHasTrends }}" hint-placeholder-val="{{ false }}">
@@ -2122,7 +2122,7 @@ class Component extends DCLogic {
     const buzzUpdated = bm.updatedAt ? new Date(bm.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const buzzWindow = bm.window || 'recent';
     // Honest source: 'counts' (set by the server when the X poller is live + uncapped)
-    // means in-play nations are driven by real X post volume; otherwise it's the demo sim.
+    // means in-play nations are driven by real X post volume; otherwise the board is idle (zeros) — there is no simulated signal.
     const buzzIsLive = bm.source === 'counts';
     const xh = this.xHealth || {};
     const xWindowMin = xh.windowMin || 10;
@@ -2404,7 +2404,7 @@ class Component extends DCLogic {
       xInspectShow: xInspectShow,
       xInspectActive: xInspectActive,
       xInspectInactive: xInspectShow && !xInspectActive && buzzIsLive,
-      xInspectSim: xInspectShow && !buzzIsLive,
+      xInspectIdle: xInspectShow && !buzzIsLive,
       xSelHasTrends: xSelHasTrends,
       xSelTrends: xSelTrends,
       xSelName: xSelName,

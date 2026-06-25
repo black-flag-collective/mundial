@@ -3,7 +3,7 @@
 /**
  * X Trends — what's actually trending right now, per location.
  *
- * Uses the v2 `GET /2/trends/by_woeid/{woeid}` endpoint (app-only Bearer auth),
+ * Uses the v2 `GET /2/trends/by/woeid/{woeid}` endpoint (app-only Bearer auth),
  * which returns trend names + post counts for a place. Unlike the per-team counts
  * poller, this is billed **per location**, so polling worldwide + the three host
  * nations is only a handful of requests per cycle — trivially cheap and separate
@@ -26,7 +26,7 @@
 
 const { CODE_NAME, ALIASES } = require('./x-build-rules');
 
-const TRENDS_URL = 'https://api.x.com/2/trends/by_woeid';
+const TRENDS_URL = 'https://api.x.com/2/trends/by/woeid';
 
 // Default locations: worldwide + the 2026 host nations. WOEIDs are the standard
 // "Where On Earth" ids; override with X_TRENDS_WOEIDS if X's list changes.

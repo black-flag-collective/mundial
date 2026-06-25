@@ -20267,6 +20267,7 @@ var MundialUI = (() => {
   }
   function Ie({
     group: n,
+    round: rd,
     state: a,
     status: o,
     teamA: t,
@@ -20297,8 +20298,7 @@ var MundialUI = (() => {
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-matchcard__head", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-matchcard__group", children: [
-              "GROUP ",
-              n
+              rd ? ({ R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", "3P": "Third place", F: "Final" }[rd] ?? rd) : "GROUP " + n
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-matchcard__status", "data-upcoming": !m || void 0, children: o })
           ] }),
@@ -20310,6 +20310,7 @@ var MundialUI = (() => {
   }
   function De({
     group: n,
+    round: rd,
     teamA: a,
     teamB: o,
     state: t,
@@ -20321,8 +20322,7 @@ var MundialUI = (() => {
     const A = t === "final";
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: ["mun-featured", E].filter(Boolean).join(" "), children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "mun-featured__group", children: [
-        "Group ",
-        n
+        rd ? ({ R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", SF: "Semi-final", "3P": "Third place", F: "Final" }[rd] ?? rd) : "Group " + n
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mun-featured__score-line", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mun-featured__code", children: a.code }),

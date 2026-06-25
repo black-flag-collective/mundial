@@ -154,6 +154,19 @@ function liveDelay(activity, koLive, fastMs, calmMs) {
 }
 
 /**
+ * Absolute board scale from the tournament-wide pulse: how bright the whole
+ * globe should glow relative to its busiest moment. `total` is the current
+ * tournament-wide volume, `peak` the rolling busiest seen. Returns 1 (no change)
+ * until a pulse has run (peak 0 / total null), otherwise sqrt(total/peak) floored
+ * so a live match is never fully dark and clamped to ≤1 so it can never inflate a
+ * signal past full (defensive — the caller maxes `peak` before calling).
+ */
+function absoluteScale(total, peak, floor = 0.35) {
+  if (!(peak > 0) || total == null) return 1;
+  return Math.min(1, Math.max(floor, Math.sqrt(total / peak)));
+}
+
+/**
  * Everything we can squeeze out of the per-minute counts series — all of it
  * ships with the same counts request, so these add zero extra cost:
  *   - trend:   latest minute vs the trailing baseline (−1..1; rising/falling)
@@ -318,6 +331,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     if (!codes.length) {
       engine.setSignals({});
+      stats.liveActivity = 0;
       stats.lastEvent = 'no live match — idle (no requests)';
       return;
     }
@@ -406,9 +420,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     // Absolute scale from the tournament-wide pulse: dim the whole board on a
     // quiet day, let it glow full during the busiest periods. 1 (no change) until
     // the pulse has run; floored so a live match is never fully dark.
-    const dayScale = tournamentPeak > 0 && stats.tournamentTotal != null
-      ? Math.max(0.35, Math.sqrt(stats.tournamentTotal / tournamentPeak))
-      : 1;
+    const dayScale = absoluteScale(stats.tournamentTotal, tournamentPeak);
     const signals = {};
     for (const code of codes) {
       const cnt = lastCount[code] || 0;
@@ -487,4 +499,4 @@ function createCountsPoller({ engine, log = console, context } = {}) {
   return { start, stats: () => ({ ...stats }), cycle, activeTeamCodes, liveContext: resolveContext };
 }
 
-module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout };
+module.exports = { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale };

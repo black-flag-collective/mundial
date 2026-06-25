@@ -154,6 +154,11 @@ app.get('/api/buzz.json', (req, res) => {
       for (const b of snap.buzz) {
         if (perTeam[b.code]) b.trend = perTeam[b.code].trend;
       }
+    } else if (snap.source === 'idle') {
+      // Stream mode (no counts poller): the ambient trends floor can still light
+      // the globe between matches, so report that honestly rather than 'idle'.
+      const ts = trendsPoller.stats();
+      if (ts && ts.ambientCount > 0) snap.source = 'trends';
     }
     res.json(snap);
   } catch (err) {

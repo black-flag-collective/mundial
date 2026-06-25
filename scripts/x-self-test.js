@@ -11,7 +11,7 @@ const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
 const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -396,6 +396,32 @@ check('counts: a rising live match raises liveActivity', async () => {
   const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
   await poller.cycle();
   assert.ok(poller.stats().liveActivity > 0.3, 'a sharp minute-over-minute jump reads as lively');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
+});
+
+check('counts: absoluteScale dims by tournament volume, floored and never inflating', () => {
+  assert.strictEqual(absoluteScale(null, 0), 1, 'no pulse yet → no scaling');
+  assert.strictEqual(absoluteScale(100, 0), 1, 'no peak yet → no scaling');
+  assert.strictEqual(absoluteScale(300, 300), 1, 'at the peak → full glow');
+  assert.ok(Math.abs(absoluteScale(150, 600) - 0.5) < 1e-9, 'quarter volume → sqrt → 0.5');
+  assert.strictEqual(absoluteScale(10, 300), 0.35, 'very quiet → floored at 0.35');
+  assert.strictEqual(absoluteScale(0, 300), 0.35, 'zero volume → still floored, never dark');
+  assert.strictEqual(absoluteScale(400, 300), 1, 'total>peak (out of order) clamped to 1, never inflates');
+});
+check('counts: an idle cycle resets liveActivity (no stale carry-over)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({
+    meta: { total_tweet_count: 60 }, data: [{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  let phase = 'live';
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => (phase === 'live' ? { codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } } : { codes: [], phase: 'idle', phases: {} }) });
+  await poller.cycle();
+  assert.ok(poller.stats().liveActivity > 0.3, 'lively while a match is live');
+  phase = 'idle';
+  await poller.cycle();
+  assert.strictEqual(poller.stats().liveActivity, 0, 'idle cycle clears the stale activity');
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
 });
 

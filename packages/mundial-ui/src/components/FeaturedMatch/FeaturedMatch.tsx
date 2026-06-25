@@ -2,8 +2,16 @@ import './FeaturedMatch.css';
 import { Flag } from '../Flag/Flag';
 import { StatusBadge } from '../StatusBadge/StatusBadge';
 
+const ROUND_LABELS: Record<string, string> = {
+  R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final',
+  SF: 'Semi-final', '3P': 'Third place', F: 'Final',
+};
+
 export interface FeaturedMatchProps {
-  group: string;
+  /** Group letter (group-stage ties). */
+  group?: string;
+  /** Knockout round code (R32/R16/QF/SF/3P/F). Shown instead of the group label. */
+  round?: string;
   teamA: { code: string; name: string };
   teamB: { code: string; name: string };
   /** 'final' shows the score; 'upcoming' shows "vs". */
@@ -21,12 +29,13 @@ export interface FeaturedMatchProps {
  * the score between them, flags + full names beneath, and a status pill.
  */
 export function FeaturedMatch({
-  group, teamA, teamB, state, score, status, venue, className
+  group, round, teamA, teamB, state, score, status, venue, className
 }: FeaturedMatchProps) {
   const final = state === 'final';
+  const badge = round ? (ROUND_LABELS[round] ?? round) : `Group ${group}`;
   return (
     <div className={['mun-featured', className].filter(Boolean).join(' ')}>
-      <span className="mun-featured__group">Group {group}</span>
+      <span className="mun-featured__group">{badge}</span>
       <div className="mun-featured__score-line">
         <span className="mun-featured__code">{teamA.code}</span>
         <span className="mun-featured__score" data-final={final || undefined}>

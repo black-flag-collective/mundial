@@ -190,7 +190,7 @@
 
       <!-- featured match -->
       <div ref="{{ displayRef }}" class="{{ fFeaturedClass }}" style="position: absolute; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 150px 470px 150px 40px; box-sizing: border-box; pointer-events: none;">
-        <x-import component-from-global-scope="MundialUI.FeaturedMatch" group="{{ fGroup }}" team-a="{{ fTeamA }}" team-b="{{ fTeamB }}" state="{{ fState }}" score="{{ fScoreStr }}" status="{{ fStatus }}" venue="{{ fVenue }}" hint-size="560px,300px"></x-import>
+        <x-import component-from-global-scope="MundialUI.FeaturedMatch" group="{{ fGroup }}" round="{{ fRound }}" team-a="{{ fTeamA }}" team-b="{{ fTeamB }}" state="{{ fState }}" score="{{ fScoreStr }}" status="{{ fStatus }}" venue="{{ fVenue }}" hint-size="560px,300px"></x-import>
       </div>
 
       <!-- day slate (right) -->
@@ -198,7 +198,7 @@
         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: var(--mun-fg-subtle);">{{ dayShort }} &middot; All Fixtures</span>
         <div class="mday-scroll" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px;">
           <sc-for list="{{ dayList }}" as="m" hint-placeholder-count="4">
-            <x-import component-from-global-scope="MundialUI.MatchCard" group="{{ m.group }}" state="{{ m.state }}" status="{{ m.status }}" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" selected="{{ m.selected }}" onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" hint-size="360px,96px"></x-import>
+            <x-import component-from-global-scope="MundialUI.MatchCard" group="{{ m.group }}" round="{{ m.round }}" state="{{ m.state }}" status="{{ m.status }}" team-a="{{ m.teamA }}" team-b="{{ m.teamB }}" selected="{{ m.selected }}" onClick="{{ m.onClick }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" hint-size="360px,96px"></x-import>
           </sc-for>
         </div>
       </div>
@@ -785,7 +785,10 @@ class Component extends DCLogic {
     this.countries.forEach((c) => { t[c.code] = { code: c.code, name: c.name, group: c.group, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, Pts: 0 }; });
     this.dayMatches.forEach((day) => day.forEach((m) => {
       if (m.st !== 'FT') return;
-      if (m.round) return; // knockout tie — never counts toward group tables
+      // Count group-stage ties only. A knockout tie carries a `round`; legacy/
+      // fallback data may instead carry a round in `g` (e.g. "R32"). Either way,
+      // anything whose `g` isn't a real group letter A–L never touches a table.
+      if (m.round || !/^[A-L]$/.test(String(m.g || ''))) return;
       const A = t[m.a], B = t[m.b];
       A.P++; B.P++; A.GF += m.as; A.GA += m.bs; B.GF += m.bs; B.GA += m.as;
       if (m.as > m.bs) { A.W++; B.L++; A.Pts += 3; }
@@ -2263,17 +2266,24 @@ class Component extends DCLogic {
     const fLive = this.liveInfo(fm);
 
     // Group ties show their letter; knockout ties show their round code (R16…F).
+    // A round may arrive as `round` (current provider) OR be carried in `g` by
+    // legacy/fallback data (e.g. g:"R32"); treat any non-A–L value as a round.
     // (The DS MatchCard prefixes the badge with "GROUP" — making it read the round
     // wording for knockouts is a design-system change, tracked separately.)
     const roundName = (r) => ({ R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final', SF: 'Semi-final', '3P': 'Third place', F: 'Final' }[r] || r || '');
+    const isGroupLetter = (g) => /^[A-L]$/.test(String(g || ''));
+    const roundOf = (m) => m.round || (m.g && !isGroupLetter(m.g) ? m.g : null);
     const dayList = dms.map((m, idx) => {
       const ft = m.st === 'FT';
       const li = this.liveInfo(m);
       const isSel = idx === fi;
       const showScore = ft || li.live;
       return {
-        // MatchCard props ('final' state renders the score; live shows it too)
-        group: m.g || m.round,
+        // MatchCard props ('final' state renders the score; live shows it too).
+        // Pass both: `round` is used by the updated DS card (badge → "Round of 16");
+        // `group` keeps the current bundle showing the round code until it's synced.
+        group: roundOf(m) || m.g,
+        round: roundOf(m),
         state: showScore ? 'final' : 'upcoming',
         status: li.live ? ('● LIVE ' + li.clock) : (ft ? 'FT' : 'Kick-off'),
         teamA: { code: m.a, name: nm(m.a), score: showScore ? (m.as ?? 0) : undefined },
@@ -2491,7 +2501,8 @@ class Component extends DCLogic {
       dayShort: day.short,
       dayIsToday: !!day.today,
       dayCount: String(dms.length),
-      fGroup: fm.g || fm.round,
+      fGroup: roundOf(fm) || fm.g,
+      fRound: roundOf(fm),
       fState: (fFT || fLive.live) ? 'final' : 'upcoming',
       fLive: fLive.live,
       fFeaturedClass: fLive.live ? 'md-featured md-live' : 'md-featured',
@@ -2507,7 +2518,7 @@ class Component extends DCLogic {
       fStatusColor: fFT ? 'rgba(255,255,255,0.85)' : accent,
       fStatusBg: fFT ? 'rgba(255,255,255,0.1)' : this.hexToRgba(accent, 0.18),
       fStatusBorder: fFT ? 'rgba(255,255,255,0.2)' : this.hexToRgba(accent, 0.5),
-      fVenue: fm.venue || (fm.round ? roundName(fm.round) : ('Group ' + fm.g)),
+      fVenue: fm.venue || (roundOf(fm) ? roundName(roundOf(fm)) : ('Group ' + fm.g)),
       fillW: fillW,
       daysUI: daysUI,
       dayList: dayList,

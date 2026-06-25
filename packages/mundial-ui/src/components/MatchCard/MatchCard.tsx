@@ -8,9 +8,18 @@ export interface MatchTeam {
   score?: number;
 }
 
+/** Knockout round codes → display labels. A tie is either group-stage (`group`)
+ *  or knockout (`round`); when `round` is set it replaces the group badge. */
+const ROUND_LABELS: Record<string, string> = {
+  R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final',
+  SF: 'Semi-final', '3P': 'Third place', F: 'Final',
+};
+
 export interface MatchCardProps {
-  /** Group letter. */
-  group: string;
+  /** Group letter (group-stage ties). */
+  group?: string;
+  /** Knockout round code (R32/R16/QF/SF/3P/F). Shown instead of the group badge. */
+  round?: string;
   /** 'final' shows scores; 'upcoming' shows the kickoff label in `status`. */
   state: 'final' | 'upcoming';
   /** Short status text, e.g. "FT" or "6:00 PM ET". */
@@ -31,9 +40,10 @@ export interface MatchCardProps {
  * to feature a match.
  */
 export function MatchCard({
-  group, state, status, teamA, teamB, selected = false,
+  group, round, state, status, teamA, teamB, selected = false,
   onClick, onMouseEnter, onMouseLeave, className
 }: MatchCardProps) {
+  const badge = round ? (ROUND_LABELS[round] ?? round) : `GROUP ${group}`;
   const final = state === 'final';
   const aWin = final && (teamA.score ?? 0) > (teamB.score ?? 0);
   const bWin = final && (teamB.score ?? 0) > (teamA.score ?? 0);
@@ -61,7 +71,7 @@ export function MatchCard({
       role={onClick ? 'button' : undefined}
     >
       <div className="mun-matchcard__head">
-        <span className="mun-matchcard__group">GROUP {group}</span>
+        <span className="mun-matchcard__group">{badge}</span>
         <span className="mun-matchcard__status" data-upcoming={!final || undefined}>{status}</span>
       </div>
       {row(teamA, aWin)}

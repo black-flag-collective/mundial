@@ -37,8 +37,10 @@ Browser ──GET /──────────► public/index.html + public/
                                └─ app's _loadLiveData() swaps in fresh data
 
 GitHub Action (.github/workflows/update-data.yml, every 30 min + manual)
-   └─ scripts/update-data.js  (needs ANTHROPIC_API_KEY repo secret)
-        └─ Claude (claude-sonnet-4-6) + web_search_20250305 tool
+   └─ scripts/update-data.js  (needs FOOTBALL_DATA_TOKEN and/or ANTHROPIC_API_KEY)
+        └─ provider chain (scripts/providers/): first available source wins
+             ├─ PRIMARY  football-data.org (structured API, no LLM)
+             └─ FALLBACK Claude (claude-sonnet-4-6) + web_search_20250305 tool
              └─ finds latest WC2026 results, mergeUpdate() patches
                 data/matches.json  (ADDITIVE ONLY — never overwrites FT scores)
         └─ commits data/matches.json back to main  ──► persists the data
@@ -204,9 +206,11 @@ mundial-buzz.fly.dev. A first deploy can also be done by hand with `fly deploy`.
 
 - Fly deploys run in GitHub Actions (full network), so the container never needs
   to reach Fly directly.
-- App still works without `ANTHROPIC_API_KEY` — it just won't auto-refresh scores.
-  The key now lives as a **GitHub Actions secret** (used by the updater workflow),
-  not as a Fly secret — the server no longer runs the updater in-process.
+- The updater needs at least one data source — `FOOTBALL_DATA_TOKEN` (primary)
+  and/or `ANTHROPIC_API_KEY` (fallback) — as **GitHub Actions secrets**. With
+  neither, the site still serves the last committed data; it just won't
+  auto-refresh. The keys are not Fly secrets — the server no longer runs the
+  updater in-process.
 - **Why the updater moved out of the server:** Fly machines have no persistent
   volume and `min_machines_running = 0`, so the filesystem resets on every
   restart/redeploy (and the in-process timer never ran while auto-stopped). Any
@@ -216,7 +220,10 @@ mundial-buzz.fly.dev. A first deploy can also be done by hand with `fly deploy`.
 ## Roadmap
 
 - Tune updater cadence / prompt once real tournament data flows in.
-- Consider a real football API as a fallback/cross-check to the Claude agent.
+- A real football API (football-data.org) is now the **primary** source with
+  Claude as fallback (`scripts/providers/`). Next: cross-check the two sources
+  against each other rather than strict primary/fallback, and refine the
+  team-code alias table in `providers/team-codes.js` as real API data arrives.
 
 ### Buzz layer
 - **Front-end "your country is trending".** The API now returns per-nation

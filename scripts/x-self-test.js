@@ -389,6 +389,16 @@ check('trends: poller feeds the engine ambient channel (zero extra requests)', a
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
+check('trends: a failed request surfaces the HTTP status + body snippet in health', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({ ok: false, status: 403, json: async () => ({}), text: async () => 'Client Forbidden: not enrolled in this product' });
+  const poller = createTrendsPoller({ log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();
+  const s = poller.stats();
+  assert.strictEqual(s.lastErrorStatus, 403, 'HTTP status surfaced for diagnostics');
+  assert.ok(s.lastErrorBody && s.lastErrorBody.includes('not enrolled'), 'error body snippet captured');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
 check('trends: a total fetch outage holds the last ambient floor (no globe blackout)', async () => {
   process.env.X_BEARER_TOKEN = 'test';
   const calls = [];

@@ -158,16 +158,27 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
     ambientCap: AMBIENT_CAP,
     ambientCount: 0,
     errors: 0,
+    lastErrorStatus: null, // HTTP status of the most recent failed trends request
+    lastErrorBody: null,   // short snippet of that error body (diagnostics)
     lastPollMs: null,
     lastEvent: 'idle',
   };
   let snap = { updatedAt: null, source: 'x-trends', locations: [] };
 
   async function fetchTrendsFor(woeid) {
-    const url = `${TRENDS_URL}/${woeid}?trend.fields=trend_name,tweet_count`;
+    // `trend_name` is returned by default — requesting only `tweet_count` avoids
+    // a strict 400 on the redundant field while still getting the volume we rank by.
+    const url = `${TRENDS_URL}/${woeid}?trend.fields=tweet_count`;
     const r = await fetch(url, { headers: { Authorization: `Bearer ${process.env.X_BEARER_TOKEN}` } });
     if (!r.ok) {
       stats.errors++;
+      // Surface the real status + a short body snippet so a prod failure is
+      // self-explaining via /api/trends.json health (403 entitlement vs 400 etc.)
+      // instead of being masked by the cycle summary below.
+      stats.lastErrorStatus = r.status;
+      let snippet = null;
+      try { snippet = ((await r.text()) || '').slice(0, 200) || null; } catch { /* ignore */ }
+      stats.lastErrorBody = snippet;
       stats.lastEvent = `trends HTTP ${r.status}`;
       return { ok: false, trends: [] };
     }

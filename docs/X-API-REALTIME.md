@@ -162,9 +162,15 @@ cadence and serves the result at **`GET /api/trends.json`**:
   "updatedAt": "…", "source": "x-trends",
   "locations": [{ "woeid": 1, "name": "Worldwide",
     "trends": [{ "name": "#WorldCup2026", "postCount": 50000, "wc": true }, …] }],
-  "health": { "enabled": true, "requestsToday": 4, "dailyCap": 800, "capped": false, … }
+  "health": { "enabled": true, "requestsToday": 4, "dailyCap": 800, "capped": false,
+    "errors": 0, "lastErrorStatus": null, "lastErrorBody": null, "ambientCount": 3, … }
 }
 ```
+
+`lastErrorStatus`/`lastErrorBody` carry the HTTP status and a short body snippet of
+the most recent failed trends request — so a production failure is self-explaining
+(e.g. `403` = the token's plan doesn't include trends-by-woeid) rather than masked
+by the per-cycle summary in `lastEvent`.
 
 Each trend is tagged `wc: true` when it looks World-Cup relevant (a nation name,
 a `#CODE`, or a keyword like "world cup"/"fifa") so the UI can filter the noise.

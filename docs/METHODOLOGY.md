@@ -8,39 +8,36 @@ and where it's modeled.
 ## What "buzzing" means
 
 Each nation has a **buzz score** (shown 0–100) plus a momentary **spike**. The
-leaderboard ranks by `score + spike`. The score eases (~3s smoothing) toward the
-**higher of** two things ([`scripts/buzz-engine.js`](../scripts/buzz-engine.js)):
+leaderboard ranks by `score + spike`. The score eases (~3s smoothing) toward a
+target driven **only by real, measured signal** ([`scripts/buzz-engine.js`](../scripts/buzz-engine.js)):
 
 ```
-target = max( modeled_attention , real_X_volume )
-         modeled_attention = popularity × match-day-state × gentle motion
-         real_X_volume      = normalized X post count (when measured)
+target = real_X_volume   — normalized X post count while a nation is in a live match
+       = 0               — whenever there is no live signal (the nation stays dark)
 ```
 
-So **real X volume raises the floor** — a nation with strong live volume glows at
-least that bright — while the modeled signal keeps the globe alive otherwise. The
-**spike** is a short-lived pulse from goal-reaction surges, live-match flares, and
-occasional viral pops; it decays over ~12s.
+So buzz is **real or it is nothing**: a nation glows exactly as bright as its
+live X volume, and with no live signal its score eases to **0** — there is no
+modeled, ambient, or simulated glow. The **spike** is a short-lived pulse raised
+only by real events — a goal (detected from a score change in `data/matches.json`)
+or a sharp minute-over-minute jump in X volume; it decays over ~12s.
 
 ### Where the number comes from — three honest tiers
 
-| Tier | When | What the score is |
-|------|------|-------------------|
-| **Measured** (real X) | A nation **in a live match**, with `X_BEARER_TOKEN` + counts mode on | Its **real X post volume** over the last ~10 min ([`buzz-counts.js`](../scripts/buzz-counts.js)), normalized against the loudest live nation. This is the only genuinely "live X buzz." |
-| **Modeled** (ambient) | Every other nation, even with a token | A popularity weight × match-day state (live / upcoming / finished / idle) × smooth motion. An **attention estimate**, not measured volume. The UI labels these nations' bars "ambient interest." |
+| State | When | What the score is |
+|-------|------|-------------------|
+| **Measured** (real X) | A nation **in a live match**, with `X_BEARER_TOKEN` + counts mode on | Its **real X post volume** over the last ~10 min ([`buzz-counts.js`](../scripts/buzz-counts.js)), normalized against the loudest live nation. This is the only thing that lights the globe. |
+| **Idle** (dark) | No live match, or no token configured | The score is **0** and the globe is a static map. Nothing is fabricated — the UI says the board is quiet and it fills back in at the next kickoff. |
 
-The **popularity weight** is not hand-set — it's derived from a citable source,
-the **FIFA/Coca-Cola Men's World Ranking** (`data/fifa-ranking.json`, the
-**11 June 2026** release), used as a transparent proxy for how much a nation
-tends to draw attention. The published **top 20** are weighted by their rank
-(a smooth `weight = max(0.45, 1.0 − (rank−1)×0.028)`, so rank 1 → 1.0 and the
-curve eases into the baseline by ~rank 20); every nation **outside the published
-top 20** gets a uniform **0.45** baseline. It's a *prior*, not a precise
-popularity figure — and it's overridden entirely by real X volume whenever a
-nation is in a live match. (FIFA ranking measures strength, which correlates
-with attention; we use it as the best citable, dated proxy available, not as a
-claim that the buzz reflects team quality.)
-| **Simulated** | No token configured | *All* nations use the modeled signal. The experience is identical, but nothing is real X data — the eyebrow reads "Buzz · simulated." |
+The **FIFA/Coca-Cola Men's World Ranking** (`data/fifa-ranking.json`, the
+**11 June 2026** release) is still kept, but it **no longer adds any buzz**: it
+serves only as the canonical 48-nation list and as a citable popularity *prior*
+(its rank weights — `weight = max(0.45, 1.0 − (rank−1)×0.028)`, so rank 1 → 1.0,
+easing into a **0.45** baseline by ~rank 20 — are available to the Buzz Oracle,
+documented below). A nation with no live X signal scores **0** regardless of its
+ranking. (FIFA ranking measures strength, which correlates with attention; we use
+it as the best citable, dated proxy available, not as a claim that buzz reflects
+team quality.)
 
 The poller only spends X requests on the nations whose match is **live right now**
 (plus a short cooldown), so on any given day only a handful of nations are ever in

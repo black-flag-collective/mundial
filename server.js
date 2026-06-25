@@ -225,8 +225,8 @@ app.get('/api/predict', async (req, res) => {
 // ── Live X buzz stream (optional) ──────────────────────────────────────────
 // One upstream X Filtered Stream connection per process feeds the buzz engine
 // (per-country signal) AND is relayed to every browser over Server-Sent Events.
-// Runs only when X_BEARER_TOKEN is set; otherwise this is inert and the app's
-// simulated buzz is unchanged. See docs/X-API-REALTIME.md.
+// Runs only when X_BEARER_TOKEN is set; otherwise this is inert and buzz stays
+// idle (zeros) — there is no simulated signal. See docs/X-API-REALTIME.md.
 const { runForever } = require('./scripts/x-stream-runner');
 const { postWeight } = require('./scripts/x-stream');
 const { RULES_URL } = require('./scripts/x-rules');
@@ -276,8 +276,9 @@ const xStreamController = new AbortController();
 // Buzz source selector. Cost-safe by default: with a token set, we use the
 // cost-bounded **counts** poller unless the operator explicitly opts into the
 // (billed-per-post) firehose with X_BUZZ_MODE=stream. Without a token both are
-// inert and the free simulation runs. This makes the cheap path the default a
-// forker gets just by setting X_BEARER_TOKEN — the expensive firehose is opt-in.
+// inert and buzz stays idle (zeros) — there is no simulated signal. This makes
+// the cheap path the default a forker gets just by setting X_BEARER_TOKEN — the
+// expensive firehose is opt-in.
 const BUZZ_MODE = resolveBuzzMode(process.env);
 const countsPoller = BUZZ_MODE === 'counts' ? createCountsPoller({ engine: buzz }) : null;
 
@@ -472,7 +473,8 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, () => {
   console.log(`Mundial server running on port ${PORT}`);
 
-  // Start the buzz engine (no API key required — simulated/goal-derived source).
+  // Start the buzz engine (no API key required; real-signal-only — stays at zero
+  // until a live X feed or an observed goal event feeds it real intensity).
   buzz.start();
 
   // X Trends poller — independent of the buzz source; no-ops without a token.

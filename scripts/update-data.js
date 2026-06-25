@@ -1,12 +1,19 @@
 /**
- * Claude-powered match data updater.
+ * Match data updater — orchestrator.
  *
- * Uses the Anthropic API with web search to find the latest World Cup 2026
- * results and patch data/matches.json so standings and the bracket stay current.
+ * Keeps standings and the bracket current by pulling the latest WC2026 results
+ * from a chain of pluggable data sources and patching data/matches.json.
+ *
+ * SOLID shape: the orchestrator depends only on the small ResultsProvider
+ * contract (see scripts/providers/provider.js), not on any concrete API.
+ * Sources, in priority order:
+ *   1. football-data.org  — structured, free, no hallucination  (PRIMARY)
+ *   2. Claude + web_search — flexible, but costly/fallible       (FALLBACK)
+ * A new source is added by dropping in another provider — this file, the merge
+ * logic, and the persistence layer don't change (Open/Closed).
  *
  * Run manually:  node scripts/update-data.js
- * Scheduled:    called automatically every 30 min by server.js when
- *               ANTHROPIC_API_KEY is set.
+ * Scheduled:     every 30 min by .github/workflows/update-data.yml
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
@@ -15,17 +22,11 @@ const { Anthropic: PostHogAnthropic } = require('@posthog/ai');
 const fs = require('fs');
 const path = require('path');
 
-const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
+const { createSportsApiProvider } = require('./providers/sports-api');
+const { createClaudeProvider } = require('./providers/claude-search');
+const { runProviders, hasContent } = require('./providers/runner');
 
-// FIFA codes used in the app — Claude must stick to these exact strings
-const TEAM_CODES = [
-  'MEX','RSA','KOR','CZE','CAN','SUI','QAT','BIH',
-  'BRA','MAR','HAI','SCO','USA','PAR','AUS','TUR',
-  'GER','CUW','CIV','ECU','NED','JPN','TUN','SWE',
-  'BEL','EGY','IRN','NZL','ESP','CPV','KSA','URU',
-  'FRA','SEN','NOR','IRQ','ARG','ALG','AUT','JOR',
-  'POR','UZB','COL','COD','ENG','CRO','GHA','PAN'
-];
+const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
 
 function loadCurrentData() {
   if (!fs.existsSync(DATA_PATH)) return null;
@@ -38,13 +39,16 @@ function saveData(data) {
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 }
 
-/** Merge Claude's response into the existing data file.
+/** Merge a provider's response into the existing data file.
  *  new_days        → append days/dayMatches, skipping fixtures we already have
  *  updated_matches → patch scores on not-yet-final entries
  *
  *  Returns { data, changed }. `changed` is true only when match content actually
  *  moved — so the caller can avoid rewriting the file (and triggering a deploy)
- *  on runs where Claude echoed data we already had.
+ *  on runs where the source echoed data we already had.
+ *
+ *  This is the source-agnostic heart of the updater: every provider returns the
+ *  shape it consumes, and its invariants protect the data regardless of source.
  */
 function mergeUpdate(current, update) {
   const data = JSON.parse(JSON.stringify(current)); // deep clone
@@ -91,7 +95,7 @@ function mergeUpdate(current, update) {
       );
       // Safety invariant: a confirmed final is immutable. Only patch matches that
       // are not yet FT, and only with a final/live result. This guards against a
-      // web-search result silently rewriting a good score (e.g. CAN–QAT flipping
+      // source silently rewriting a good score (e.g. CAN–QAT flipping
       // 2–0 → 6–0 between runs).
       if (m && m.st !== 'FT' && (um.st === 'FT' || um.st === 'LIVE')) {
         const flipped = m.a !== um.a;
@@ -113,185 +117,68 @@ function mergeUpdate(current, update) {
   return { data, changed };
 }
 
-/** Extract <match_data>…</match_data> JSON block from Claude's text response */
-function parseResponseJson(text) {
-  const m = text.match(/<match_data>([\s\S]*?)<\/match_data>/);
-  if (m) {
-    try { return JSON.parse(m[1].trim()); } catch {}
-  }
-  // Fallback: look for a raw JSON object
-  const jsonM = text.match(/\{[\s\S]*"new_days"[\s\S]*\}/);
-  if (jsonM) {
-    try { return JSON.parse(jsonM[0]); } catch {}
-  }
-  return null;
+/**
+ * Build the ordered provider chain from the environment. Each provider reports
+ * its own availability, so an absent key simply skips that source.
+ *   - sports API is primary (structured, free, reliable)
+ *   - Claude web-search is the fallback (only reached if the primary can't run)
+ */
+function buildProviders({ client, aiObservability } = {}) {
+  return [
+    createSportsApiProvider({}),
+    createClaudeProvider({ client, aiObservability }),
+  ];
 }
 
-async function updateData({ phClient = null } = {}) {
-  // maxRetries lets the SDK automatically back off and honor the API's
-  // `retry-after` header on transient 429/5xx responses. When a PostHog client
-  // is provided (POSTHOG_KEY set in CI), route through the @posthog/ai wrapper
-  // so the daily updater's web-search run is captured as an $ai_generation
-  // event (model, tokens, cost). The wrapper constructor takes no maxRetries —
-  // it's passed per-request on messages.create below instead.
-  const client = phClient
-    ? new PostHogAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY, posthog: phClient })
-    : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 5 });
+async function updateData({ phClient = null, providers = null } = {}) {
+  // Construct the Anthropic client only when a key is present. When a PostHog
+  // client is provided (POSTHOG_KEY set in CI), route through the @posthog/ai
+  // wrapper so the fallback's web-search run is captured as an $ai_generation
+  // event (model, tokens, cost). Without a key, the Claude provider reports
+  // unavailable and the chain relies on the sports API alone.
+  let client = null;
+  if (process.env.ANTHROPIC_API_KEY) {
+    client = phClient
+      ? new PostHogAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY, posthog: phClient })
+      : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 5 });
+  }
+  const aiObservability = !!(phClient && process.env.ANTHROPIC_API_KEY);
 
   const current = loadCurrentData();
   if (!current) throw new Error('No existing matches.json found');
 
-  const today = new Date();
-  const todayStr = today.toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
+  const chain = providers || buildProviders({ client, aiObservability });
+  const { update, provider } = await runProviders(chain, current);
 
-  // Build a summary of what's still upcoming (needs results)
-  const upcomingList = [];
-  current.days.forEach((d, i) => {
-    const ms = current.dayMatches[i] || [];
-    ms.forEach(m => {
-      if (m.st !== 'FT') {
-        upcomingList.push(`${d.short}: ${m.a} vs ${m.b} (Group ${m.g})`);
-      }
-    });
-  });
-
-  const lastDay = current.days[current.days.length - 1]?.short || 'Jun 18';
-
-  const prompt = `
-You are updating match data for a live FIFA World Cup 2026 tracker.
-
-Today is: ${todayStr}
-
-TEAM CODES (use exactly these strings):
-${TEAM_CODES.join(', ')}
-
-Current data covers: Jun 11 – ${lastDay}
-
-Matches still marked as UPCOMING that may now have results:
-${upcomingList.length ? upcomingList.join('\n') : '(none)'}
-
-Please:
-1. Search the web for any FIFA World Cup 2026 match results that happened since ${lastDay} and up to now
-2. Search for today's full schedule if not already in the data
-3. Find results for any UPCOMING matches listed above that have since been played
-
-Return your findings as a JSON object inside <match_data> tags with this exact structure:
-
-<match_data>
-{
-  "new_days": [
-    {
-      "day_short": "Jun 19",
-      "day_long": "June 19",
-      "day_dow": "Friday",
-      "matches": [
-        { "g": "GROUP_LETTER", "a": "TEAM_CODE", "b": "TEAM_CODE", "as": 0, "bs": 0, "st": "FT", "venue": "Venue Name" },
-        { "g": "GROUP_LETTER", "a": "TEAM_CODE", "b": "TEAM_CODE", "st": "UP", "time": "6:00 PM ET", "venue": "Venue Name" }
-      ]
-    }
-  ],
-  "updated_matches": [
-    { "day_short": "Jun 18", "a": "SUI", "b": "BIH", "as": 2, "bs": 0, "st": "FT" }
-  ]
-}
-</match_data>
-
-Rules:
-- Only include "new_days" for days not already in the data (after ${lastDay})
-- Only include "updated_matches" for matches that have changed status (UP → FT or LIVE)
-- Use "st": "FT" only for confirmed final scores. Use "st": "UP" for scheduled matches not yet played.
-- For matches still in the future, include them in new_days with st: "UP" and a "time" field
-- If a day has no matches or you're unsure, omit it from new_days
-- Keep as/bs as integers (goals scored)
-- Venue: use short form like "MetLife Stadium, NJ" or "SoFi Stadium, LA"
-- If there is nothing to update, return empty arrays: { "new_days": [], "updated_matches": [] }
-`;
-
-  // Keep the request lightweight. Each web_search result page is pulled back
-  // into context as input tokens, so a high max_uses can blow past a low
-  // input-tokens-per-minute rate limit mid-request (429). Three searches is
-  // enough to cover "results since last day", "today's schedule", and
-  // "upcoming results" while keeping the token footprint small.
-  let response;
-  try {
-    const createBody = {
-      model: 'claude-sonnet-4-6',
-      max_tokens: 3072,
-      tools: [
-        {
-          type: 'web_search_20250305',
-          name: 'web_search',
-          max_uses: 3
-        }
-      ],
-      messages: [{ role: 'user', content: prompt }]
-    };
-    // PostHog metadata only when wrapped (plain SDK would forward these to the API).
-    if (phClient) {
-      createBody.posthogDistinctId = 'match-data-updater';
-      createBody.posthogProperties = { feature: 'match_data_updater', model: 'claude-sonnet-4-6' };
-    }
-    // maxRetries per-request so it applies on the wrapper too (its constructor
-    // takes none); honors the API's retry-after on transient 429/5xx.
-    response = await client.messages.create(createBody, { maxRetries: 5 });
-  } catch (err) {
-    // A persistent rate limit (after the SDK's own retries) is not a failure
-    // worth going red over on a 30-min cron — skip this run and let the next
-    // one try. Surfacing it as an error would just spam notifications.
-    if (err && err.status === 429) {
-      const h = err.headers;
-      const reset = h && (typeof h.get === 'function'
-        ? h.get('anthropic-ratelimit-input-tokens-reset')
-        : h['anthropic-ratelimit-input-tokens-reset']);
-      console.warn(
-        `[update] Rate limited by the Anthropic API (429). Skipping this run; ` +
-        `the next scheduled run will retry.${reset ? ` Input-token limit resets at ${reset}.` : ''}`
-      );
-      return;
-    }
-    throw err;
-  }
-
-  // Extract text from response (may contain tool_result blocks from web search)
-  const textBlocks = response.content.filter(b => b.type === 'text');
-  const fullText = textBlocks.map(b => b.text).join('\n');
-
-  const update = parseResponseJson(fullText);
-  if (!update) {
-    console.warn('[update] Could not parse structured response from Claude. Raw response:\n', fullText.slice(0, 500));
+  if (!hasContent(update)) {
+    console.log(`[update] No new results to add${provider ? ` (source: ${provider})` : ' (no source available)'}.`);
     return;
   }
 
   const hadNewDays = (update.new_days || []).length;
   const hadUpdates = (update.updated_matches || []).length;
 
-  if (!hadNewDays && !hadUpdates) {
-    console.log('[update] No new results to add.');
-    return;
-  }
-
   const { data: merged, changed } = mergeUpdate(current, update);
   if (!changed) {
-    // Claude reported items, but they were all dupes or already-final matches, so
-    // nothing actually moved. Don't rewrite the file — saveData() bumps updatedAt
-    // unconditionally, and a timestamp-only commit would trigger a needless deploy.
-    console.log(`[update] Response had ${hadNewDays} day(s)/${hadUpdates} update(s), but no net change — skipping save.`);
+    // The source reported items, but they were all dupes or already-final
+    // matches, so nothing actually moved. Don't rewrite the file — saveData()
+    // bumps updatedAt unconditionally, and a timestamp-only commit would trigger
+    // a needless deploy.
+    console.log(`[update] ${provider}: ${hadNewDays} day(s)/${hadUpdates} update(s), but no net change — skipping save.`);
     return;
   }
   saveData(merged);
-  console.log(`[update] Saved: ${hadNewDays} new days, ${hadUpdates} match updates`);
+  console.log(`[update] Saved from ${provider}: ${hadNewDays} new days, ${hadUpdates} match updates`);
 }
 
 // Allow direct execution
 if (require.main === module) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('Set ANTHROPIC_API_KEY before running this script.');
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.FOOTBALL_DATA_TOKEN) {
+    console.error('Set FOOTBALL_DATA_TOKEN (primary) and/or ANTHROPIC_API_KEY (fallback) before running this script.');
     process.exit(1);
   }
   // Opt-in AI observability: with POSTHOG_KEY set (as a GitHub Actions secret),
-  // the updater's Claude call is captured in PostHog. Without it, runs exactly
+  // the fallback's Claude call is captured in PostHog. Without it, runs exactly
   // as before. A short-lived CLI must flush before exit or queued events drop.
   const phClient = process.env.POSTHOG_KEY
     ? new PostHog(process.env.POSTHOG_KEY, { host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com' })
@@ -301,4 +188,4 @@ if (require.main === module) {
     .finally(async () => { if (phClient) await phClient.shutdown(); });
 }
 
-module.exports = { updateData, mergeUpdate };
+module.exports = { updateData, mergeUpdate, buildProviders, loadCurrentData, saveData };

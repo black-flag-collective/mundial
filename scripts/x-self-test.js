@@ -97,7 +97,7 @@ check('counts: hard cap trips the circuit breaker (clears signals)', async () =>
   const engine = { state: { BRA: {}, ARG: {}, FRA: {} }, setSignals(m) { got = m; }, surge() {} };
   const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: LIVE_CTX });
   await poller.cycle();
-  assert.deepStrictEqual(got, {}, 'capped → signals cleared (fades to simulation)');
+  assert.deepStrictEqual(got, {}, 'capped → signals cleared (fades to idle/zeros)');
   assert.strictEqual(poller.stats().capped, true);
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_DAILY_CAP;
 });

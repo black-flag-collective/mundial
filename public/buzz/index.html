@@ -208,7 +208,10 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const h = s.health || {};
-    const mode = h.mode || (h.tokenConfigured ? 'stream' : 'sim');
+    // /api/x/health reports mode as 'counts' | 'stream' | 'off' — never a
+    // simulation (the engine is real-signal-only). Default to 'off' (no live
+    // feed) until health loads, so the panel never claims a non-existent sim.
+    const mode = h.mode || (h.tokenConfigured ? 'stream' : 'off');
     const counts = mode === 'counts';
 
     // Globe nations: real lat/lon + confederation color + buzz intensity.
@@ -238,12 +241,12 @@ class Component extends DCLogic {
     const hot = hotEntry ? (this.byCode[hotEntry.code] || {}) : null;
 
     // Connection pill + tiles adapt to the active mode.
-    const connText = counts ? (h.capped ? 'CAPPED' : h.rateLimited ? 'PAUSED' : 'COUNTS') : mode === 'sim' ? 'SIMULATED' : mode === 'off' ? 'OFF' : 'STREAM';
-    const liveish = (counts && !h.capped && !h.rateLimited) || mode === 'sim';
+    const connText = counts ? (h.capped ? 'CAPPED' : h.rateLimited ? 'PAUSED' : 'COUNTS') : mode === 'off' ? 'OFF' : 'STREAM';
+    const liveish = counts && !h.capped && !h.rateLimited;
     const connDot = (h.capped || h.rateLimited) ? '#ff8a5c' : liveish ? '#5fe0a0' : 'var(--mun-fg-dim)';
     const connSub = counts
       ? `${h.phase || 'idle'} · ${(h.activeTeams || []).length} active team(s)`
-      : mode === 'sim' ? 'procedural source · no X cost' : (h.lastEvent || '');
+      : mode === 'off' ? 'no live feed — idle' : (h.lastEvent || '');
 
     let tiles;
     if (counts) {
@@ -259,11 +262,11 @@ class Component extends DCLogic {
       ];
     } else {
       tiles = [
-        { label: 'Source', value: mode === 'sim' ? 'Simulated' : 'Stream', unit: '', sub: mode === 'sim' ? 'no X cost' : (h.lastEvent || ''), tone: 'var(--mun-accent)', hasBar: false },
+        { label: 'Source', value: mode === 'off' ? 'Off' : 'Stream', unit: '', sub: mode === 'off' ? 'no live feed' : (h.lastEvent || ''), tone: 'var(--mun-accent)', hasBar: false },
         { label: 'Nations lit', value: String(s.snap.filter((e) => this.intensity(e) > 0.55).length), unit: 'hot', sub: 'score + spike', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Tracked', value: String(s.teams.length), unit: 'teams', sub: 'all qualified nations', tone: 'var(--mun-fg-display)', hasBar: false },
-        { label: 'Mode', value: connText, unit: '', sub: mode === 'sim' ? 'add X_BEARER_TOKEN for live counts' : 'firehose (X_BUZZ_MODE=stream)', tone: 'var(--mun-fg-display)', hasBar: false },
-        { label: 'Token', value: h.tokenConfigured ? 'set' : 'none', unit: '', sub: h.tokenConfigured ? 'X configured' : 'simulation only', tone: 'var(--mun-fg-display)', hasBar: false },
+        { label: 'Mode', value: connText, unit: '', sub: mode === 'off' ? 'add X_BEARER_TOKEN for live counts' : 'firehose (X_BUZZ_MODE=stream)', tone: 'var(--mun-fg-display)', hasBar: false },
+        { label: 'Token', value: h.tokenConfigured ? 'set' : 'none', unit: '', sub: h.tokenConfigured ? 'X configured' : 'no live feed — idle', tone: 'var(--mun-fg-display)', hasBar: false },
       ];
     }
 

@@ -2,9 +2,9 @@
  * Buzz engine — tracks a live "social buzz" intensity per country for the
  * globe's beacon layer.
  *
- * Buzz is driven ONLY by real, measured signal — there is no simulated/ambient
- * fallback. With no live feed every score stays 0 and the globe is a static
- * map; buzz lights up only when real data is fed in via:
+ * Buzz is driven ONLY by real, measured X signal — there is no fabricated or
+ * procedural glow. With no live feed and nothing trending, every score stays 0
+ * and the globe is a static map; buzz lights up only when real data is fed in via:
  *   - setSignals() / ingest() — rolling X (Twitter) post volume per country,
  *     from the cost-bounded counts poller or the filtered stream
  *     (see scripts/buzz-counts.js, scripts/x-stream*.js, server.js),

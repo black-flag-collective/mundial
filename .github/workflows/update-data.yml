@@ -1,7 +1,8 @@
 name: Update match data
 
-# Fetches the latest World Cup 2026 results via the Claude web-search updater
-# and commits data/matches.json back to the repo. Committing (rather than
+# Fetches the latest World Cup 2026 results — from a structured football API
+# (primary) with a Claude web-search fallback — and commits data/matches.json
+# back to the repo. Committing (rather than
 # writing to the server's local disk) is what makes updates PERSIST: Fly
 # machines have no volume and reset their filesystem on restart/redeploy, so
 # any score written in-process is lost. A commit to main also triggers the
@@ -40,19 +41,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify API key is configured
+      - name: Verify a data source is configured
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::ANTHROPIC_API_KEY secret is not set. Add it under Settings → Secrets and variables → Actions."
+          if [ -z "$FOOTBALL_DATA_TOKEN" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::No data source configured. Set FOOTBALL_DATA_TOKEN (primary, structured) and/or ANTHROPIC_API_KEY (fallback, web-search) under Settings → Secrets and variables → Actions."
             exit 1
           fi
 
       - name: Run updater
         env:
+          # Primary source: a structured football-results API (football-data.org).
+          # Reliable and free; no LLM, no hallucinated scores.
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          # Fallback source: Claude + web_search, used only when the primary is
+          # unavailable. A depleted balance / rate limit is skipped gracefully.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Optional: set the POSTHOG_KEY repo secret to capture the updater's
+          # Optional: set the POSTHOG_KEY repo secret to capture the fallback's
           # Claude call in PostHog AI observability. Empty → runs without it.
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
         run: node scripts/update-data.js

@@ -139,10 +139,11 @@ Bracket re-derive themselves from those scores. A "_Updated …_" timestamp on
 the data views tells you how fresh it is. Confirmed final scores are never
 overwritten.
 
-**Buzz** is polled every ~4 seconds from a live feed. Today it can be driven by
+**Buzz** is polled every ~4 seconds from a live feed. It is driven **only** by
 real activity from the X (Twitter) API — per-nation post volume mapped onto each
-country's score and spikes — or by a built-in simulated source as a fallback.
-Either way the on-screen experience is identical.
+country's score and spikes — while a match is live. There is no simulated
+fallback: when no match is in play (or no X token is configured) the board
+simply stays quiet and lights up again at the next kickoff.
 
 **Privacy:** the buzz layer only ever stores **aggregate intensity per
 country**. No post text, authors, or account IDs are kept or shown.

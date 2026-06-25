@@ -31,7 +31,7 @@
  *      a match is live) for overall World-Cup chatter — a global heartbeat and an
  *      absolute scale, so a quiet day glows dimmer than a final.
  *   5. **Hard daily cap.** A request budget with a circuit breaker that pauses
- *      polling (buzz fades back to the free simulation) when hit.
+ *      polling (buzz fades to idle/zeros — no simulated signal) when hit.
  *
  * Off unless `X_BUZZ_MODE=counts` and `X_BEARER_TOKEN` are set. Tunables:
  *   X_COUNTS_LIVE_INTERVAL_MS      (default 60000=60s fast floor while live)
@@ -344,7 +344,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     stats.phase = context.phase || 'idle';
     stats.activeTeams = codes;
 
-    // Drop state for nations no longer in any window so they fade to simulation.
+    // Drop state for nations no longer in any window so they fade to idle (zeros).
     const hot = new Set(codes);
     for (const c of Object.keys(lastCount)) if (!hot.has(c)) { delete lastCount[c]; delete lastFetchAt[c]; delete perTeamState[c]; }
 
@@ -366,7 +366,7 @@ function createCountsPoller({ engine, log = console, context } = {}) {
     if (fetchCodes.length && stats.requestsToday + fetchCodes.length > DAILY_CAP) {
       stats.capped = true;
       stats.lastEvent = `daily cap ${DAILY_CAP} reached — paused until UTC reset`;
-      engine.setSignals({}); // fade back to the free simulation
+      engine.setSignals({}); // fade to idle (zeros) — no simulated signal
       return;
     }
     stats.capped = false;

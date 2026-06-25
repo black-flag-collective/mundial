@@ -25,6 +25,7 @@ const path = require('path');
 const { createSportsApiProvider } = require('./providers/sports-api');
 const { createClaudeProvider } = require('./providers/claude-search');
 const { runProviders, hasContent } = require('./providers/runner');
+const { demotePrematureResults } = require('./providers/provider');
 
 const DATA_PATH = path.join(__dirname, '..', 'data', 'matches.json');
 
@@ -155,28 +156,40 @@ async function updateData({ phClient = null, providers = null } = {}) {
   const current = loadCurrentData();
   if (!current) throw new Error('No existing matches.json found');
 
+  // Enforce the no-result-before-kickoff invariant on the existing data FIRST,
+  // so any fabricated/early FT (which mergeUpdate's immutability would freeze)
+  // is reset to UP and the provider below can fill the real result once played.
+  // Runs every cycle, even when the provider has nothing new — that's what
+  // self-heals stale data already committed to the repo.
+  const premature = demotePrematureResults(current, Date.now());
+  if (premature) console.log(`[update] Reset ${premature} pre-kickoff result(s) to UP (no result before kickoff).`);
+
   const chain = providers || buildProviders({ client, aiObservability });
   const { update, provider } = await runProviders(chain, current);
 
-  if (!hasContent(update)) {
+  let merged = current;
+  let changed = false;
+  let hadNewDays = 0;
+  let hadUpdates = 0;
+  if (hasContent(update)) {
+    hadNewDays = (update.new_days || []).length;
+    hadUpdates = (update.updated_matches || []).length;
+    const res = mergeUpdate(current, update); // current is already sanitized
+    merged = res.data;
+    changed = res.changed;
+  } else {
     console.log(`[update] No new results to add${provider ? ` (source: ${provider})` : ' (no source available)'}.`);
-    return;
   }
 
-  const hadNewDays = (update.new_days || []).length;
-  const hadUpdates = (update.updated_matches || []).length;
-
-  const { data: merged, changed } = mergeUpdate(current, update);
-  if (!changed) {
-    // The source reported items, but they were all dupes or already-final
-    // matches, so nothing actually moved. Don't rewrite the file — saveData()
-    // bumps updatedAt unconditionally, and a timestamp-only commit would trigger
-    // a needless deploy.
-    console.log(`[update] ${provider}: ${hadNewDays} day(s)/${hadUpdates} update(s), but no net change — skipping save.`);
+  // Save when the merge moved match content OR the sanitizer corrected stale
+  // data. Otherwise skip — saveData() bumps updatedAt unconditionally, and a
+  // timestamp-only commit would trigger a needless deploy.
+  if (!changed && !premature) {
+    console.log(`[update] ${provider || 'no source'}: ${hadNewDays} day(s)/${hadUpdates} update(s), but no net change — skipping save.`);
     return;
   }
   saveData(merged);
-  console.log(`[update] Saved from ${provider}: ${hadNewDays} new days, ${hadUpdates} match updates`);
+  console.log(`[update] Saved${provider ? ` from ${provider}` : ''}: ${hadNewDays} new days, ${hadUpdates} updates, ${premature} reset`);
 }
 
 // Allow direct execution

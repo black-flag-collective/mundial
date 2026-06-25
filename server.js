@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { createRateLimiter, clientIp } = require('./scripts/rate-limit');
+const { demotePrematureResults } = require('./scripts/providers/provider');
 const { PostHog, setupExpressRequestContext, setupExpressErrorHandler } = require('posthog-node');
 
 const app = express();
@@ -24,7 +25,14 @@ let _matchesMtime = -1;
 function readMatches() {
   const mtime = fs.statSync(DATA_PATH).mtimeMs;
   if (_matchesCache === null || mtime !== _matchesMtime) {
-    _matchesCache = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+    // Never serve a result for a match that hasn't kicked off. This enforces the
+    // same no-result-before-kickoff invariant as the updater at serve time, so a
+    // stale/early FT in the committed file is shown as UP until the updater
+    // repopulates the real result — the live site self-heals on deploy.
+    const reset = demotePrematureResults(data, Date.now());
+    if (reset) console.warn(`[data] readMatches: reset ${reset} pre-kickoff result(s) to UP`);
+    _matchesCache = data;
     _matchesMtime = mtime;
   }
   return _matchesCache;

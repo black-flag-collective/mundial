@@ -73,4 +73,44 @@ function normalizeGroup(g) {
   return m ? m[1] : null;
 }
 
-module.exports = { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup };
+/**
+ * Normalize a knockout stage to the app's round code, or null for the group
+ * stage / unknown. Codes ascend through the bracket: R32 → R16 → QF → SF → 3P
+ * (third-place playoff) → F (final). football-data.org uses LAST_16 etc.; we
+ * also accept ROUND_OF_* and a few aliases so the mapping survives a provider swap.
+ */
+function mapStage(stage) {
+  switch (String(stage || '').toUpperCase().replace(/[\s-]+/g, '_')) {
+    case 'LAST_32':
+    case 'ROUND_OF_32':
+      return 'R32';
+    case 'LAST_16':
+    case 'ROUND_OF_16':
+      return 'R16';
+    case 'QUARTER_FINALS':
+    case 'QUARTER_FINAL':
+    case 'QUARTERFINALS':
+      return 'QF';
+    case 'SEMI_FINALS':
+    case 'SEMI_FINAL':
+    case 'SEMIFINALS':
+      return 'SF';
+    case 'THIRD_PLACE':
+    case 'THIRD_PLACE_PLAYOFF':
+    case 'PLAY_OFF_FOR_THIRD_PLACE':
+      return '3P';
+    case 'FINAL':
+      return 'F';
+    default:
+      return null; // GROUP_STAGE / REGULAR_SEASON / unknown → not a knockout tie
+  }
+}
+
+/** Human label for a round code, e.g. "R16" → "Round of 16". */
+const ROUND_LABELS = {
+  R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-final',
+  SF: 'Semi-final', '3P': 'Third place', F: 'Final',
+};
+function roundLabel(round) { return ROUND_LABELS[round] || round || ''; }
+
+module.exports = { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage, roundLabel, ROUND_LABELS };

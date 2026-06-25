@@ -12,15 +12,19 @@
  * point SPORTS_API_URL at it, set the token, and adjust the per-match field reads
  * in mapFixtures(). The contract and everything downstream stay identical.
  *
- * Safety: any fixture whose two teams don't BOTH resolve to our FIFA codes is
- * dropped with a warning (never guessed) — a wrong code would render a broken
- * flag and poison the derived standings/bracket. mergeUpdate() additionally
- * guarantees confirmed finals are never overwritten, so even a mistimed LIVE
- * from the API can't corrupt good data.
+ * Group-stage ties carry a group letter (g); knockout ties carry a round code
+ * (round: R32…F). Both share one UP→LIVE→FT lifecycle, so a tie's state is always
+ * managed before (UP), during (LIVE), and after (FT) kickoff.
+ *
+ * Safety: any fixture whose two teams don't BOTH resolve to our FIFA codes — or
+ * that resolves to neither a group nor a known knockout round — is dropped with a
+ * warning (never guessed): a wrong code would render a broken flag and poison the
+ * derived standings. mergeUpdate() additionally guarantees confirmed finals are
+ * never overwritten, so even a mistimed LIVE from the API can't corrupt good data.
  */
 
 const { toFifa } = require('./team-codes');
-const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup } = require('./provider');
+const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage } = require('./provider');
 
 /**
  * Map a list of football-data.org fixtures → { new_days, updated_matches }.
@@ -49,15 +53,15 @@ function mapFixtures(fixtures, log = console) {
     if (!short) { dropped++; continue; }
 
     const st = mapStatus(fx.status);
-    // Group letter must come ONLY from fx.group, never fx.stage: WC2026 has 12
-    // groups A–L, and a stage like "FINAL" would normalize to "L" — silently
-    // assigning a knockout match to the real Group L and corrupting its standings.
-    // A fixture whose group can't be resolved to A–L is dropped: the matchday UI
-    // and standings are group-keyed, so a blank/wrong group is worse than omitting
-    // it. (Known limitation: knockout-stage fixtures carry no group and are not
-    // emitted by this structured provider yet — see docs/DATA-PIPELINE.md.)
+    // Place each fixture in exactly one context: a group-stage tie carries a
+    // group letter (g, A–L from fx.group ONLY — never fx.stage, since "FINAL"
+    // would normalize to the real Group L and corrupt its standings); a knockout
+    // tie carries a round code (R32…F from fx.stage). A fixture that resolves to
+    // neither (an unknown stage, or knockout teams still TBD) is dropped — never
+    // guessed. Both contexts share the same UP→LIVE→FT lifecycle below.
     const g = normalizeGroup(fx.group);
-    if (!g) { dropped++; continue; }
+    const round = g ? null : mapStage(fx.stage);
+    if (!g && !round) { dropped++; continue; }
     const ft = (fx.score && fx.score.fullTime) || {};
     const hasScore = Number.isInteger(ft.home) && Number.isInteger(ft.away);
 
@@ -66,12 +70,12 @@ function mapFixtures(fixtures, log = console) {
     // fullTime scores; defaulting those to 0 would write a fake 0–0 — and because
     // mergeUpdate() treats FT as immutable, that wrong score could never be
     // corrected later. So a scoreless FT/LIVE is kept UP until a real score lands.
-    const match = { g, a, b, ko };
+    const match = g ? { g, a, b, ko } : { round, a, b, ko };
     if ((st === 'FT' || st === 'LIVE') && hasScore) {
       match.st = st;
       match.as = ft.home;
       match.bs = ft.away;
-      updated.push({ day_short: short, a, b, as: ft.home, bs: ft.away, st });
+      updated.push({ day_short: short, a, b, as: ft.home, bs: ft.away, st, ...(g ? { g } : { round }) });
     } else {
       match.st = 'UP';
     }
@@ -83,7 +87,7 @@ function mapFixtures(fixtures, log = console) {
   }
 
   if (dropped) {
-    (log.warn || console.warn)(`[update] football-data.org: dropped ${dropped} fixture(s) with unresolved teams/dates.`);
+    (log.warn || console.warn)(`[update] football-data.org: dropped ${dropped} fixture(s) with unresolved teams, dates, or stage.`);
   }
   return { new_days: [...dayMap.values()], updated_matches: updated };
 }

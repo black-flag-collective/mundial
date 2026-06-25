@@ -69,10 +69,11 @@ the design below.
 |--------------|---------|
 | `days[i]`    | A match day. **Positionally aligned** with `dayMatches[i]`. |
 | `dayMatches[i]` | Array of matches played that day. |
-| `g`          | Group letter `A`–`L` (12 groups of 4). |
+| `g`          | Group letter `A`–`L` (12 groups of 4). Present on **group-stage** ties only. |
+| `round`      | Knockout round code — `R32`, `R16`, `QF`, `SF`, `3P`, `F`. Present on **knockout** ties only (mutually exclusive with `g`). |
 | `a`, `b`     | FIFA 3-letter team codes. Must be from the fixed `TEAM_CODES` list in `scripts/providers/team-codes.js`. |
 | `as`, `bs`   | Goals for team `a` / team `b` (integers). Present once a score is known. |
-| `st`         | `"UP"` (upcoming, has `time`), `"LIVE"`, or `"FT"` (final). |
+| `st`         | The managed lifecycle: `"UP"` (before kickoff, has `time`), `"LIVE"` (during), or `"FT"` (after, final). Every tie — group or knockout — always carries one. |
 | `time`       | Kickoff time, for `UP` matches only. Removed when a score lands. |
 | `venue`      | Stadium string (display-only). |
 | `today`      | **Not stored.** Injected per-request by the server (see §4). |
@@ -81,9 +82,11 @@ the design below.
 
 1. **`days.length === dayMatches.length`** — they are parallel arrays.
    *(checked by the smoke test)*
-2. **A fixture appears on exactly one day.** A team-pair `{a,b}` is a stable
-   fixture id (group-stage pairs are unique), so the same match must never be
-   scheduled twice. *(enforced in `mergeUpdate`; checked by the smoke test)*
+2. **A fixture appears on exactly one day.** The fixture id is the team-pair
+   `{a,b}` **plus its context** (group letter `g` or knockout `round`) — because
+   two teams from the same group can advance and meet again in a knockout tie
+   (e.g. the final), the pair alone isn't unique tournament-wide. The same match
+   must never be scheduled twice. *(enforced in `mergeUpdate`; checked by the smoke test)*
 3. **A confirmed final (`st: "FT"`) is immutable.** Once a score is recorded as
    final it is never overwritten. *(enforced in `mergeUpdate`)*
 4. **Updates are additive.** The updater only *adds* new days/fixtures and
@@ -204,11 +207,21 @@ gated on whether a commit was actually made (`steps.commit.outputs.committed`).
 
 ## 6. Standings & bracket are *derived*, not stored
 
-The browser computes group tables (`computeStandings()` in `index.html`) and the
-projected knockout bracket directly from `dayMatches` scores. There is no separate
-standings/bracket data to keep in sync — fix the scores and everything downstream
-recomputes. This is also why score *accuracy* matters so much: one wrong `FT`
-score silently distorts a group table and the bracket.
+The browser computes group tables (`computeStandings()` in `index.html`) directly
+from `dayMatches` scores. There is no separate standings data to keep in sync —
+fix the scores and the tables recompute. This is also why score *accuracy* matters
+so much: one wrong `FT` score silently distorts a group table.
+
+`computeStandings()` counts **group-stage ties only** (it skips any match with a
+`round`), so knockout results never leak into the group tables.
+
+**Knockout ties** flow through the provider like any other fixture: they're stored
+in `dayMatches` on their date with a `round` (R32…F) instead of a `g`, and move
+through the same `UP → LIVE → FT` lifecycle. They surface in the **matchday** view.
+The **bracket** view is a separate, deliberate exception: it is a *projection* from
+the FIFA-strength order (`this.rank` / `this.r32` in `index.html`), independent of
+real results. Reconciling the bracket with actual knockout outcomes is a future
+step; for now the projection and the real matchday results coexist.
 
 ---
 

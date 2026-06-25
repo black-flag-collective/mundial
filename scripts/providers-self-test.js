@@ -12,10 +12,11 @@
 const assert = require('node:assert');
 
 const { TEAM_CODES, CODE_SET, toFifa } = require('./providers/team-codes');
-const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup } = require('./providers/provider');
+const { toDayShort, toDayLong, toDow, mapStatus, normalizeGroup, mapStage } = require('./providers/provider');
 const { createSportsApiProvider, mapFixtures } = require('./providers/sports-api');
 const { createClaudeProvider } = require('./providers/claude-search');
 const { runProviders, hasContent } = require('./providers/runner');
+const { mergeUpdate } = require('./update-data');
 
 let passed = 0;
 const checks = [];
@@ -42,6 +43,17 @@ check('provider: mapStatus normalizes API statuses to FT/LIVE/UP', () => {
   assert.strictEqual(mapStatus('TIMED'), 'UP');
   assert.strictEqual(mapStatus('SCHEDULED'), 'UP');
   assert.strictEqual(mapStatus(undefined), 'UP');
+});
+
+check('provider: mapStage maps knockout stages to round codes; group stage → null', () => {
+  assert.strictEqual(mapStage('LAST_16'), 'R16');
+  assert.strictEqual(mapStage('ROUND_OF_16'), 'R16');
+  assert.strictEqual(mapStage('QUARTER_FINALS'), 'QF');
+  assert.strictEqual(mapStage('SEMI_FINALS'), 'SF');
+  assert.strictEqual(mapStage('THIRD_PLACE'), '3P');
+  assert.strictEqual(mapStage('FINAL'), 'F');
+  assert.strictEqual(mapStage('GROUP_STAGE'), null);
+  assert.strictEqual(mapStage(undefined), null);
 });
 
 check('provider: normalizeGroup extracts the letter', () => {
@@ -129,8 +141,9 @@ check('sports-api: a FINISHED/IN_PLAY fixture with missing scores never becomes 
   }
 });
 
-check('sports-api: group comes only from fx.group; stage-only fixtures are dropped (FINAL ≠ Group L)', () => {
-  // WC2026 groups run A–L, so "FINAL" must NOT normalize to the real Group L.
+check('sports-api: knockout ties carry a round (not a group); FINAL never becomes Group L', () => {
+  // WC2026 groups run A–L, so "FINAL" must NOT normalize to the real Group L —
+  // knockout ties are emitted with a `round` code and never a group letter.
   const knockout = [
     { utcDate: '2026-07-19T19:00:00Z', status: 'FINISHED', stage: 'FINAL', // no group
       homeTeam: { tla: 'BRA', name: 'Brazil' }, awayTeam: { tla: 'FRA', name: 'France' },
@@ -140,8 +153,30 @@ check('sports-api: group comes only from fx.group; stage-only fixtures are dropp
       score: {} },
   ];
   const { new_days, updated_matches } = mapFixtures(knockout, SILENT);
-  assert.strictEqual(new_days.length, 0, 'no groupless fixtures emitted');
-  assert.strictEqual(updated_matches.length, 0, 'no groupless score promoted (would have hit Group L)');
+  const all = new_days.flatMap(d => d.matches);
+  assert.strictEqual(all.length, 2, 'both knockout ties emitted');
+  for (const m of all) {
+    assert.ok(m.round && !('g' in m), `${m.a}-${m.b} carries a round, not a group`);
+    assert.notStrictEqual(m.round, 'L', 'FINAL must not become Group L');
+  }
+  const final = all.find(m => m.round === 'F');
+  assert.ok(final && final.st === 'FT' && final.as === 2 && final.bs === 1, 'final has its real score');
+  assert.strictEqual(all.find(m => m.round === 'QF').st, 'UP', 'scoreless QF kept UP');
+  assert.strictEqual(updated_matches.length, 1, 'only the finished final is a score update');
+  assert.strictEqual(updated_matches[0].round, 'F', 'update carries the round context');
+});
+
+check('sports-api: a knockout rematch of group opponents is NOT deduped against the group tie', () => {
+  // Two teams that met in the group can meet again in a knockout tie. The
+  // fixture key must include the round/group context so the rematch survives.
+  const current = { days: [{ short: 'Jun 11', long: 'June 11', dow: 'Thursday' }],
+    dayMatches: [[{ g: 'A', a: 'BRA', b: 'FRA', as: 1, bs: 1, st: 'FT' }]] };
+  const update = { new_days: [{ day_short: 'Jul 19', day_long: 'July 19', day_dow: 'Sunday',
+    matches: [{ round: 'F', a: 'BRA', b: 'FRA', st: 'UP' }] }], updated_matches: [] };
+  const { data, changed } = mergeUpdate(current, update);
+  assert.ok(changed, 'the knockout rematch is added');
+  const all = data.dayMatches.flat();
+  assert.strictEqual(all.filter(m => m.a === 'BRA' && m.b === 'FRA').length, 2, 'group tie + knockout rematch both present');
 });
 
 check('team-codes: RKS (Kosovo) is NOT mapped to KSA (never guess)', () => {

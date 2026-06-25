@@ -471,28 +471,33 @@ function createCountsPoller({ engine, log = console, context } = {}) {
 
     const tick = async () => {
       if (signal && signal.aborted) return;
-      let nextDelay = IDLE_INTERVAL;
+      // Resolve liveness up front so the cadence is known even if cycle() throws:
+      // a transient fetch error during a live match must keep retrying on the live
+      // tier, not silently drop to the 10-minute idle re-check.
+      const context = resolveContext();
+      const codes = context.codes || [];
+      const phases = context.phases || {};
+      const anyLive = codes.some((c) => (phases[c] || 'live') === 'live');
+      const pickDelay = () => (!codes.length
+        ? IDLE_INTERVAL
+        : (anyLive ? liveDelay(stats.liveActivity, context.koLive, LIVE_INTERVAL, LIVE_CALM_INTERVAL) : SLOW_INTERVAL));
+      // Live matches set an activity-adaptive cadence (fast when buzz is rising,
+      // calm when flat; knockouts always fast); a window with only warmup/cooldown
+      // nations ticks on the slow tier; nothing active → request-free re-check.
+      let nextDelay = pickDelay();
       try {
-        const context = resolveContext();
         await cycle(context); // handles the empty/idle case (clears signals) itself
-        const codes = context.codes || [];
-        const phases = context.phases || {};
-        const anyLive = codes.some((c) => (phases[c] || 'live') === 'live');
-        // Live matches set an activity-adaptive cadence (fast when buzz is rising,
-        // calm when flat; knockouts always fast); a window with only warmup/cooldown
-        // nations ticks on the slow tier; nothing active → request-free re-check.
-        nextDelay = !codes.length
-          ? IDLE_INTERVAL
-          : (anyLive ? liveDelay(stats.liveActivity, context.koLive, LIVE_INTERVAL, LIVE_CALM_INTERVAL) : SLOW_INTERVAL);
-        stats.nextDelayMs = nextDelay;
-        // If X rate-limited us, don't tick again until its reset window passes.
-        if (stats.pausedUntilMs && stats.pausedUntilMs > Date.now()) {
-          nextDelay = Math.max(nextDelay, stats.pausedUntilMs - Date.now() + 1_000);
-        }
+        nextDelay = pickDelay(); // recompute: cycle() may have updated liveActivity
       } catch (e) {
         stats.errors++;
         stats.lastEvent = 'cycle error: ' + e.message;
         log.error('[buzz-counts]', e.message);
+        // keep the context-appropriate delay above (fast retry while live)
+      }
+      stats.nextDelayMs = nextDelay;
+      // If X rate-limited us, don't tick again until its reset window passes.
+      if (stats.pausedUntilMs && stats.pausedUntilMs > Date.now()) {
+        nextDelay = Math.max(nextDelay, stats.pausedUntilMs - Date.now() + 1_000);
       }
       if (signal && signal.aborted) return;
       stats.nextPollMs = Date.now() + nextDelay;

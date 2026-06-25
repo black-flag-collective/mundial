@@ -436,6 +436,23 @@ check('counts: an idle cycle resets liveActivity (no stale carry-over)', async (
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
 });
 
+check('counts: a cycle error during a live match retries on the live tier, not idle', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => { throw new Error('network blip'); };
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const ac = new AbortController();
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' }, koLive: false }) });
+  poller.start(ac.signal);
+  await new Promise((r) => setTimeout(r, 30)); // let the first tick run and throw
+  ac.abort();
+  const s = poller.stats();
+  assert.ok(s.errors > 0, 'the fetch error was recorded');
+  assert.ok(s.nextDelayMs >= 60_000 && s.nextDelayMs <= 150_000,
+    `error during a live match retries on the live band, not the 10m idle tier (got ${s.nextDelayMs})`);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
 // --- Tournament-wide pulse ---------------------------------------------------
 check('counts: tournament pulse fires once per slow tier while live, off when idle', async () => {
   process.env.X_BEARER_TOKEN = 'test';

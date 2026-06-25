@@ -69,6 +69,37 @@ check('setSignals: atomic replace, clamps, drops unknown/omitted codes', () => {
   assert.deepStrictEqual(e.signal, {}, 'null clears all');
 });
 
+check('setAmbient: atomic replace, clamps, independent of the signal channel', () => {
+  const e = new BuzzEngine();
+  e.setSignals({ BRA: 0.8 });
+  e.setAmbient({ ARG: 0.3, ZZZ: 0.9, FRA: 2 });
+  assert.strictEqual(e.ambient.ARG, 0.3);
+  assert.strictEqual(e.ambient.FRA, 1, 'clamped to 1');
+  assert.ok(!('ZZZ' in e.ambient), 'unknown code dropped');
+  assert.deepStrictEqual(e.signal, { BRA: 0.8 }, 'setAmbient leaves the signal channel untouched');
+  e.setAmbient(null);
+  assert.deepStrictEqual(e.ambient, {}, 'null clears all');
+});
+
+check('tick: ambient lights a dark nation; a live signal outshines its ambient floor', async () => {
+  const e = new BuzzEngine();
+  // A nation trending on X but with no live match: ambient only → globe glows.
+  const before = e.state.CPV.score;
+  e.setAmbient({ CPV: 0.4 });
+  await e.tick();
+  await sleep(60);
+  await e.tick();
+  assert.ok(e.state.CPV.score > before, 'ambient floor raises a dark nation');
+  // A live counts signal above the ambient floor wins (tick eases toward the max
+  // of the two channels). Under identical ticks, a nation easing toward 0.9 rises
+  // faster than one easing toward only its 0.2 ambient floor.
+  e.setSignals({ BRA: 0.9 });           // live volume
+  e.setAmbient({ BRA: 0.2, ARG: 0.2 }); // both have the same ambient floor
+  for (let i = 0; i < 6; i++) { await e.tick(); await sleep(20); }
+  e.stop();
+  assert.ok(e.state.BRA.score > e.state.ARG.score, 'live signal (0.9) outshines the ambient-only nation (0.2)');
+});
+
 check('snapshot: sorted hottest-first with 1..n ranks and rounded values', () => {
   const e = new BuzzEngine();
   e.surge('BRA', 0.9);

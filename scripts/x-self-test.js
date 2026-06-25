@@ -9,9 +9,9 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
-const { parseTrends, isWorldCupTrend, createTrendsPoller } = require('./x-trends');
+const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
-const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch } = require('./buzz-counts');
+const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak } = require('./buzz-counts');
 
 let passed = 0;
 const checks = [];
@@ -97,7 +97,7 @@ check('counts: hard cap trips the circuit breaker (clears signals)', async () =>
   const engine = { state: { BRA: {}, ARG: {}, FRA: {} }, setSignals(m) { got = m; }, surge() {} };
   const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: LIVE_CTX });
   await poller.cycle();
-  assert.deepStrictEqual(got, {}, 'capped → signals cleared (fades to simulation)');
+  assert.deepStrictEqual(got, {}, 'capped → signals cleared (fades to idle/zeros)');
   assert.strictEqual(poller.stats().capped, true);
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_DAILY_CAP;
 });
@@ -135,6 +135,7 @@ check('counts: dueForFetch — live every cycle, others on the slow tier', () =>
 });
 check('counts: live polled every cycle; cooldown holds its signal on the slow tier', async () => {
   process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1'; // isolate team-poll cadence from the tournament pulse
   let fetches = 0;
   global.fetch = async () => { fetches++; return { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 50 }, data: [{ tweet_count: 50 }] }) }; };
   const sigs = [];
@@ -148,7 +149,7 @@ check('counts: live polled every cycle; cooldown holds its signal on the slow ti
   assert.strictEqual(fetches - afterFirst, 1, 'second cycle fetches only the live team');
   const last = sigs[sigs.length - 1];
   assert.ok('ARG' in last && last.ARG > 0, 'cooldown team keeps its signal between slow polls');
-  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
 });
 check('counts: a 429 pauses polling until the reset window (no hammering)', async () => {
   process.env.X_BEARER_TOKEN = 'test';
@@ -321,6 +322,263 @@ check('trends: poller respects the daily cap (circuit breaker)', async () => {
   assert.strictEqual(calls, 0, 'no requests when the cycle would exceed the cap');
   assert.strictEqual(poller.stats().capped, true);
   delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_TRENDS_DAILY_CAP;
+});
+
+// --- Trends → ambient globe glow ---------------------------------------------
+check('trends: codeForTrend attributes a trend to the most specific nation', () => {
+  assert.strictEqual(codeForTrend('#BRA'), 'BRA');
+  assert.strictEqual(codeForTrend('Vamos Brasil!'), 'BRA');
+  assert.strictEqual(codeForTrend('South Korea fighting'), 'KOR'); // longest match wins over "Korea"
+  assert.strictEqual(codeForTrend('just some random topic'), null);
+});
+check('trends: codeForTrend never steals one nation’s name for another (alias-edit guard)', () => {
+  // Every nation's own name, #CODE, and aliases must resolve to itself — guards
+  // against a future alias addition shadowing another nation via substring match.
+  for (const code of Object.keys(CODE_NAME)) {
+    assert.strictEqual(codeForTrend(CODE_NAME[code]), code, `${code} name maps to itself`);
+    assert.strictEqual(codeForTrend('#' + code), code, `#${code} maps to ${code}`);
+  }
+  // Shared-prefix nations stay distinct (longest-needle-first ordering).
+  assert.strictEqual(codeForTrend('South Korea win'), 'KOR');
+  assert.strictEqual(codeForTrend('South Africa win'), 'RSA');
+});
+check('trends: post counts above the 32-bit range don’t overflow (no `| 0` truncation)', () => {
+  const big = 3_000_000_000; // > 2^31; `| 0` would flip this negative
+  // parseTrends preserves it as a real number, not a truncated/negative int.
+  const parsed = parseTrends({ data: [{ trend_name: '#BRA', tweet_count: big }] });
+  assert.strictEqual(parsed[0].postCount, big, 'tweet_count kept without truncation');
+  // trendsToAmbient ranks a huge count above a small one (would invert if negative).
+  const floor = trendsToAmbient([{ trends: [
+    { name: '#BRA', postCount: big, wc: true },
+    { name: 'Argentina', postCount: 100, wc: true },
+  ] }], 0.3);
+  assert.ok(floor.BRA >= floor.ARG && floor.BRA > 0, 'huge count ranks at/above a small one, never negative');
+});
+check('trends: a non-numeric X_TRENDS_AMBIENT_CAP falls back to the default (not NaN)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_TRENDS_AMBIENT_CAP = 'not-a-number';
+  let got = null;
+  const engine = { state: { BRA: {} }, setAmbient(m) { got = m; } };
+  global.fetch = async () => ({ ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();
+  assert.strictEqual(poller.stats().ambientCap, 0.3, 'invalid cap → default 0.3, never NaN');
+  assert.ok(got && got.BRA > 0, 'ambient still feeds (NaN cap would have disabled it)');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_TRENDS_AMBIENT_CAP;
+});
+check('trends: trendsToAmbient yields a capped, normalized per-nation floor', () => {
+  const locations = [{ trends: [
+    { name: '#BRA', postCount: 100000, wc: true },
+    { name: 'Argentina', postCount: 25000, wc: true },
+    { name: 'taylor swift', postCount: 999999, wc: false }, // not WC → ignored
+  ] }];
+  const floor = trendsToAmbient(locations, 0.3);
+  assert.ok(floor.BRA === 0.3, 'busiest WC nation pinned to the cap');
+  assert.ok(floor.ARG > 0 && floor.ARG < 0.3, 'quieter nation gets a lower floor');
+  assert.ok(!('TSWIFT' in floor) && Object.keys(floor).length === 2, 'non-WC trends excluded');
+});
+check('trends: poller feeds the engine ambient channel (zero extra requests)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let got = null;
+  const engine = { state: { BRA: {}, ARG: {} }, setAmbient(m) { got = m; } };
+  global.fetch = async () => ({ ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();
+  assert.ok(got && got.BRA > 0, 'a trending nation lights up the ambient channel');
+  assert.strictEqual(poller.stats().ambientCount, 1);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+check('trends: a total fetch outage holds the last ambient floor (no globe blackout)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const calls = [];
+  const engine = { state: { BRA: {} }, setAmbient(m) { calls.push(m); } };
+  let healthy = true;
+  global.fetch = async () => (healthy
+    ? { ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) }
+    : { ok: false, status: 503, json: async () => ({}) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();                      // seeds ambient: BRA glowing
+  assert.ok(calls.length === 1 && calls[0].BRA > 0, 'seeded ambient floor');
+  healthy = false;
+  await poller.cycle();                      // total outage (all locations 503)
+  assert.strictEqual(calls.length, 1, 'ambient NOT overwritten on a total outage — last floor held');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('trends: a clean poll with no World-Cup trends clears the ambient floor', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const calls = [];
+  const engine = { state: { BRA: {} }, setAmbient(m) { calls.push(m); } };
+  let body = { data: [{ trend_name: '#BRA', tweet_count: 5000 }] };
+  global.fetch = async () => ({ ok: true, json: async () => body });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();                       // BRA glows
+  body = { data: [{ trend_name: 'concert tour', tweet_count: 9 }] }; // no WC trend
+  await poller.cycle();                       // ok response, nothing WC → clear honestly
+  assert.deepStrictEqual(calls[calls.length - 1], {}, 'a healthy poll with no WC trends clears the floor');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+// --- Activity-adaptive cadence -----------------------------------------------
+check('counts: liveDelay flexes fast↔calm by activity, knockouts always fast', () => {
+  const fast = 60_000, calm = 150_000;
+  assert.strictEqual(liveDelay(0, false, fast, calm), calm, 'flat match → calm ceiling');
+  assert.strictEqual(liveDelay(1, false, fast, calm), fast, 'rising surge → fast floor');
+  const mid = liveDelay(0.5, false, fast, calm);
+  assert.ok(mid > fast && mid < calm, 'mid activity interpolates');
+  assert.strictEqual(liveDelay(0, true, fast, calm), fast, 'knockout always polls fast');
+});
+check('counts: isKnockout distinguishes group letters from bracket labels', () => {
+  // Groups are single letters A–L; knockout rounds use multi-char labels.
+  assert.strictEqual(isKnockout('A'), false);
+  assert.strictEqual(isKnockout('L'), false);
+  assert.strictEqual(isKnockout('R32'), true);
+  assert.strictEqual(isKnockout('R16'), true);
+  assert.strictEqual(isKnockout('QF'), true);
+  assert.strictEqual(isKnockout('SF'), true);
+  // A single-letter final 'F' is indistinguishable from group F by label alone;
+  // it reads as a group here (a buzzing final still polls fast via the activity
+  // adapter). The bracket data should use a multi-char label like 'FIN' to force it.
+  assert.strictEqual(isKnockout('FIN'), true);
+});
+check('counts: liveContext flags a live knockout match (koLive)', () => {
+  const now = Date.parse('2026-07-10T21:30:00Z');
+  const groups = liveContext({ now, matchMin: 150, matches: { dayMatches: [[
+    { a: 'FRA', b: 'IRQ', g: 'C', ko: '2026-07-10T21:00:00Z' },
+  ]] } });
+  assert.strictEqual(groups.koLive, false, 'group match → not knockout');
+  const ko = liveContext({ now, matchMin: 150, matches: { dayMatches: [[
+    { a: 'FRA', b: 'IRQ', g: 'QF', ko: '2026-07-10T21:00:00Z' },
+  ]] } });
+  assert.strictEqual(ko.koLive, true, 'quarter-final → knockout');
+});
+check('counts: a rising live match raises liveActivity', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({
+    meta: { total_tweet_count: 60 }, data: [{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();
+  assert.ok(poller.stats().liveActivity > 0.3, 'a sharp minute-over-minute jump reads as lively');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
+});
+
+check('counts: absoluteScale dims by tournament volume, floored and never inflating', () => {
+  assert.strictEqual(absoluteScale(null, 0), 1, 'no pulse yet → no scaling');
+  assert.strictEqual(absoluteScale(100, 0), 1, 'no peak yet → no scaling');
+  assert.strictEqual(absoluteScale(300, 300), 1, 'at the peak → full glow');
+  assert.ok(Math.abs(absoluteScale(150, 600) - 0.5) < 1e-9, 'quarter volume → sqrt → 0.5');
+  assert.strictEqual(absoluteScale(10, 300), 0.35, 'very quiet → floored at 0.35');
+  assert.strictEqual(absoluteScale(0, 300), 0.35, 'zero volume → still floored, never dark');
+  assert.strictEqual(absoluteScale(400, 300), 1, 'total>peak (out of order) clamped to 1, never inflates');
+});
+check('counts: decayPeak lets a new high win but bleeds a stale blockbuster down', () => {
+  assert.strictEqual(decayPeak(0, 500, 0.98), 500, 'first sample sets the peak');
+  assert.strictEqual(decayPeak(500, 900, 0.98), 900, 'a fresh high wins immediately');
+  assert.ok(Math.abs(decayPeak(500, 100, 0.98) - 490) < 1e-9, 'no new high → old peak decays by the factor');
+  // A blockbuster peak must recalibrate toward sustained lower volume over time,
+  // so the board recovers instead of being dimmed forever.
+  let peak = 100000; // a past final
+  for (let i = 0; i < 400; i++) peak = decayPeak(peak, 2000, 0.98); // a long quiet stretch
+  assert.ok(peak <= 2000 + 1e-6, `stale peak bled down to recent volume (got ${Math.round(peak)})`);
+  assert.strictEqual(decayPeak(NaN, NaN, 0.98), 0, 'NaN inputs → 0, never NaN');
+  // Extremes (the values X_COUNTS_PULSE_PEAK_DECAY exposes): 1 = never forget
+  // (all-time max), 0 = always track the current pulse (cross-match dimming off).
+  assert.strictEqual(decayPeak(500, 100, 1), 500, 'decay 1 → all-time max retained');
+  assert.strictEqual(decayPeak(500, 100, 0), 100, 'decay 0 → peak tracks the current pulse (dimming disabled)');
+});
+check('counts: an idle cycle resets liveActivity (no stale carry-over)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  process.env.X_COUNTS_PULSE_DISABLED = '1';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({
+    meta: { total_tweet_count: 60 }, data: [{ tweet_count: 5 }, { tweet_count: 5 }, { tweet_count: 50 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  let phase = 'live';
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => (phase === 'live' ? { codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } } : { codes: [], phase: 'idle', phases: {} }) });
+  await poller.cycle();
+  assert.ok(poller.stats().liveActivity > 0.3, 'lively while a match is live');
+  phase = 'idle';
+  await poller.cycle();
+  assert.strictEqual(poller.stats().liveActivity, 0, 'idle cycle clears the stale activity');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN; delete process.env.X_COUNTS_PULSE_DISABLED;
+});
+
+check('counts: a cycle error during a live match retries on the live tier, not idle', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => { throw new Error('network blip'); };
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const ac = new AbortController();
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' }, koLive: false }) });
+  poller.start(ac.signal);
+  await new Promise((r) => setTimeout(r, 30)); // let the first tick run and throw
+  ac.abort();
+  const s = poller.stats();
+  assert.ok(s.errors > 0, 'the fetch error was recorded');
+  assert.ok(s.nextDelayMs >= 60_000 && s.nextDelayMs <= 150_000,
+    `error during a live match retries on the live band, not the 10m idle tier (got ${s.nextDelayMs})`);
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+check('counts: a transient HTTP error holds last-known counts (team + pulse), not 0', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  let healthy = true;
+  global.fetch = async () => (healthy
+    ? { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 300 }, data: [{ tweet_count: 150 }, { tweet_count: 150 }] }) }
+    : { ok: false, status: 503, headers: { get: () => null }, json: async () => ({}) });
+  const sigs = [];
+  const engine = { state: { BRA: {} }, setSignals(m) { sigs.push(m); }, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();                       // healthy: BRA lit, pulse total 300
+  assert.ok(sigs[sigs.length - 1].BRA > 0, 'team lit while healthy');
+  assert.strictEqual(poller.stats().tournamentTotal, 300, 'pulse total recorded');
+  const reqBefore = poller.stats().requestsToday;
+  healthy = false;
+  await poller.cycle();                        // 503 on both team and pulse
+  const st = poller.stats();
+  assert.ok(sigs[sigs.length - 1].BRA > 0, 'team holds its last signal on a transient error (not zeroed)');
+  assert.strictEqual(st.tournamentTotal, 300, 'pulse holds last heartbeat on a transient error (not 0)');
+  assert.ok(st.requestsToday > reqBefore, 'failed requests still count toward the daily cap');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('counts: an idle cycle clears the stale tournament heartbeat', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({ ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 200 }, data: [{ tweet_count: 100 }, { tweet_count: 100 }] }) });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  let phase = 'live';
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} },
+    context: () => (phase === 'live' ? { codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } } : { codes: [], phase: 'idle', phases: {} }) });
+  await poller.cycle();
+  assert.strictEqual(poller.stats().tournamentTotal, 200, 'pulse surfaced while live');
+  phase = 'idle';
+  await poller.cycle();
+  assert.strictEqual(poller.stats().tournamentTotal, null, 'idle clears the stale heartbeat (tournamentTotal)');
+  assert.strictEqual(poller.stats().tournamentTrend, null, 'idle clears tournamentTrend too');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
+// --- Tournament-wide pulse ---------------------------------------------------
+check('counts: tournament pulse fires once per slow tier while live, off when idle', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const queries = [];
+  global.fetch = async (url) => {
+    queries.push(decodeURIComponent(String(url)));
+    return { ok: true, headers: { get: () => null }, json: async () => ({ meta: { total_tweet_count: 200 }, data: [{ tweet_count: 100 }, { tweet_count: 100 }] }) };
+  };
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } }) });
+  await poller.cycle();
+  const pulses = queries.filter((q) => !q.includes('"Brazil"')).length;
+  assert.strictEqual(pulses, 1, 'exactly one tournament-wide pulse on the first live cycle');
+  assert.strictEqual(poller.stats().tournamentTotal, 200, 'pulse total surfaced in stats');
+  // Idle cycle issues no requests at all (pulse included).
+  const before = queries.length;
+  const idle = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: () => ({ codes: [], phase: 'idle', phases: {} }) });
+  await idle.cycle();
+  assert.strictEqual(queries.length, before, 'no pulse (or any request) when nothing is live');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
 (async () => {

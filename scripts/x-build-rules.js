@@ -88,7 +88,7 @@ function codesInFixtures() {
   }
 }
 
-module.exports = { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME, ALIASES };
+module.exports = { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME, ALIASES, CONTEXT };
 
 if (require.main === module) {
   const onlyFixtures = process.argv.includes('--fixtures');

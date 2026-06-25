@@ -354,6 +354,36 @@ check('trends: poller feeds the engine ambient channel (zero extra requests)', a
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 
+check('trends: a total fetch outage holds the last ambient floor (no globe blackout)', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const calls = [];
+  const engine = { state: { BRA: {} }, setAmbient(m) { calls.push(m); } };
+  let healthy = true;
+  global.fetch = async () => (healthy
+    ? { ok: true, json: async () => ({ data: [{ trend_name: '#BRA', tweet_count: 5000 }] }) }
+    : { ok: false, status: 503, json: async () => ({}) });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();                      // seeds ambient: BRA glowing
+  assert.ok(calls.length === 1 && calls[0].BRA > 0, 'seeded ambient floor');
+  healthy = false;
+  await poller.cycle();                      // total outage (all locations 503)
+  assert.strictEqual(calls.length, 1, 'ambient NOT overwritten on a total outage — last floor held');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('trends: a clean poll with no World-Cup trends clears the ambient floor', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  const calls = [];
+  const engine = { state: { BRA: {} }, setAmbient(m) { calls.push(m); } };
+  let body = { data: [{ trend_name: '#BRA', tweet_count: 5000 }] };
+  global.fetch = async () => ({ ok: true, json: async () => body });
+  const poller = createTrendsPoller({ engine, log: { warn() {}, error() {} }, woeids: [{ woeid: 1, name: 'A' }] });
+  await poller.cycle();                       // BRA glows
+  body = { data: [{ trend_name: 'concert tour', tweet_count: 9 }] }; // no WC trend
+  await poller.cycle();                       // ok response, nothing WC → clear honestly
+  assert.deepStrictEqual(calls[calls.length - 1], {}, 'a healthy poll with no WC trends clears the floor');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+
 // --- Activity-adaptive cadence -----------------------------------------------
 check('counts: liveDelay flexes fast↔calm by activity, knockouts always fast', () => {
   const fast = 60_000, calm = 150_000;

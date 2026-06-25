@@ -161,10 +161,10 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
     if (!r.ok) {
       stats.errors++;
       stats.lastEvent = `trends HTTP ${r.status}`;
-      return [];
+      return { ok: false, trends: [] };
     }
     const body = await r.json().catch(() => ({}));
-    return parseTrends(body);
+    return { ok: true, trends: parseTrends(body) };
   }
 
   async function cycle() {
@@ -179,10 +179,12 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
     stats.capped = false;
 
     const locations = [];
+    let okCount = 0;
     for (const loc of LOCATIONS) {
-      const trends = await fetchTrendsFor(loc.woeid);
+      const res = await fetchTrendsFor(loc.woeid);
+      if (res.ok) okCount++;
       stats.requestsToday++;
-      locations.push({ woeid: loc.woeid, name: loc.name, trends });
+      locations.push({ woeid: loc.woeid, name: loc.name, trends: res.trends });
     }
     snap = { updatedAt: new Date().toISOString(), source: 'x-trends', locations };
     stats.lastPollMs = Date.now();
@@ -191,7 +193,10 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
     // Feed a low ambient glow into the buzz engine (zero extra requests — derived
     // from the trends we just pulled), so nations trending on X light up the globe
     // even between matches. A live counts signal always outshines this floor.
-    if (engine && engine.setAmbient && AMBIENT_CAP > 0) {
+    // Only overwrite the floor when at least one location actually responded: a
+    // total outage (every location errored) holds the last floor rather than
+    // blanking the globe, while a clean poll with no WC trends clears it honestly.
+    if (engine && engine.setAmbient && AMBIENT_CAP > 0 && okCount > 0) {
       const floor = trendsToAmbient(locations, AMBIENT_CAP);
       engine.setAmbient(floor);
       stats.ambientCount = Object.keys(floor).length;

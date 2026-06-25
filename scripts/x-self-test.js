@@ -9,7 +9,7 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
-const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
+const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, codesForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak } = require('./buzz-counts');
 
@@ -353,6 +353,19 @@ check('trends: codeForTrend never steals one nation’s name for another (alias-
   // Shared-prefix nations stay distinct (longest-needle-first ordering).
   assert.strictEqual(codeForTrend('South Korea win'), 'KOR');
   assert.strictEqual(codeForTrend('South Africa win'), 'RSA');
+});
+check('trends: nation nicknames resolve to the right nation (ambient breadth)', () => {
+  assert.strictEqual(codeForTrend('Vamos Albiceleste'), 'ARG');
+  assert.strictEqual(codeForTrend('Allez Les Bleus'), 'FRA');
+  assert.strictEqual(codeForTrend('come on you Three Lions'), 'ENG');
+  assert.strictEqual(codeForTrend('Oranje boven'), 'NED');
+  assert.strictEqual(codeForTrend('Atlas Lions roar'), 'MAR');
+  assert.strictEqual(codeForTrend('Samurai Blue'), 'JPN');
+});
+check('trends: codesForTrend attributes a head-to-head trend to BOTH nations', () => {
+  assert.deepStrictEqual(codesForTrend('Argentina vs France final').sort(), ['ARG', 'FRA']);
+  assert.deepStrictEqual(codesForTrend('Three Lions vs La Roja').sort(), ['ENG', 'ESP']);
+  assert.deepStrictEqual(codesForTrend('random topic'), []);
 });
 check('trends: post counts above the 32-bit range don’t overflow (no `| 0` truncation)', () => {
   const big = 3_000_000_000; // > 2^31; `| 0` would flip this negative

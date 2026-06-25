@@ -31,11 +31,25 @@ const CODE_NAME = {
   ENG: 'England', CRO: 'Croatia', GHA: 'Ghana', PAN: 'Panama',
 };
 
-// Extra match aliases for nations whose name varies on X.
+// Extra match aliases for nations whose name varies on X, plus widely-used team
+// nicknames. These feed the stream rule, the counts query, AND the trend→nation
+// attribution (so a trending nickname lights the right nation on the globe). Only
+// high-confidence, unambiguous forms are listed — nothing shared between two field
+// nations (e.g. "Seleção" is both Brazil and Portugal, so it's omitted), and the
+// WorldCup CONTEXT filter keeps a nickname from matching unrelated chatter.
 const ALIASES = {
+  // Alternate spellings / English exonyms
   BRA: ['Brasil'], TUR: ['Turkey'], CIV: ['Ivory Coast'], CPV: ['Cape Verde'],
-  COD: ['Congo', 'DRC'], KOR: ['Korea'], NED: ['Holland'], CZE: ['Czech Republic'],
-  USA: ['United States of America'], RSA: ['South Africa'],
+  COD: ['Congo', 'DRC'], CZE: ['Czech Republic'],
+  // Alt-spelling + nickname
+  KOR: ['Korea', 'Taegeuk Warriors'], NED: ['Holland', 'Oranje'],
+  USA: ['United States of America', 'USMNT'], RSA: ['Bafana Bafana'],
+  // Nicknames (one well-known form per nation)
+  ARG: ['Albiceleste'], FRA: ['Les Bleus'], ESP: ['La Roja'], ENG: ['Three Lions'],
+  JPN: ['Samurai Blue'], AUS: ['Socceroos'], MAR: ['Atlas Lions'], GHA: ['Black Stars'],
+  EGY: ['Pharaohs'], MEX: ['El Tri'], GER: ['Die Mannschaft'], SCO: ['Tartan Army'],
+  IRN: ['Team Melli'], NZL: ['All Whites'], KSA: ['Green Falcons'], URU: ['La Celeste'],
+  SEN: ['Lions of Teranga'], ALG: ['Les Fennecs'], TUN: ['Eagles of Carthage'],
 };
 
 // Stay safely under the pay-per-use rule-length cap (1,024 chars).

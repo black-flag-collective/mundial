@@ -9,7 +9,7 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
-const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, trendsToAmbient } = require('./x-trends');
+const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, codesForTrend, trendsToAmbient } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak } = require('./buzz-counts');
 
@@ -168,6 +168,18 @@ check('counts: a 429 pauses polling until the reset window (no hammering)', asyn
   assert.ok(poller.stats().pausedUntilMs > Date.now(), 'paused until the reset window');
   await poller.cycle();                       // still within the pause → no new requests
   assert.strictEqual(calls, 1, 'no requests spent while paused');
+  delete global.fetch; delete process.env.X_BEARER_TOKEN;
+});
+check('counts: a failed request surfaces the HTTP status + body snippet in health', async () => {
+  process.env.X_BEARER_TOKEN = 'test';
+  global.fetch = async () => ({ ok: false, status: 403, headers: { get: () => null }, json: async () => ({}), text: async () => 'Client Forbidden: not enrolled in this product' });
+  const engine = { state: { BRA: {} }, setSignals() {}, surge() {} };
+  const ctx = () => ({ codes: ['BRA'], phase: 'live', phases: { BRA: 'live' } });
+  const poller = createCountsPoller({ engine, log: { warn() {}, error() {} }, context: ctx });
+  await poller.cycle();
+  const s = poller.stats();
+  assert.strictEqual(s.lastErrorStatus, 403, 'counts HTTP status surfaced for diagnostics');
+  assert.ok(s.lastErrorBody && s.lastErrorBody.includes('not enrolled'), 'counts error body snippet captured');
   delete global.fetch; delete process.env.X_BEARER_TOKEN;
 });
 check('counts: liveContext reports per-nation phase', () => {
@@ -341,6 +353,19 @@ check('trends: codeForTrend never steals one nation’s name for another (alias-
   // Shared-prefix nations stay distinct (longest-needle-first ordering).
   assert.strictEqual(codeForTrend('South Korea win'), 'KOR');
   assert.strictEqual(codeForTrend('South Africa win'), 'RSA');
+});
+check('trends: nation nicknames resolve to the right nation (ambient breadth)', () => {
+  assert.strictEqual(codeForTrend('Vamos Albiceleste'), 'ARG');
+  assert.strictEqual(codeForTrend('Allez Les Bleus'), 'FRA');
+  assert.strictEqual(codeForTrend('come on you Three Lions'), 'ENG');
+  assert.strictEqual(codeForTrend('Oranje boven'), 'NED');
+  assert.strictEqual(codeForTrend('Atlas Lions roar'), 'MAR');
+  assert.strictEqual(codeForTrend('Samurai Blue'), 'JPN');
+});
+check('trends: codesForTrend attributes a head-to-head trend to BOTH nations', () => {
+  assert.deepStrictEqual(codesForTrend('Argentina vs France final').sort(), ['ARG', 'FRA']);
+  assert.deepStrictEqual(codesForTrend('Three Lions vs La Roja').sort(), ['ENG', 'ESP']);
+  assert.deepStrictEqual(codesForTrend('random topic'), []);
 });
 check('trends: post counts above the 32-bit range don’t overflow (no `| 0` truncation)', () => {
   const big = 3_000_000_000; // > 2^31; `| 0` would flip this negative

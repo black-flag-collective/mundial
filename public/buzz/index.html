@@ -240,12 +240,15 @@ class Component extends DCLogic {
     const hotEntry = top[0];
     const hot = hotEntry ? (this.byCode[hotEntry.code] || {}) : null;
 
-    // Connection pill + tiles adapt to the active mode.
+    // Connection pill + tiles adapt to the active mode. A recent API failure
+    // (counts/trends returning non-OK) surfaces its HTTP status so the panel is
+    // self-explaining — e.g. "HTTP 403" pins an entitlement issue at a glance.
+    const apiErr = h.lastErrorStatus ? `HTTP ${h.lastErrorStatus}` : null;
     const connText = counts ? (h.capped ? 'CAPPED' : h.rateLimited ? 'PAUSED' : 'COUNTS') : mode === 'off' ? 'OFF' : 'STREAM';
     const liveish = counts && !h.capped && !h.rateLimited;
-    const connDot = (h.capped || h.rateLimited) ? '#ff8a5c' : liveish ? '#5fe0a0' : 'var(--mun-fg-dim)';
+    const connDot = (h.capped || h.rateLimited || apiErr) ? '#ff8a5c' : liveish ? '#5fe0a0' : 'var(--mun-fg-dim)';
     const connSub = counts
-      ? `${h.phase || 'idle'} · ${(h.activeTeams || []).length} active team(s)`
+      ? `${h.phase || 'idle'} · ${(h.activeTeams || []).length} active team(s)${apiErr ? ' · ' + apiErr : ''}`
       : mode === 'off' ? 'no live feed — idle' : (h.lastEvent || '');
 
     let tiles;
@@ -258,7 +261,7 @@ class Component extends DCLogic {
         { label: 'Active teams', value: String((h.activeTeams || []).length), unit: 'today', sub: (h.activeTeams || []).join(' ') || '—', tone: 'var(--mun-fg-display)', hasBar: false },
         { label: 'Requests today', value: String(h.requestsToday || 0), unit: '/ ' + (h.dailyCap || '—'), sub: h.capped ? 'cap reached · paused' : 'daily budget', tone: reqColor, hasBar: true, barPct: reqPct + '%', barColor: reqColor },
         { label: 'Cadence', value: String(h.windowMin || '—'), unit: 'min window', sub: 'live ' + Math.round((h.liveIntervalMs || 0) / 1000) + 's · slow ' + Math.round((h.slowIntervalMs || 0) / 60000) + 'm', tone: 'var(--mun-fg-display)', hasBar: false },
-        { label: 'Last poll', value: agoP == null ? '—' : (agoP < 1 ? 'now' : agoP + 's'), unit: agoP == null || agoP < 1 ? '' : 'ago', sub: h.lastEvent || 'idle', tone: 'var(--mun-fg-display)', hasBar: false },
+        { label: 'Last poll', value: agoP == null ? '—' : (agoP < 1 ? 'now' : agoP + 's'), unit: agoP == null || agoP < 1 ? '' : 'ago', sub: apiErr ? ('error · ' + apiErr) : (h.lastEvent || 'idle'), tone: apiErr ? '#ff8a5c' : 'var(--mun-fg-display)', hasBar: false },
       ];
     } else {
       tiles = [

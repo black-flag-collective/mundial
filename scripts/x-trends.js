@@ -71,6 +71,19 @@ function codeForTrend(name) {
 }
 
 /**
+ * Every field nation a trend names — so a head-to-head trend ("Argentina vs
+ * France", "#ESPGER") lights BOTH nations, not just the first match. Returns a
+ * de-duped list of FIFA codes (empty if none).
+ */
+function codesForTrend(name) {
+  if (!name) return [];
+  const t = String(name).toLowerCase();
+  const found = new Set();
+  for (const [needle, code] of NAME_TO_CODE) if (needle && t.includes(needle)) found.add(code);
+  return [...found];
+}
+
+/**
  * Derive a low per-nation **ambient** glow from the trends snapshot — fed to the
  * buzz engine's ambient channel so nations trending on X breathe on the globe
  * even when no match is live. Uses data we already polled (zero extra requests):
@@ -84,12 +97,13 @@ function trendsToAmbient(locations, cap = 0.3) {
   for (const loc of locations || []) {
     for (const tr of (loc && loc.trends) || []) {
       if (!tr || !tr.wc) continue;
-      const code = codeForTrend(tr.name);
-      if (!code) continue;
+      const codes = codesForTrend(tr.name);
+      if (!codes.length) continue;
       // Numeric coercion without 32-bit truncation (`| 0` overflows/flips
       // negative past ~2.1B), clamped to >=0 so a bad value can't mis-rank floors.
       const c = Math.max(0, Number(tr.postCount) || 0);
-      if (c > (byCode[code] || 0)) byCode[code] = c;
+      // A head-to-head trend names both nations → both get the floor.
+      for (const code of codes) if (c > (byCode[code] || 0)) byCode[code] = c;
     }
   }
   const codes = Object.keys(byCode);
@@ -250,4 +264,4 @@ function createTrendsPoller({ log = console, woeids, engine } = {}) {
   return { start, stats: () => ({ ...stats }), snapshot: () => snap, cycle };
 }
 
-module.exports = { createTrendsPoller, parseTrends, isWorldCupTrend, codeForTrend, trendsToAmbient, DEFAULT_WOEIDS };
+module.exports = { createTrendsPoller, parseTrends, isWorldCupTrend, codeForTrend, codesForTrend, trendsToAmbient, DEFAULT_WOEIDS };

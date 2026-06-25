@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-25T00:22:57.435Z",
+  "updatedAt": "2026-06-25T14:55:17.775Z",
   "days": [
     {
       "dow": "Thursday",
@@ -85,6 +85,11 @@
       "dow": "Saturday",
       "short": "Jun 27",
       "long": "June 27"
+    },
+    {
+      "dow": "Sunday",
+      "short": "Jun 28",
+      "long": "June 28"
     }
   ],
   "dayMatches": [
@@ -840,6 +845,16 @@
         "st": "FT",
         "ko": "2026-06-27T21:00:00Z",
         "venue": "Lincoln Financial Field, Philadelphia"
+      }
+    ],
+    [
+      {
+        "g": "R32",
+        "a": "RSA",
+        "b": "CAN",
+        "st": "UP",
+        "time": "3:00 PM ET",
+        "venue": "SoFi Stadium, LA"
       }
     ]
   ]

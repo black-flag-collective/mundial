@@ -11,7 +11,7 @@
  * dimension on top of the "how loud is each nation" volume signal.
  *
  * Off unless `X_BEARER_TOKEN` is set (and `X_TRENDS_DISABLED` isn't `1`).
- * Tunables: X_TRENDS_INTERVAL_MS (default 600000=10m), X_TRENDS_DAILY_CAP
+ * Tunables: X_TRENDS_INTERVAL_MS (default 1200000=20m), X_TRENDS_DAILY_CAP
  * (default 800 requests/UTC-day), X_TRENDS_WOEIDS (comma-separated overrides),
  * X_TRENDS_AMBIENT_CAP (default 0.3 — ceiling for the ambient globe glow this
  * feeds the buzz engine; 0 disables it).
@@ -30,14 +30,35 @@ const TRENDS_URL = 'https://api.x.com/2/trends/by/woeid';
 
 // Default locations: worldwide + the 2026 host nations. WOEIDs are the standard
 // "Where On Earth" ids; override with X_TRENDS_WOEIDS if X's list changes.
+// Worldwide + the three hosts + the largest football-X audiences. Budget math:
+// at the 20m default interval that's 72 cycles/UTC-day × 8 locations = 576
+// requests, comfortably under the 800 DAILY_CAP. A bad/retired WOEID just errors
+// for that one location (now surfaced via health.lastErrorStatus) and is skipped.
 const DEFAULT_WOEIDS = [
   { woeid: 1, name: 'Worldwide' },
   { woeid: 23424977, name: 'United States' },
   { woeid: 23424900, name: 'Mexico' },
   { woeid: 23424775, name: 'Canada' },
+  { woeid: 23424768, name: 'Brazil' },
+  { woeid: 23424747, name: 'Argentina' },
+  { woeid: 23424975, name: 'United Kingdom' },
+  { woeid: 23424950, name: 'Spain' },
 ];
 
-// Lowercased nation names + aliases, for tagging which trends are football/WC.
+// Star players → their nation (field nations only). A trending player name is a
+// strong real signal for their country during the tournament, so we let it light
+// that nation's ambient glow. Curated to unambiguous, football-distinctive
+// surnames — no common words, no names shared across field nations. Used ONLY for
+// trend attribution (not the stream/counts rules), so a rare mis-tag only nudges
+// a low ambient floor. Keys are lowercased.
+const PLAYERS = {
+  messi: 'ARG', mbappe: 'FRA', 'mbappé': 'FRA', griezmann: 'FRA',
+  haaland: 'NOR', bellingham: 'ENG', neymar: 'BRA', vinicius: 'BRA',
+  modric: 'CRO', salah: 'EGY', hakimi: 'MAR', pulisic: 'USA',
+  yamal: 'ESP', mahrez: 'ALG', gakpo: 'NED',
+};
+
+// Lowercased nation names + aliases + star players, for tagging WC-relevant trends.
 const WC_NAMES = (() => {
   const set = new Set();
   for (const code of Object.keys(CODE_NAME)) {
@@ -45,6 +66,7 @@ const WC_NAMES = (() => {
     for (const a of ALIASES[code] || []) set.add(a.toLowerCase());
     set.add('#' + code.toLowerCase());
   }
+  for (const p of Object.keys(PLAYERS)) set.add(p);
   return set;
 })();
 const WC_KEYWORDS = ['world cup', 'worldcup', 'fifa', 'fwc', '#wc26', 'wc2026'];
@@ -58,6 +80,7 @@ const NAME_TO_CODE = (() => {
     pairs.push(['#' + code.toLowerCase(), code]);
     for (const a of ALIASES[code] || []) pairs.push([a.toLowerCase(), code]);
   }
+  for (const p of Object.keys(PLAYERS)) pairs.push([p, PLAYERS[p]]);
   pairs.sort((a, b) => b[0].length - a[0].length);
   return pairs;
 })();
@@ -148,7 +171,7 @@ function parseWoeidEnv(raw) {
  * snapshot() backs GET /api/trends.json; stats() is light telemetry.
  */
 function createTrendsPoller({ log = console, woeids, engine } = {}) {
-  const INTERVAL = Number(process.env.X_TRENDS_INTERVAL_MS) || 600_000;
+  const INTERVAL = Number(process.env.X_TRENDS_INTERVAL_MS) || 1_200_000; // 20m — keeps 8 locations under the daily cap
   const DAILY_CAP = Number(process.env.X_TRENDS_DAILY_CAP) || 800;
   const LOCATIONS = woeids || parseWoeidEnv(process.env.X_TRENDS_WOEIDS) || DEFAULT_WOEIDS;
   // Cap for the ambient glow trends feed into the buzz engine (0 disables it).

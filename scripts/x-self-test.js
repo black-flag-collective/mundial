@@ -9,7 +9,7 @@
 const assert = require('node:assert');
 const { backoff } = require('./x-stream-runner');
 const { streamPosts, postWeight } = require('./x-stream');
-const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, codesForTrend, trendsToAmbient } = require('./x-trends');
+const { parseTrends, isWorldCupTrend, createTrendsPoller, codeForTrend, codesForTrend, trendsToAmbient, DEFAULT_WOEIDS } = require('./x-trends');
 const { buildTeamRules, ruleForTeam, codesInFixtures, CODE_NAME } = require('./x-build-rules');
 const { createCountsPoller, activeTeamCodes, liveContext, computeTrend, resolveBuzzMode, dueForFetch, liveDelay, isKnockout, absoluteScale, decayPeak } = require('./buzz-counts');
 
@@ -366,6 +366,25 @@ check('trends: codesForTrend attributes a head-to-head trend to BOTH nations', (
   assert.deepStrictEqual(codesForTrend('Argentina vs France final').sort(), ['ARG', 'FRA']);
   assert.deepStrictEqual(codesForTrend('Three Lions vs La Roja').sort(), ['ENG', 'ESP']);
   assert.deepStrictEqual(codesForTrend('random topic'), []);
+});
+check('trends: star players attribute to their nation (and head-to-heads to both)', () => {
+  assert.strictEqual(codeForTrend('Messi magic tonight'), 'ARG');
+  assert.strictEqual(codeForTrend('Mbappé hat-trick'), 'FRA');
+  assert.strictEqual(codeForTrend('Salah penalty'), 'EGY');
+  assert.deepStrictEqual(codesForTrend('Messi vs Mbappe').sort(), ['ARG', 'FRA']);
+  assert.strictEqual(codeForTrend('some random surname'), null);
+});
+check('trends: native-language country names resolve (broadens non-English chatter)', () => {
+  assert.strictEqual(codeForTrend('España campeona'), 'ESP');
+  assert.strictEqual(codeForTrend('Vamos Deutschland'), 'GER');
+  assert.strictEqual(codeForTrend('México'), 'MEX');
+});
+check('trends: DEFAULT_WOEIDS stays within the daily cap at the default cadence', () => {
+  const ids = DEFAULT_WOEIDS.map((w) => w.woeid);
+  assert.strictEqual(new Set(ids).size, ids.length, 'no duplicate WOEIDs');
+  // 20m default interval → 72 cycles/UTC-day; locations × cycles must stay < 800 cap.
+  const cyclesPerDay = Math.floor(86_400_000 / 1_200_000);
+  assert.ok(DEFAULT_WOEIDS.length * cyclesPerDay < 800, `${DEFAULT_WOEIDS.length} locs × ${cyclesPerDay} cycles under cap`);
 });
 check('trends: post counts above the 32-bit range don’t overflow (no `| 0` truncation)', () => {
   const big = 3_000_000_000; // > 2^31; `| 0` would flip this negative

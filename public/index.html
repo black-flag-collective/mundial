@@ -67,6 +67,12 @@
   .mday-scroll::-webkit-scrollbar-thumb { background: var(--mun-surface-active); border-radius: 3px; }
   .bk-wrap::-webkit-scrollbar { height: 6px; }
   .bk-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  /* Bracket: globe sits in a reserved bottom-centre band, so its caption + backing
+     centre with it instead of tucking bottom-left (the standings placement). */
+  @media (min-width: 761px) {
+    .view-bracket .legend-cap { left: 0 !important; right: 0 !important; bottom: 16px !important; width: auto !important; }
+    .view-bracket .legend-backing { left: 50% !important; right: auto !important; transform: translateX(-50%); width: 560px !important; bottom: -150px !important; }
+  }
   /* Desktop: the mobile hamburger is hidden (also has inline display:none). */
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
@@ -108,7 +114,7 @@
   }
 </style>
 </helmet>
-<div ref="{{ rootRef }}" class="mun-root" style="min-height: 100vh;">
+<div ref="{{ rootRef }}" class="mun-root {{ viewClass }}" style="min-height: 100vh;">
 
   <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;">
     <div class="nav-brand" style="display: flex; align-items: center;">
@@ -239,7 +245,7 @@
 
     <!-- ============ BRACKET VIEW ============ -->
     <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
-      <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 22px; box-sizing: border-box;">
+      <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 184px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
           <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--mun-fg); line-height: 1;">Projected Bracket</span>
@@ -1623,8 +1629,10 @@ class Component extends DCLogic {
       const sz = Math.min(0.42 * vh, 300);
       s = sz / full; cx = 193; cy = vh - 74 - sz / 2; z = 60; op = 1;
     } else if (legend) {
-      const sz = Math.min(0.34 * vh, 300);
-      s = sz / full; cx = 36 + sz / 2; cy = vh - 64 - sz / 2; z = 60; op = 1;
+      // Bracket: globe lives in a reserved band at the bottom-centre so it never
+      // overlaps the (full-width) bracket above it.
+      const sz = Math.min(0.18 * vh, 156);
+      s = sz / full; cx = vw / 2; cy = vh - 18 - sz / 2; z = 60; op = 1;
     } else {
       s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : (v === 'buzz' ? 0.4 : 1));
     }
@@ -2439,6 +2447,7 @@ class Component extends DCLogic {
       closeXInspect: () => this.setState({ buzzFocusCode: null }),
       retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,
+      viewClass: isBracket ? 'view-bracket' : (isStandings ? 'view-standings' : (isMatchday ? 'view-matchday' : (isBuzz ? 'view-buzz' : 'view-globe'))),
       legendTitle: isBracket ? 'Knockout path' : 'Group locator',
       legendHint: isBracket ? 'Hover a match to trace it' : 'Hover a team to locate it',
       showGlobe: () => this.setView('globe'),

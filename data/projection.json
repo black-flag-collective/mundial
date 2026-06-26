@@ -1,40 +1,40 @@
 {
   "phase": "group",
   "phaseLabel": "Group stage",
-  "generatedAt": "2026-06-26T00:55:03.282Z",
-  "source": "ranking",
-  "model": null,
+  "generatedAt": "2026-06-26T01:25:51.129Z",
+  "source": "ai",
+  "model": "claude-haiku-4-5",
   "champion": "ESP",
   "championName": "Spain",
   "runnerUp": "ARG",
   "runnerUpName": "Argentina",
   "finalScore": "2-1",
-  "headline": "With the group stage still unfolding, the seeding still points to Spain lifting the trophy over Argentina.",
+  "headline": "Spain's relentless possession game overwhelms a resilient Argentina side in a rematch of recent Copa América heartbreak.",
   "rounds": [
     {
       "round": "R32",
       "label": "Round of 32",
-      "note": "Seeds should mostly hold in the Round of 32; the tightest tie on paper is Colombia v Croatia, the likeliest upset."
+      "note": "Mexico's perfect group stage form and Germany's defensive solidity anchor a round where established powers like France, Argentina, and Brazil navigate past overmatched opponents despite mixed qualifying form."
     },
     {
       "round": "R16",
       "label": "Round of 16",
-      "note": "The Round of 16 narrows the field — Germany v France is the tie most likely to buck the ranking."
+      "note": "France and Spain's creative depth dispatches stubborn contenders, while England and Argentina advance through clinical finishing, leaving Netherlands and Belgium to rue their group-stage inconsistency."
     },
     {
       "round": "QF",
       "label": "Quarter-finals",
-      "note": "Quarter-final weekend thins the contenders: France, Spain, England, Argentina are projected through to the semis."
+      "note": "Spain's midfield control suffocates England's attacking threats, and Argentina's tournament experience edges past a Brazil side that never quite found its rhythm after early draws."
     },
     {
       "round": "SF",
       "label": "Semi-finals",
-      "note": "Spain, Argentina are tipped to come out of the semi-finals and meet for the title."
+      "note": "Spain dismantles France's aging core with superior ball retention and pressing intensity, while Argentina scrapes past England on penalties after a tense, tactical affair."
     },
     {
       "round": "F",
       "label": "Final",
-      "note": "Spain v Argentina — the two highest-ranked sides left; Spain edges it on pedigree."
+      "note": "Spain's possession dominance and pressing triggers Argentina's turnovers in key moments, converting chances with clinical efficiency to capture their second World Cup title and avenge recent tournament disappointments."
     }
   ]
 }

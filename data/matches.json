@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T00:23:29.337Z",
+  "updatedAt": "2026-06-26T01:25:46.835Z",
   "days": [
     {
       "dow": "Thursday",
@@ -686,21 +686,21 @@
         "g": "F",
         "a": "JPN",
         "b": "SWE",
-        "st": "LIVE",
+        "st": "FT",
         "ko": "2026-06-25T23:00:00Z",
         "venue": "AT&T Stadium, Arlington",
         "as": 1,
-        "bs": 0
+        "bs": 1
       },
       {
         "g": "F",
         "a": "TUN",
         "b": "NED",
-        "st": "LIVE",
+        "st": "FT",
         "ko": "2026-06-25T23:00:00Z",
         "venue": "Arrowhead Stadium, Kansas City",
         "as": 1,
-        "bs": 2
+        "bs": 3
       },
       {
         "g": "D",

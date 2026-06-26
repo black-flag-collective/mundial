@@ -235,7 +235,7 @@
             <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--mun-fg-muted);"><span style="width: 9px; height: 9px; border-radius: var(--mun-radius-flag); background: {{ accent }};"></span>Advances to Round of 32</span>
             <span style="font-size: 12px; color: var(--mun-fg-faint);">{{ dataUpdated }}</span>
           </div>
-          <div ref="{{ standingsWrapRef }}" class="standings-gridwrap" style="flex: 1; min-height: 0; overflow: hidden; margin-top: 16px; display: flex; justify-content: center; align-items: center;">
+          <div ref="{{ standingsWrapRef }}" class="standings-gridwrap" onScroll="{{ onStandingsScroll }}" style="flex: 1; min-height: 0; overflow: hidden; margin-top: 16px; display: flex; justify-content: center; align-items: center;">
           <div ref="{{ standingsGridRef }}" class="standings-grid" style="display: grid; grid-template-columns: repeat(4, 320px); gap: 16px 20px; align-content: start; transform-origin: center center;">
           <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
             <x-import component-from-global-scope="MundialUI.StandingsTable" group="{{ g.group }}" rows="{{ g.rows }}" advancing="{{ 2 }}" on-team-hover="{{ onTeamHover }}"></x-import>
@@ -909,7 +909,7 @@ class Component extends DCLogic {
     this.hoverIdx = -1;
     // Fit the standings grid once its pane is laid out (the globe RAF loop doesn't
     // drive this view, so trigger straight off the nav switch).
-    if (v === 'standings') [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d));
+    if (v === 'standings') { [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d)); setTimeout(() => this.onStandingsScroll(), 120); }
     if (v === 'bracket') [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleBracket(), d));
     // Analytics: record the switch as a virtual pageview and keep app_view as a
     // super-property so every later event (incl. autocaptured clicks) is tagged
@@ -923,6 +923,26 @@ class Component extends DCLogic {
   setLegendTeam = (code) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = code ? [code] : null; window.__mundial.legendArc = null; };
   setLegendMatch = (a, b) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = [a, b]; window.__mundial.legendArc = { a: a, b: b }; };
   clearLegend = () => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; };
+
+  // Mobile standings: as you swipe between group cards, focus the globe on the 4
+  // nations of whichever group is centred (rAF-throttled). Desktop keeps the
+  // per-team hover focus, so this only acts in the carousel.
+  onStandingsScroll = () => {
+    if (window.innerWidth > 760) return;
+    const wrap = this.standingsWrapRef.current;
+    if (!wrap || !this._standingsGroups || this._stScrollRaf) return;
+    this._stScrollRaf = requestAnimationFrame(() => {
+      this._stScrollRaf = null;
+      const cards = wrap.querySelectorAll('.standings-grid > *');
+      if (!cards.length) return;
+      const wr = wrap.getBoundingClientRect();
+      const mid = wr.left + wr.width / 2;
+      let best = 0, bestD = Infinity;
+      cards.forEach((c, i) => { const r = c.getBoundingClientRect(); const d = Math.abs((r.left + r.width / 2) - mid); if (d < bestD) { bestD = d; best = i; } });
+      const codes = this._standingsGroups[best];
+      if (codes && codes.length) { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = codes; window.__mundial.legendArc = null; }
+    });
+  };
 
   setDay(idx) {
     idx = Math.max(0, Math.min(this.days.length - 1, idx));
@@ -1772,7 +1792,13 @@ class Component extends DCLogic {
         if (mid.length() < 1e-4) mid = vecs[0].clone();
         mid.normalize();
         targetQ = this.faceVec(mid);
-        if (vecs.length === 2) targetZ = Math.max(432, Math.min(540, 432 + vecs[0].angleTo(vecs[1]) * 110));
+        // Zoom out to fit the focused nations — works for a pair (a match) or a
+        // whole group (4 teams): use the widest pairwise separation.
+        if (vecs.length >= 2) {
+          let maxAng = 0;
+          for (let a = 0; a < vecs.length; a++) for (let b = a + 1; b < vecs.length; b++) maxAng = Math.max(maxAng, vecs[a].angleTo(vecs[b]));
+          targetZ = Math.max(432, Math.min(560, 432 + maxAng * 110));
+        }
       } else { targetQ = this.faceQuat(10, this.idleLon); }
     } else {
       const autoRotate = this.props.autoRotate ?? false;
@@ -2294,6 +2320,8 @@ class Component extends DCLogic {
         P: r.P, W: r.W, D: r.D, L: r.L, GD: r.GD, Pts: r.Pts
       }))
     }));
+    // Card-order group→codes map, used by the mobile carousel to focus the globe.
+    this._standingsGroups = standings.map((g) => g.rows.map((r) => r.code));
 
     // ---- bracket ----
     const B = this.resolveBracket();
@@ -2522,6 +2550,7 @@ class Component extends DCLogic {
       bracketInnerRef: this.bracketInnerRef,
       standingsWrapRef: this.standingsWrapRef,
       standingsGridRef: this.standingsGridRef,
+      onStandingsScroll: this.onStandingsScroll,
       finalM: this.mkM(B.final, accent),
       champCode: B.champ, champName: champ ? champ.name : '',
       championFinal: (() => { const f = this.mkM(B.final, accent); return { teamA: f.teamA, teamB: f.teamB, onMouseEnter: f.onEnter, onMouseLeave: f.onLeave, onClick: f.onEnter }; })(),

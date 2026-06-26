@@ -650,7 +650,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
   &quot;accentColor&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#e8702a&quot; },
-  &quot;autoRotate&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true },
+  &quot;autoRotate&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false },
   &quot;kicker&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Canada · Mexico · USA&quot; }
 }">
 class Component extends DCLogic {
@@ -1775,7 +1775,7 @@ class Component extends DCLogic {
         if (vecs.length === 2) targetZ = Math.max(432, Math.min(540, 432 + vecs[0].angleTo(vecs[1]) * 110));
       } else { targetQ = this.faceQuat(10, this.idleLon); }
     } else {
-      const autoRotate = this.props.autoRotate ?? true;
+      const autoRotate = this.props.autoRotate ?? false;
       if (autoRotate) this.idleLon += 0.16;
       targetQ = this.faceQuat(12, this.idleLon);
     }
@@ -1831,7 +1831,20 @@ class Component extends DCLogic {
       const hm = (window.__mundial ? window.__mundial.mhover : -1);
       const hMatch = (hm >= 0 && hm < day.length) ? day[hm] : null;
       let targetQ, targetZ;
-      if (hMatch) {
+      // Let the user spin even on this focus view: while dragging (or coasting
+      // after a flick) the marble takes over from the featured-match framing.
+      const mdCoasting = !this.dragging && (Math.abs(this.velLon) > 0.02 || Math.abs(this.velLat) > 0.02);
+      if (this.dragging || mdCoasting) {
+        if (!this.dragging) {
+          this.idleLon += this.velLon;
+          this.idleLat = Math.max(-78, Math.min(78, this.idleLat + this.velLat));
+          this.velLon *= 0.94; this.velLat *= 0.94;
+          if (Math.abs(this.velLon) < 0.02) this.velLon = 0;
+          if (Math.abs(this.velLat) < 0.02) this.velLat = 0;
+        }
+        targetQ = this.faceQuat(this.idleLat, this.idleLon);
+        targetZ = this.camZ;
+      } else if (hMatch) {
         const ca = this.byCode[hMatch.a], cb = this.byCode[hMatch.b];
         const v1 = this.latLonToVec(ca.lat, ca.lon, 1);
         const v2 = this.latLonToVec(cb.lat, cb.lon, 1);
@@ -1841,16 +1854,30 @@ class Component extends DCLogic {
         targetQ = this.faceVec(mid);
         targetZ = Math.max(560, Math.min(720, 560 + v1.angleTo(v2) * 150));
       } else {
-        const autoRotate = this.props.autoRotate ?? true;
-        if (autoRotate) this.idleLon += 0.08;
-        targetQ = this.faceQuat(8, this.idleLon);
-        targetZ = 560;
+        const autoRotate = this.props.autoRotate ?? false;
+        // Default (no hover, no auto-spin): hold a static framing of the featured
+        // match's two nations — the "in focus" teams shown in the panel.
+        const fm = day[this.state.featuredIdx];
+        if (!autoRotate && fm && this.byCode[fm.a] && this.byCode[fm.b]) {
+          const v1 = this.latLonToVec(this.byCode[fm.a].lat, this.byCode[fm.a].lon, 1);
+          const v2 = this.latLonToVec(this.byCode[fm.b].lat, this.byCode[fm.b].lon, 1);
+          let mid = v1.clone().add(v2);
+          if (mid.length() < 1e-4) mid = v1.clone();
+          mid.normalize();
+          targetQ = this.faceVec(mid);
+          targetZ = Math.max(560, Math.min(720, 560 + v1.angleTo(v2) * 150));
+        } else {
+          if (autoRotate) this.idleLon += 0.08;
+          targetQ = this.faceQuat(8, this.idleLon);
+          targetZ = 560;
+        }
       }
-      this.globe.quaternion.slerp(targetQ, hMatch ? 0.085 : 0.06);
+      this.globe.quaternion.slerp(targetQ, this.dragging ? 0.45 : (mdCoasting ? 0.2 : (hMatch ? 0.085 : 0.06)));
       this.camZ += (targetZ - this.camZ) * 0.06;
       this.camera.position.z = this.camZ;
 
-      const focus = hMatch ? new Set([hMatch.a, hMatch.b]) : this.playingSet();
+      const fmFocus = day[this.state.featuredIdx];
+      const focus = hMatch ? new Set([hMatch.a, hMatch.b]) : (fmFocus ? new Set([fmFocus.a, fmFocus.b]) : this.playingSet());
       for (let i = 0; i < this.markers.length; i++) {
         const mk = this.markers[i];
         const on = focus.has(this.countries[mk.idx].code);
@@ -1878,7 +1905,7 @@ class Component extends DCLogic {
 
     // ---- globe view + buzz view (marble/hover; buzz also reacts to board-row focus) ----
     if (this.arcGroup) this.arcGroup.visible = false;
-    const autoRotate = this.props.autoRotate ?? true;
+    const autoRotate = this.props.autoRotate ?? false;
     // Two-way link: in the Buzz view, hovering a leaderboard row sets legendFocus →
     // bring that nation to center behind the board.
     const gbus = window.__mundial || {};

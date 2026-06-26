@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T03:43:50.474Z",
+  "updatedAt": "2026-06-26T05:21:51.723Z",
   "days": [
     {
       "dow": "Thursday",
@@ -706,17 +706,17 @@
         "g": "D",
         "a": "TUR",
         "b": "USA",
-        "st": "LIVE",
+        "st": "FT",
         "ko": "2026-06-26T02:00:00Z",
         "venue": "SoFi Stadium, Inglewood",
-        "as": 2,
+        "as": 3,
         "bs": 2
       },
       {
         "g": "D",
         "a": "PAR",
         "b": "AUS",
-        "st": "LIVE",
+        "st": "FT",
         "ko": "2026-06-26T02:00:00Z",
         "venue": "Levi's Stadium, Santa Clara",
         "as": 0,

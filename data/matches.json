@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-25T23:31:43.476Z",
+  "updatedAt": "2026-06-26T00:23:29.337Z",
   "days": [
     {
       "dow": "Thursday",
@@ -689,7 +689,7 @@
         "st": "LIVE",
         "ko": "2026-06-25T23:00:00Z",
         "venue": "AT&T Stadium, Arlington",
-        "as": 0,
+        "as": 1,
         "bs": 0
       },
       {
@@ -699,7 +699,7 @@
         "st": "LIVE",
         "ko": "2026-06-25T23:00:00Z",
         "venue": "Arrowhead Stadium, Kansas City",
-        "as": 0,
+        "as": 1,
         "bs": 2
       },
       {

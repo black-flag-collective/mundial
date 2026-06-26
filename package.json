@@ -29,7 +29,7 @@
   "scripts": {
     "start": "node server.js",
     "update": "node scripts/update-data.js",
-    "test": "node scripts/x-self-test.js && node scripts/buzz-self-test.js && node scripts/predict-self-test.js && node scripts/providers-self-test.js && node scripts/rate-limit-self-test.js && node scripts/smoke-test.js"
+    "test": "node scripts/x-self-test.js && node scripts/buzz-self-test.js && node scripts/predict-self-test.js && node scripts/project-self-test.js && node scripts/providers-self-test.js && node scripts/rate-limit-self-test.js && node scripts/smoke-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",

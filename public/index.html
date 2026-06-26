@@ -96,6 +96,8 @@
     .standings-grid { display: flex !important; grid-template-columns: none !important; flex-wrap: nowrap !important; align-items: start !important; gap: 12px !important; transform: none !important; padding-bottom: 6px; }
     .standings-grid > * { display: block !important; flex: 0 0 86vw !important; width: 86vw; max-width: 86vw; scroll-snap-align: center; box-sizing: border-box; }
     .pane-bracket { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
+    .bk-proj { overflow-x: auto !important; padding: 0 14px 4px !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .bk-proj > * { flex: 0 0 78vw !important; }
     .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
     .bk-inner { gap: 7px !important; padding: 0 14px; }
     /* hover-to-trace caption is a desktop affordance — no hover on a phone, and
@@ -253,8 +255,21 @@
         <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
           <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--mun-fg); line-height: 1;">Projected Bracket</span>
-          <span style="font-size: 12px; color: var(--mun-fg-faint);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
+          <span style="font-size: 12.5px; color: var(--mun-fg-muted); text-align: center; max-width: 760px; line-height: 1.45;">{{ bracketSubtitle }}</span>
+          <sc-if value="{{ projAvailable }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mun-accent);">{{ projTag }}</span>
+          </sc-if>
         </div>
+        <sc-if value="{{ projAvailable }}" hint-placeholder-val="{{ false }}">
+          <div class="bk-proj" style="display: flex; gap: 8px; margin-top: 12px; width: 100%; max-width: 1180px; align-self: center;">
+            <sc-for list="{{ projRounds }}" as="r" hint-placeholder-count="5">
+              <div style="flex: 1; min-width: 0; background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); padding: 8px 11px; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mun-accent);">{{ r.label }}</span>
+                <span style="font-size: 11px; line-height: 1.35; color: var(--mun-fg-muted);">{{ r.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
         <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
           <div ref="{{ bracketInnerRef }}" class="bk-inner" style="display: flex; align-items: stretch; gap: 9px; height: 100%;">
 
@@ -784,6 +799,7 @@ class Component extends DCLogic {
     // immediately).
     this.days = [];
     this.dayMatches = [];
+    this.projection = null; // /api/projection.json — round-by-round bracket read
     this._dataLoaded = false;
 
     // rough strength order (FIFA ranking / title odds) used to project knockout winners
@@ -1085,6 +1101,12 @@ class Component extends DCLogic {
     let first = true;
     const poll = () => {
       if (this._buzzStopped) return;
+      // Bracket projection (round-by-round read, refreshed at each stage change).
+      // Cheap + cached; absent file → { available:false } and the UI falls back.
+      fetch('/api/projection.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(p => { if (p && p.available) { this.projection = p; this.setState({ liveTick: (this.state.liveTick || 0) + 1 }); } })
+        .catch(() => {});
       fetch('/api/data.json')
         .then(r => r.ok ? r.json() : null)
         .then(data => {
@@ -2076,7 +2098,10 @@ class Component extends DCLogic {
     if (window.innerWidth <= 760) { inner.style.transform = 'none'; return; }
     inner.style.transform = 'none';
     const aw = wrap.clientWidth, iw = inner.scrollWidth;
-    const s = iw > 0 ? Math.min(1, (aw - 6) / iw) : 1;
+    const ah = wrap.clientHeight, ih = inner.scrollHeight;
+    // Fit BOTH axes so a tall R32 column never clips (the projection strip eats a
+    // little height); width usually binds, height binds on shorter viewports.
+    const s = (iw > 0 && ih > 0) ? Math.min(1, (aw - 6) / iw, (ah - 2) / ih) : 1;
     inner.style.transformOrigin = 'center center';
     inner.style.transform = 'scale(' + s + ')';
   }
@@ -2551,6 +2576,14 @@ class Component extends DCLogic {
       leftR16: mk(B.r16.slice(0, 4)), rightR16: mk(B.r16.slice(4)),
       leftQF: mk(B.qf.slice(0, 2)), rightQF: mk(B.qf.slice(2)),
       leftSF: mk([B.sf[0]]), rightSF: mk([B.sf[1]]),
+      // Bracket projection (round-by-round rationale, /api/projection.json).
+      projAvailable: !!(this.projection && this.projection.rounds && this.projection.rounds.length),
+      bracketSubtitle: (this.projection && this.projection.headline)
+        ? this.projection.headline
+        : 'Round of 32 from group favourites · winners projected by world ranking · Jun 28 – Jul 19',
+      projHeadline: (this.projection && this.projection.headline) || '',
+      projRounds: (this.projection && this.projection.rounds) ? this.projection.rounds.map((r) => ({ label: r.label, note: r.note })) : [],
+      projTag: this.projection ? ('Projected at ' + (this.projection.phaseLabel || this.projection.phase) + (this.projection.source === 'ai' ? ' · AI read' : '')) : '',
       bracketWrapRef: this.bracketWrapRef,
       bracketInnerRef: this.bracketInnerRef,
       standingsWrapRef: this.standingsWrapRef,

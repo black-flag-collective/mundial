@@ -83,7 +83,8 @@
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
     .standings-rail .rail-desc { display: none !important; }
     .standings-head { flex-wrap: wrap !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 8px !important; margin-top: 4px !important; }
-    .standings-grid { grid-template-columns: 1fr !important; margin-top: 10px !important; }
+    .standings-gridwrap { overflow-y: auto !important; overflow-x: hidden !important; display: block !important; margin-top: 10px !important; }
+    .standings-grid { grid-template-columns: 1fr !important; transform: none !important; }
     .pane-bracket { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
     .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
     .bk-inner { gap: 7px !important; padding: 0 14px; }
@@ -225,10 +226,12 @@
             <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--mun-fg-muted);"><span style="width: 9px; height: 9px; border-radius: var(--mun-radius-flag); background: {{ accent }};"></span>Advances to Round of 32</span>
             <span style="font-size: 12px; color: var(--mun-fg-faint);">{{ dataUpdated }}</span>
           </div>
-          <div class="standings-grid" style="flex: 1; min-height: 0; overflow-y: auto; margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 18px; align-content: start;">
+          <div ref="{{ standingsWrapRef }}" class="standings-gridwrap" style="flex: 1; min-height: 0; overflow: hidden; margin-top: 16px; display: flex; justify-content: center; align-items: center;">
+          <div ref="{{ standingsGridRef }}" class="standings-grid" style="display: grid; grid-template-columns: repeat(4, 320px); gap: 16px 20px; align-content: start; transform-origin: center center;">
           <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
             <x-import component-from-global-scope="MundialUI.StandingsTable" group="{{ g.group }}" rows="{{ g.rows }}" advancing="{{ 2 }}" on-team-hover="{{ onTeamHover }}"></x-import>
           </sc-for>
+          </div>
           </div>
         </div>
       </div>
@@ -652,6 +655,8 @@ class Component extends DCLogic {
     this.sliderTrackRef = React.createRef();
     this.bracketWrapRef = React.createRef();
     this.bracketInnerRef = React.createRef();
+    this.standingsWrapRef = React.createRef();
+    this.standingsGridRef = React.createRef();
     this.state = { view: 'globe', hoverIdx: -1, selectedDay: 7, featuredIdx: 0, menuOpen: false };
     this.mouse = { x: -1, y: -1, has: false };
     this.hoverIdx = -1;
@@ -893,6 +898,10 @@ class Component extends DCLogic {
     if (v !== 'buzz') patch.buzzFocusCode = null;  // drop the click-through highlight when leaving the board
     this.setState(patch);
     this.hoverIdx = -1;
+    // Fit the standings grid once its pane is laid out (the globe RAF loop doesn't
+    // drive this view, so trigger straight off the nav switch).
+    if (v === 'standings') [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d));
+    if (v === 'bracket') [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleBracket(), d));
     // Analytics: record the switch as a virtual pageview and keep app_view as a
     // super-property so every later event (incl. autocaptured clicks) is tagged
     // with the view it happened in.
@@ -939,7 +948,7 @@ class Component extends DCLogic {
   componentDidMount() {
     this.onMove = (e) => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.has = true; if (!this.dragging) this.pickHover(); };
     window.addEventListener('mousemove', this.onMove);
-    this.onResize = () => { this.resize(); this.scaleBracket(); this.forceUpdate(); };
+    this.onResize = () => { this.resize(); this.scaleBracket(); this.scaleStandings(); this.forceUpdate(); };
     window.addEventListener('resize', this.onResize);
     // Tag the entry view so the initial pageview (already fired by the snippet
     // for "/") and every subsequent event carry the active in-app view.
@@ -1072,6 +1081,8 @@ class Component extends DCLogic {
             this.setState({ liveTick: (this.state.liveTick || 0) + 1 });
           }
           this.rebuildArcs();
+          // Group tables now have real rows — refit so all 12 fill the viewport with no scroll.
+          if (this.currentView() === 'standings') requestAnimationFrame(() => this.scaleStandings());
         })
         .catch(() => {})
         .finally(() => { if (!this._buzzStopped) this._liveDataTimer = setTimeout(poll, 25000); });
@@ -1787,6 +1798,7 @@ class Component extends DCLogic {
       this.applyBuzzVisibility();
       this.rebuildArcs();
       if (_v === 'bracket') { requestAnimationFrame(() => this.scaleBracket()); setTimeout(() => this.scaleBracket(), 350); }
+      if (_v === 'standings') { [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d)); requestAnimationFrame(() => this.scaleStandings()); }
     }
     const T = window.THREE;
     const md = _v === 'matchday';
@@ -1971,6 +1983,22 @@ class Component extends DCLogic {
   faceVec(dir) {
     const T = window.THREE;
     return new T.Quaternion().setFromUnitVectors(dir.clone().normalize(), new T.Vector3(0, 0, 1));
+  }
+
+  // Fit all 12 group tables in the viewport with no scroll, mirroring the bracket's
+  // fit-to-container scale. The grid lays out at a fixed natural size (4×3); we then
+  // scale it down to whichever of width/height binds. Mobile keeps its own 1-col flow.
+  scaleStandings() {
+    const wrap = this.standingsWrapRef.current, grid = this.standingsGridRef.current;
+    if (!wrap || !grid) return;
+    if (window.innerWidth <= 760) { grid.style.transform = 'none'; return; }
+    grid.style.transform = 'none';
+    const aw = wrap.clientWidth, ah = wrap.clientHeight;
+    const gw = grid.scrollWidth, gh = grid.scrollHeight;
+    if (gw === 0 || gh === 0) return;
+    const s = Math.min(1, aw / gw, ah / gh);
+    grid.style.transformOrigin = 'top center';
+    grid.style.transform = 'scale(' + s.toFixed(4) + ')';
   }
 
   scaleBracket() {
@@ -2453,6 +2481,8 @@ class Component extends DCLogic {
       leftSF: mk([B.sf[0]]), rightSF: mk([B.sf[1]]),
       bracketWrapRef: this.bracketWrapRef,
       bracketInnerRef: this.bracketInnerRef,
+      standingsWrapRef: this.standingsWrapRef,
+      standingsGridRef: this.standingsGridRef,
       finalM: this.mkM(B.final, accent),
       champCode: B.champ, champName: champ ? champ.name : '',
       championFinal: (() => { const f = this.mkM(B.final, accent); return { teamA: f.teamA, teamB: f.teamB, onMouseEnter: f.onEnter, onMouseLeave: f.onLeave, onClick: f.onEnter }; })(),

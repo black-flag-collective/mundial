@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T05:21:51.723Z",
+  "updatedAt": "2026-06-26T06:45:26.407Z",
   "days": [
     {
       "dow": "Thursday",
@@ -90,6 +90,16 @@
       "dow": "Sunday",
       "short": "Jun 28",
       "long": "June 28"
+    },
+    {
+      "dow": "Monday",
+      "short": "Jun 29",
+      "long": "June 29"
+    },
+    {
+      "dow": "Wednesday",
+      "short": "Jul 1",
+      "long": "July 1"
     }
   ],
   "dayMatches": [
@@ -831,6 +841,31 @@
         "st": "UP",
         "time": "3:00 PM ET",
         "venue": "SoFi Stadium, LA"
+      }
+    ],
+    [
+      {
+        "round": "R32",
+        "a": "BRA",
+        "b": "JPN",
+        "ko": "2026-06-29T17:00:00Z",
+        "st": "UP"
+      },
+      {
+        "round": "R32",
+        "a": "NED",
+        "b": "MAR",
+        "ko": "2026-06-30T01:00:00Z",
+        "st": "UP"
+      }
+    ],
+    [
+      {
+        "round": "R32",
+        "a": "USA",
+        "b": "BIH",
+        "ko": "2026-07-02T00:00:00Z",
+        "st": "UP"
       }
     ]
   ]

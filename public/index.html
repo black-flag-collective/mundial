@@ -89,8 +89,11 @@
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
     .standings-rail .rail-desc { display: none !important; }
     .standings-head { flex-wrap: wrap !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 8px !important; margin-top: 4px !important; }
-    .standings-gridwrap { overflow-y: auto !important; overflow-x: hidden !important; display: block !important; margin-top: 10px !important; }
-    .standings-grid { grid-template-columns: 1fr !important; transform: none !important; }
+    /* Mobile: swipe left/right through the 12 group cards (scroll-snap carousel). */
+    .standings-gridwrap { overflow-x: auto !important; overflow-y: hidden !important; display: block !important; margin-top: 10px !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .standings-gridwrap::-webkit-scrollbar { display: none; }
+    .standings-grid { display: flex !important; grid-template-columns: none !important; flex-wrap: nowrap !important; align-items: start !important; gap: 12px !important; transform: none !important; padding-bottom: 6px; }
+    .standings-grid > * { display: block !important; flex: 0 0 86vw !important; width: 86vw; max-width: 86vw; scroll-snap-align: center; box-sizing: border-box; }
     .pane-bracket { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
     .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
     .bk-inner { gap: 7px !important; padding: 0 14px; }

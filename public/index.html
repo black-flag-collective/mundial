@@ -84,6 +84,7 @@
     .nav-menu-btn { display: inline-flex !important; }
     /* buzz: header + full-width leaderboard over the dimmed live globe */
     .pane-buzz { padding: 78px 14px 18px !important; }
+    .bz-xgrid { grid-template-columns: 1fr !important; gap: 9px !important; }
     /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
     .pane-standings { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
@@ -464,22 +465,26 @@
                   <span onClick="{{ closeXInspect }}" title="Close" style="font-size: 16px; line-height: 1; color: var(--mun-fg-subtle); cursor: pointer; padding: 0 4px;">&times;</span>
                 </div>
                 <sc-if value="{{ xInspectActive }}" hint-placeholder-val="{{ true }}">
-                  <div style="display: flex; flex-direction: column; gap: 8px; text-align: left;">
-                    <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
-                    <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
-                    <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                      <sc-if value="{{ xHasSpark }}" hint-placeholder-val="{{ true }}">
-                        <svg viewBox="0 0 132 26" preserveAspectRatio="none" style="width: 132px; height: 26px; flex: none;"><polyline points="{{ xSelSpark }}" fill="none" stroke="var(--mun-accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
-                      </sc-if>
-                      <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
+                  <div class="bz-xgrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; align-items: start; text-align: left;">
+                    <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                      <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
+                      <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
+                      <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
                     </div>
-                    <sc-if value="{{ xHasVs }}" hint-placeholder-val="{{ false }}">
-                      <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.06em; text-transform: uppercase;"><span>match chatter</span><span><span style="color: var(--mun-accent); font-weight: 700;">{{ xVsShare }}</span> {{ xSelCode }} &middot; {{ xVsOppShare }} {{ xVsName }}</span></div>
-                        <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;"><span style="position: absolute; inset: 0 auto 0 0; width: {{ xVsPct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span></span>
+                    <div style="display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <sc-if value="{{ xHasSpark }}" hint-placeholder-val="{{ true }}">
+                          <svg viewBox="0 0 132 26" preserveAspectRatio="none" style="width: 132px; height: 26px; flex: none;"><polyline points="{{ xSelSpark }}" fill="none" stroke="var(--mun-accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+                        </sc-if>
+                        <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
                       </div>
-                    </sc-if>
+                      <sc-if value="{{ xHasVs }}" hint-placeholder-val="{{ false }}">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.06em; text-transform: uppercase;"><span>match chatter</span><span><span style="color: var(--mun-accent); font-weight: 700;">{{ xVsShare }}</span> {{ xSelCode }} &middot; {{ xVsOppShare }} {{ xVsName }}</span></div>
+                          <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;"><span style="position: absolute; inset: 0 auto 0 0; width: {{ xVsPct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span></span>
+                        </div>
+                      </sc-if>
+                    </div>
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T06:45:26.407Z",
+  "updatedAt": "2026-06-26T19:10:14.280Z",
   "days": [
     {
       "dow": "Thursday",
@@ -770,17 +770,21 @@
         "g": "I",
         "a": "NOR",
         "b": "FRA",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-26T19:00:00Z",
-        "venue": "Gillette Stadium, Foxborough"
+        "venue": "Gillette Stadium, Foxborough",
+        "as": 0,
+        "bs": 0
       },
       {
         "g": "I",
         "a": "SEN",
         "b": "IRQ",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-26T19:00:00Z",
-        "venue": "BMO Field, Toronto"
+        "venue": "BMO Field, Toronto",
+        "as": 0,
+        "bs": 0
       }
     ],
     [

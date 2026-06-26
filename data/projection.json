@@ -1,0 +1,40 @@
+{
+  "phase": "group",
+  "phaseLabel": "Group stage",
+  "generatedAt": "2026-06-26T00:55:03.282Z",
+  "source": "ranking",
+  "model": null,
+  "champion": "ESP",
+  "championName": "Spain",
+  "runnerUp": "ARG",
+  "runnerUpName": "Argentina",
+  "finalScore": "2-1",
+  "headline": "With the group stage still unfolding, the seeding still points to Spain lifting the trophy over Argentina.",
+  "rounds": [
+    {
+      "round": "R32",
+      "label": "Round of 32",
+      "note": "Seeds should mostly hold in the Round of 32; the tightest tie on paper is Colombia v Croatia, the likeliest upset."
+    },
+    {
+      "round": "R16",
+      "label": "Round of 16",
+      "note": "The Round of 16 narrows the field — Germany v France is the tie most likely to buck the ranking."
+    },
+    {
+      "round": "QF",
+      "label": "Quarter-finals",
+      "note": "Quarter-final weekend thins the contenders: France, Spain, England, Argentina are projected through to the semis."
+    },
+    {
+      "round": "SF",
+      "label": "Semi-finals",
+      "note": "Spain, Argentina are tipped to come out of the semi-finals and meet for the title."
+    },
+    {
+      "round": "F",
+      "label": "Final",
+      "note": "Spain v Argentina — the two highest-ranked sides left; Spain edges it on pedigree."
+    }
+  ]
+}

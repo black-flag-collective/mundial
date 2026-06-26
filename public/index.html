@@ -67,6 +67,12 @@
   .mday-scroll::-webkit-scrollbar-thumb { background: var(--mun-surface-active); border-radius: 3px; }
   .bk-wrap::-webkit-scrollbar { height: 6px; }
   .bk-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  /* Bracket: globe sits in a reserved bottom-centre band, so its caption + backing
+     centre with it instead of tucking bottom-left (the standings placement). */
+  @media (min-width: 761px) {
+    .view-bracket .legend-cap { left: 0 !important; right: 0 !important; bottom: 16px !important; width: auto !important; }
+    .view-bracket .legend-backing { left: 50% !important; right: auto !important; transform: translateX(-50%); width: 560px !important; bottom: -150px !important; }
+  }
   /* Desktop: the mobile hamburger is hidden (also has inline display:none). */
   @media (max-width: 760px) {
     nav { padding: 12px 14px !important; }
@@ -78,13 +84,20 @@
     .nav-menu-btn { display: inline-flex !important; }
     /* buzz: header + full-width leaderboard over the dimmed live globe */
     .pane-buzz { padding: 78px 14px 18px !important; }
+    .bz-xgrid { grid-template-columns: 1fr !important; gap: 9px !important; }
     /* standings + bracket: globe is a slim decorative top band, content scrolls below it */
     .pane-standings { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 12px 14px 22px !important; flex-direction: column !important; gap: 10px !important; }
     .standings-rail { width: auto !important; flex: none !important; gap: 2px !important; }
     .standings-rail .rail-desc { display: none !important; }
     .standings-head { flex-wrap: wrap !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 8px !important; margin-top: 4px !important; }
-    .standings-grid { grid-template-columns: 1fr !important; margin-top: 10px !important; }
+    /* Mobile: swipe left/right through the 12 group cards (scroll-snap carousel). */
+    .standings-gridwrap { overflow-x: auto !important; overflow-y: hidden !important; display: block !important; margin-top: 10px !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .standings-gridwrap::-webkit-scrollbar { display: none; }
+    .standings-grid { display: flex !important; grid-template-columns: none !important; flex-wrap: nowrap !important; align-items: start !important; gap: 12px !important; transform: none !important; padding-bottom: 6px; }
+    .standings-grid > * { display: block !important; flex: 0 0 86vw !important; width: 86vw; max-width: 86vw; scroll-snap-align: center; box-sizing: border-box; }
     .pane-bracket { top: 34vh !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 10px 0 14px !important; }
+    .bk-proj { overflow-x: auto !important; padding: 0 14px 4px !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .bk-proj > * { flex: 0 0 78vw !important; }
     .bk-wrap { overflow-x: auto !important; overflow-y: hidden !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; }
     .bk-inner { gap: 7px !important; padding: 0 14px; }
     /* hover-to-trace caption is a desktop affordance — no hover on a phone, and
@@ -107,7 +120,7 @@
   }
 </style>
 </helmet>
-<div ref="{{ rootRef }}" class="mun-root" style="min-height: 100vh;">
+<div ref="{{ rootRef }}" class="mun-root {{ viewClass }}" style="min-height: 100vh;">
 
   <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;">
     <div class="nav-brand" style="display: flex; align-items: center;">
@@ -225,10 +238,12 @@
             <span style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--mun-fg-muted);"><span style="width: 9px; height: 9px; border-radius: var(--mun-radius-flag); background: {{ accent }};"></span>Advances to Round of 32</span>
             <span style="font-size: 12px; color: var(--mun-fg-faint);">{{ dataUpdated }}</span>
           </div>
-          <div class="standings-grid" style="flex: 1; min-height: 0; overflow-y: auto; margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 18px; align-content: start;">
+          <div ref="{{ standingsWrapRef }}" class="standings-gridwrap" onScroll="{{ onStandingsScroll }}" style="flex: 1; min-height: 0; overflow: hidden; margin-top: 16px; display: flex; justify-content: center; align-items: center;">
+          <div ref="{{ standingsGridRef }}" class="standings-grid" style="display: grid; grid-template-columns: repeat(4, 320px); gap: 16px 20px; align-content: start; transform-origin: center center;">
           <sc-for list="{{ standings }}" as="g" hint-placeholder-count="12">
             <x-import component-from-global-scope="MundialUI.StandingsTable" group="{{ g.group }}" rows="{{ g.rows }}" advancing="{{ 2 }}" on-team-hover="{{ onTeamHover }}"></x-import>
           </sc-for>
+          </div>
           </div>
         </div>
       </div>
@@ -236,12 +251,25 @@
 
     <!-- ============ BRACKET VIEW ============ -->
     <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
-      <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 22px; box-sizing: border-box;">
+      <div class="pane-bracket" style="position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; padding: 88px 24px 184px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
           <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.34em; text-transform: uppercase; color: var(--mun-fg-subtle); white-space: nowrap;">FIFA World Cup 26 &middot; Knockout Stage</span>
           <span style="font-family: var(--mun-font-display); font-style: italic; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--mun-fg); line-height: 1;">Projected Bracket</span>
-          <span style="font-size: 12px; color: var(--mun-fg-faint);">Round of 32 from group favourites &middot; winners projected by world ranking &middot; Jun 28 &ndash; Jul 19</span>
+          <span style="font-size: 12.5px; color: var(--mun-fg-muted); text-align: center; max-width: 760px; line-height: 1.45;">{{ bracketSubtitle }}</span>
+          <sc-if value="{{ projAvailable }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mun-accent);">{{ projTag }}</span>
+          </sc-if>
         </div>
+        <sc-if value="{{ projAvailable }}" hint-placeholder-val="{{ false }}">
+          <div class="bk-proj" style="display: flex; gap: 8px; margin-top: 12px; width: 100%; max-width: 1180px; align-self: center;">
+            <sc-for list="{{ projRounds }}" as="r" hint-placeholder-count="5">
+              <div style="flex: 1; min-width: 0; background: var(--mun-surface-2); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-md); padding: 8px 11px; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mun-accent);">{{ r.label }}</span>
+                <span style="font-size: 11px; line-height: 1.35; color: var(--mun-fg-muted);">{{ r.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
         <div ref="{{ bracketWrapRef }}" class="bk-wrap" style="flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: stretch; justify-content: center; margin-top: 16px;">
           <div ref="{{ bracketInnerRef }}" class="bk-inner" style="display: flex; align-items: stretch; gap: 9px; height: 100%;">
 
@@ -452,22 +480,26 @@
                   <span onClick="{{ closeXInspect }}" title="Close" style="font-size: 16px; line-height: 1; color: var(--mun-fg-subtle); cursor: pointer; padding: 0 4px;">&times;</span>
                 </div>
                 <sc-if value="{{ xInspectActive }}" hint-placeholder-val="{{ true }}">
-                  <div style="display: flex; flex-direction: column; gap: 8px; text-align: left;">
-                    <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
-                    <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
-                    <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                      <sc-if value="{{ xHasSpark }}" hint-placeholder-val="{{ true }}">
-                        <svg viewBox="0 0 132 26" preserveAspectRatio="none" style="width: 132px; height: 26px; flex: none;"><polyline points="{{ xSelSpark }}" fill="none" stroke="var(--mun-accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
-                      </sc-if>
-                      <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
+                  <div class="bz-xgrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; align-items: start; text-align: left;">
+                    <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                      <div style="font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.1em; text-transform: uppercase;">X recent-counts query</div>
+                      <code style="font-size: 12px; color: var(--mun-fg-strong); background: var(--mun-bg); border: 1px solid var(--mun-border-soft); border-radius: var(--mun-radius-sm); padding: 8px 10px; word-break: break-word; font-family: ui-monospace, Menlo, monospace;">{{ xSelQuery }}</code>
+                      <div style="font-size: 13px; color: var(--mun-fg-muted);"><span style="color: var(--mun-accent); font-weight: 700; font-size: 15px;">{{ xSelCount }}</span> posts in the last {{ xSelWindow }} min &middot; volume only, no post text fetched</div>
                     </div>
-                    <sc-if value="{{ xHasVs }}" hint-placeholder-val="{{ false }}">
-                      <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.06em; text-transform: uppercase;"><span>match chatter</span><span><span style="color: var(--mun-accent); font-weight: 700;">{{ xVsShare }}</span> {{ xSelCode }} &middot; {{ xVsOppShare }} {{ xVsName }}</span></div>
-                        <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;"><span style="position: absolute; inset: 0 auto 0 0; width: {{ xVsPct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span></span>
+                    <div style="display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <sc-if value="{{ xHasSpark }}" hint-placeholder-val="{{ true }}">
+                          <svg viewBox="0 0 132 26" preserveAspectRatio="none" style="width: 132px; height: 26px; flex: none;"><polyline points="{{ xSelSpark }}" fill="none" stroke="var(--mun-accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+                        </sc-if>
+                        <div style="font-size: 12px; color: var(--mun-fg-faint);">peak <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelPeak }}</span>/min &middot; now <span style="color: var(--mun-fg-muted); font-weight: 600;">{{ xSelNow }}</span>/min</div>
                       </div>
-                    </sc-if>
+                      <sc-if value="{{ xHasVs }}" hint-placeholder-val="{{ false }}">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mun-fg-faint); letter-spacing: 0.06em; text-transform: uppercase;"><span>match chatter</span><span><span style="color: var(--mun-accent); font-weight: 700;">{{ xVsShare }}</span> {{ xSelCode }} &middot; {{ xVsOppShare }} {{ xVsName }}</span></div>
+                          <span style="position: relative; height: 6px; border-radius: var(--mun-radius-pill); background: var(--mun-surface-4); overflow: hidden;"><span style="position: absolute; inset: 0 auto 0 0; width: {{ xVsPct }}; border-radius: var(--mun-radius-pill); background: linear-gradient(90deg, var(--mun-blue), var(--mun-accent));"></span></span>
+                        </div>
+                      </sc-if>
+                    </div>
                   </div>
                 </sc-if>
                 <sc-if value="{{ xInspectInactive }}" hint-placeholder-val="{{ false }}">
@@ -611,7 +643,10 @@
                 <span style="display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--mun-fg); font-weight: 600; white-space: nowrap;"><img src="{{ m.oppFlag }}" alt="" style="width: 22px; height: 15px; border-radius: var(--mun-radius-flag); object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);">vs <span style="color: {{ confedColor }};">{{ m.oppCode }}</span> &middot; {{ m.oppName }}</span>
                 <span style="font-size: 12px; color: var(--mun-fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.venue }}</span>
               </div>
-              <span style="font-size: 13px; font-weight: 600; color: var(--mun-fg-strong); white-space: nowrap;">{{ m.date }}</span>
+              <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap;">
+                <sc-if value="{{ m.score }}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; font-weight: 700; color: var(--mun-fg-strong);">{{ m.score }}</span></sc-if>
+                <span style="font-size: 12px; font-weight: 600; color: {{ m.statusColor }};">{{ m.status }}</span>
+              </span>
             </div>
           </sc-for>
         </div>
@@ -635,7 +670,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
   &quot;accentColor&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#e8702a&quot; },
-  &quot;autoRotate&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true },
+  &quot;autoRotate&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false },
   &quot;kicker&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Canada · Mexico · USA&quot; }
 }">
 class Component extends DCLogic {
@@ -649,6 +684,8 @@ class Component extends DCLogic {
     this.sliderTrackRef = React.createRef();
     this.bracketWrapRef = React.createRef();
     this.bracketInnerRef = React.createRef();
+    this.standingsWrapRef = React.createRef();
+    this.standingsGridRef = React.createRef();
     this.state = { view: 'globe', hoverIdx: -1, selectedDay: 7, featuredIdx: 0, menuOpen: false };
     this.mouse = { x: -1, y: -1, has: false };
     this.hoverIdx = -1;
@@ -754,8 +791,6 @@ class Component extends DCLogic {
       POR: 'pt', UZB: 'uz', COL: 'co', COD: 'cd', ENG: 'gb-eng', CRO: 'hr', GHA: 'gh', PAN: 'pa'
     };
 
-    this.matches = this.buildMatches();
-
     // Match data is loaded live from /api/data.json (served from data/matches.json,
     // refreshed by the update-data workflow). Nothing is baked into the page — the
     // matchday/standings views render from the API only, so no stale or fabricated
@@ -764,6 +799,7 @@ class Component extends DCLogic {
     // immediately).
     this.days = [];
     this.dayMatches = [];
+    this.projection = null; // /api/projection.json — round-by-round bracket read
     this._dataLoaded = false;
 
     // rough strength order (FIFA ranking / title odds) used to project knockout winners
@@ -829,68 +865,43 @@ class Component extends DCLogic {
     };
   }
 
-  buildMatches() {
-    const groups = {};
-    this.countries.forEach((c) => { (groups[c.group] = groups[c.group] || []).push(c.code); });
-    const known = {
-      'MEX_RSA': { date: 'Jun 11', venue: 'Estadio Azteca, Mexico City' },
-      'CZE_KOR': { date: 'Jun 12', venue: 'Estadio Guadalajara' },
-      'QAT_SUI': { date: 'Jun 13', venue: 'San Francisco Bay Area' },
-      'BRA_MAR': { date: 'Jun 13', venue: 'New York / New Jersey' },
-      'PAR_USA': { date: 'Jun 13', venue: 'SoFi Stadium, Los Angeles' },
-      'TUR_USA': { date: 'Jun 19', venue: 'Los Angeles Stadium' },
-      'AUS_PAR': { date: 'Jun 16', venue: 'San Francisco Bay Area' },
-      'CIV_CUW': { date: 'Jun 14', venue: 'Philadelphia Stadium' },
-      'ECU_GER': { date: 'Jun 14', venue: 'New York / New Jersey' },
-      'JPN_SWE': { date: 'Jun 15', venue: 'Dallas Stadium' },
-      'NED_TUN': { date: 'Jun 15', venue: 'Kansas City Stadium' },
-      'EGY_IRN': { date: 'Jun 15', venue: 'Seattle Stadium' },
-      'BEL_NZL': { date: 'Jun 15', venue: 'BC Place, Vancouver' },
-      'CPV_KSA': { date: 'Jun 14', venue: 'Houston Stadium' },
-      'CPV_ESP': { date: 'Jun 15', venue: 'Atlanta Stadium' },
-      'ESP_KSA': { date: 'Jun 20', venue: 'Atlanta Stadium' },
-      'ESP_URU': { date: 'Jun 24', venue: 'Guadalajara Stadium' },
-      'FRA_NOR': { date: 'Jun 26', venue: 'Boston Stadium' },
-      'IRQ_SEN': { date: 'Jun 26', venue: 'Toronto Stadium' },
-      'FRA_SEN': { date: 'Jun 16', venue: 'MetLife, New York / New Jersey' },
-      'IRQ_NOR': { date: 'Jun 16', venue: 'Gillette Stadium, Boston' },
-      'ALG_AUT': { date: 'Jun 22', venue: 'Kansas City Stadium' },
-      'ARG_JOR': { date: 'Jun 22', venue: 'Dallas Stadium' },
-      'ALG_ARG': { date: 'Jun 16', venue: 'Arrowhead, Kansas City' },
-      'AUT_JOR': { date: 'Jun 16', venue: "Levi's Stadium, SF Bay" },
-      'POR_UZB': { date: 'Jun 17', venue: 'Lumen Field, Seattle' },
-      'CRO_ENG': { date: 'Jun 17', venue: 'NRG Stadium, Houston' },
-      'COD_COL': { date: 'Jun 17', venue: 'Hard Rock Stadium, Miami' },
-      'GHA_PAN': { date: 'Jun 17', venue: 'Mercedes-Benz Stadium, Atlanta' },
-      'ENG_PAN': { date: 'Jun 27', venue: 'New York / New Jersey' },
-      'CRO_GHA': { date: 'Jun 27', venue: 'Philadelphia Stadium' },
-      'ENG_GHA': { date: 'Jun 23', venue: 'Boston Stadium' }
-    };
-    const order = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+  // Group fixtures for a nation, sourced from the live schedule (data/matches.json
+  // via /api/data.json) so dates, venues, and scores are always real \u2014 never a
+  // stale hardcoded guess. The date comes from the fixture's matchday bucket, so it
+  // matches the matchday slider exactly. 'TBD' only ever appears for a fixture that
+  // genuinely has no scheduled day. Scores/live state are surfaced here too, so the
+  // globe reflects the same live results as the matchday view: the hovered nation's
+  // tally is shown first ("vs OPP \u00b7 2 \u2013 1").
+  matchesFor(code) {
+    const country = this.byCode[code];
+    const grp = country ? country.group : null;
     const out = [];
-    Object.keys(groups).sort().forEach((g) => {
-      const t = groups[g];
-      order.forEach((pr) => {
-        const a = t[pr[0]], b = t[pr[1]];
-        const k = known[[a, b].sort().join('_')] || {};
-        out.push({ group: g, a: a, b: b, date: k.date || '', venue: k.venue || '' });
+    (this.dayMatches || []).forEach((day, di) => {
+      const label = (this.days[di] && this.days[di].short) || '';
+      (day || []).forEach((m) => {
+        if (m.a !== code && m.b !== code) return;
+        if (grp && m.g !== grp) return; // group-stage fixtures only (knockouts carry R32\u2026F)
+        const isA = m.a === code;
+        const oppCode = isA ? m.b : m.a;
+        const opp = this.byCode[oppCode];
+        const li = this.liveInfo(m);
+        const ft = m.st === 'FT';
+        const showScore = ft || li.live;
+        const mine = isA ? m.as : m.bs, theirs = isA ? m.bs : m.as;
+        out.push({
+          oppCode: oppCode,
+          oppFlag: this.flagUrl(oppCode),
+          oppName: opp ? opp.name : '',
+          venue: m.venue || ('Group ' + m.g + ' \u00b7 venue TBD'),
+          // Right-column: score (when live/final) over a caption. Upcoming fixtures
+          // show only the kickoff date, kept prominent like before.
+          score: showScore ? ((mine ?? 0) + ' \u2013 ' + (theirs ?? 0)) : '',
+          status: li.live ? ('\u25cf ' + li.clock) : (ft ? 'FT' : (label || 'TBD')),
+          statusColor: li.live ? 'var(--mun-accent)' : (showScore ? 'var(--mun-fg-subtle)' : 'var(--mun-fg-strong)')
+        });
       });
     });
     return out;
-  }
-
-  matchesFor(code) {
-    return this.matches.filter((m) => m.a === code || m.b === code).map((m) => {
-      const oppCode = m.a === code ? m.b : m.a;
-      const opp = this.byCode[oppCode];
-      return {
-        oppCode: oppCode,
-        oppFlag: this.flagUrl(oppCode),
-        oppName: opp ? opp.name : '',
-        date: m.date || 'TBD',
-        venue: m.venue || ('Group ' + m.group + ' \u00b7 venue TBD')
-      };
-    });
   }
 
   // Lightweight PostHog wrapper. No-ops when analytics is disabled: with no
@@ -917,6 +928,10 @@ class Component extends DCLogic {
     if (v !== 'buzz') patch.buzzFocusCode = null;  // drop the click-through highlight when leaving the board
     this.setState(patch);
     this.hoverIdx = -1;
+    // Fit the standings grid once its pane is laid out (the globe RAF loop doesn't
+    // drive this view, so trigger straight off the nav switch).
+    if (v === 'standings') { [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d)); setTimeout(() => this.onStandingsScroll(), 120); }
+    if (v === 'bracket') [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleBracket(), d));
     // Analytics: record the switch as a virtual pageview and keep app_view as a
     // super-property so every later event (incl. autocaptured clicks) is tagged
     // with the view it happened in.
@@ -929,6 +944,26 @@ class Component extends DCLogic {
   setLegendTeam = (code) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = code ? [code] : null; window.__mundial.legendArc = null; };
   setLegendMatch = (a, b) => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = [a, b]; window.__mundial.legendArc = { a: a, b: b }; };
   clearLegend = () => { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = null; window.__mundial.legendArc = null; };
+
+  // Mobile standings: as you swipe between group cards, focus the globe on the 4
+  // nations of whichever group is centred (rAF-throttled). Desktop keeps the
+  // per-team hover focus, so this only acts in the carousel.
+  onStandingsScroll = () => {
+    if (window.innerWidth > 760) return;
+    const wrap = this.standingsWrapRef.current;
+    if (!wrap || !this._standingsGroups || this._stScrollRaf) return;
+    this._stScrollRaf = requestAnimationFrame(() => {
+      this._stScrollRaf = null;
+      const cards = wrap.querySelectorAll('.standings-grid > *');
+      if (!cards.length) return;
+      const wr = wrap.getBoundingClientRect();
+      const mid = wr.left + wr.width / 2;
+      let best = 0, bestD = Infinity;
+      cards.forEach((c, i) => { const r = c.getBoundingClientRect(); const d = Math.abs((r.left + r.width / 2) - mid); if (d < bestD) { bestD = d; best = i; } });
+      const codes = this._standingsGroups[best];
+      if (codes && codes.length) { window.__mundial = window.__mundial || {}; window.__mundial.legendFocus = codes; window.__mundial.legendArc = null; }
+    });
+  };
 
   setDay(idx) {
     idx = Math.max(0, Math.min(this.days.length - 1, idx));
@@ -963,7 +998,7 @@ class Component extends DCLogic {
   componentDidMount() {
     this.onMove = (e) => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.has = true; if (!this.dragging) this.pickHover(); };
     window.addEventListener('mousemove', this.onMove);
-    this.onResize = () => { this.resize(); this.scaleBracket(); this.forceUpdate(); };
+    this.onResize = () => { this.resize(); this.scaleBracket(); this.scaleStandings(); this.forceUpdate(); };
     window.addEventListener('resize', this.onResize);
     // Tag the entry view so the initial pageview (already fired by the snippet
     // for "/") and every subsequent event carry the active in-app view.
@@ -1066,6 +1101,12 @@ class Component extends DCLogic {
     let first = true;
     const poll = () => {
       if (this._buzzStopped) return;
+      // Bracket projection (round-by-round read, refreshed at each stage change).
+      // Cheap + cached; absent file → { available:false } and the UI falls back.
+      fetch('/api/projection.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(p => { if (p && p.available) { this.projection = p; this.setState({ liveTick: (this.state.liveTick || 0) + 1 }); } })
+        .catch(() => {});
       fetch('/api/data.json')
         .then(r => r.ok ? r.json() : null)
         .then(data => {
@@ -1096,6 +1137,8 @@ class Component extends DCLogic {
             this.setState({ liveTick: (this.state.liveTick || 0) + 1 });
           }
           this.rebuildArcs();
+          // Group tables now have real rows — refit so all 12 fill the viewport with no scroll.
+          if (this.currentView() === 'standings') requestAnimationFrame(() => this.scaleStandings());
         })
         .catch(() => {})
         .finally(() => { if (!this._buzzStopped) this._liveDataTimer = setTimeout(poll, 25000); });
@@ -1636,8 +1679,10 @@ class Component extends DCLogic {
       const sz = Math.min(0.42 * vh, 300);
       s = sz / full; cx = 193; cy = vh - 74 - sz / 2; z = 60; op = 1;
     } else if (legend) {
-      const sz = Math.min(0.34 * vh, 300);
-      s = sz / full; cx = 36 + sz / 2; cy = vh - 64 - sz / 2; z = 60; op = 1;
+      // Bracket: globe lives in a reserved band at the bottom-centre so it never
+      // overlaps the (full-width) bracket above it.
+      const sz = Math.min(0.18 * vh, 156);
+      s = sz / full; cx = vw / 2; cy = vh - 18 - sz / 2; z = 60; op = 1;
     } else {
       s = 1; cx = vw / 2; cy = vh / 2; z = 10; op = (v === 'matchday' ? 0.62 : (v === 'buzz' ? 0.4 : 1));
     }
@@ -1774,10 +1819,16 @@ class Component extends DCLogic {
         if (mid.length() < 1e-4) mid = vecs[0].clone();
         mid.normalize();
         targetQ = this.faceVec(mid);
-        if (vecs.length === 2) targetZ = Math.max(432, Math.min(540, 432 + vecs[0].angleTo(vecs[1]) * 110));
+        // Zoom out to fit the focused nations — works for a pair (a match) or a
+        // whole group (4 teams): use the widest pairwise separation.
+        if (vecs.length >= 2) {
+          let maxAng = 0;
+          for (let a = 0; a < vecs.length; a++) for (let b = a + 1; b < vecs.length; b++) maxAng = Math.max(maxAng, vecs[a].angleTo(vecs[b]));
+          targetZ = Math.max(432, Math.min(560, 432 + maxAng * 110));
+        }
       } else { targetQ = this.faceQuat(10, this.idleLon); }
     } else {
-      const autoRotate = this.props.autoRotate ?? true;
+      const autoRotate = this.props.autoRotate ?? false;
       if (autoRotate) this.idleLon += 0.16;
       targetQ = this.faceQuat(12, this.idleLon);
     }
@@ -1811,6 +1862,7 @@ class Component extends DCLogic {
       this.applyBuzzVisibility();
       this.rebuildArcs();
       if (_v === 'bracket') { requestAnimationFrame(() => this.scaleBracket()); setTimeout(() => this.scaleBracket(), 350); }
+      if (_v === 'standings') { [0, 80, 250, 500].forEach((d) => setTimeout(() => this.scaleStandings(), d)); requestAnimationFrame(() => this.scaleStandings()); }
     }
     const T = window.THREE;
     const md = _v === 'matchday';
@@ -1832,7 +1884,20 @@ class Component extends DCLogic {
       const hm = (window.__mundial ? window.__mundial.mhover : -1);
       const hMatch = (hm >= 0 && hm < day.length) ? day[hm] : null;
       let targetQ, targetZ;
-      if (hMatch) {
+      // Let the user spin even on this focus view: while dragging (or coasting
+      // after a flick) the marble takes over from the featured-match framing.
+      const mdCoasting = !this.dragging && (Math.abs(this.velLon) > 0.02 || Math.abs(this.velLat) > 0.02);
+      if (this.dragging || mdCoasting) {
+        if (!this.dragging) {
+          this.idleLon += this.velLon;
+          this.idleLat = Math.max(-78, Math.min(78, this.idleLat + this.velLat));
+          this.velLon *= 0.94; this.velLat *= 0.94;
+          if (Math.abs(this.velLon) < 0.02) this.velLon = 0;
+          if (Math.abs(this.velLat) < 0.02) this.velLat = 0;
+        }
+        targetQ = this.faceQuat(this.idleLat, this.idleLon);
+        targetZ = this.camZ;
+      } else if (hMatch) {
         const ca = this.byCode[hMatch.a], cb = this.byCode[hMatch.b];
         const v1 = this.latLonToVec(ca.lat, ca.lon, 1);
         const v2 = this.latLonToVec(cb.lat, cb.lon, 1);
@@ -1842,16 +1907,30 @@ class Component extends DCLogic {
         targetQ = this.faceVec(mid);
         targetZ = Math.max(560, Math.min(720, 560 + v1.angleTo(v2) * 150));
       } else {
-        const autoRotate = this.props.autoRotate ?? true;
-        if (autoRotate) this.idleLon += 0.08;
-        targetQ = this.faceQuat(8, this.idleLon);
-        targetZ = 560;
+        const autoRotate = this.props.autoRotate ?? false;
+        // Default (no hover, no auto-spin): hold a static framing of the featured
+        // match's two nations — the "in focus" teams shown in the panel.
+        const fm = day[this.state.featuredIdx];
+        if (!autoRotate && fm && this.byCode[fm.a] && this.byCode[fm.b]) {
+          const v1 = this.latLonToVec(this.byCode[fm.a].lat, this.byCode[fm.a].lon, 1);
+          const v2 = this.latLonToVec(this.byCode[fm.b].lat, this.byCode[fm.b].lon, 1);
+          let mid = v1.clone().add(v2);
+          if (mid.length() < 1e-4) mid = v1.clone();
+          mid.normalize();
+          targetQ = this.faceVec(mid);
+          targetZ = Math.max(560, Math.min(720, 560 + v1.angleTo(v2) * 150));
+        } else {
+          if (autoRotate) this.idleLon += 0.08;
+          targetQ = this.faceQuat(8, this.idleLon);
+          targetZ = 560;
+        }
       }
-      this.globe.quaternion.slerp(targetQ, hMatch ? 0.085 : 0.06);
+      this.globe.quaternion.slerp(targetQ, this.dragging ? 0.45 : (mdCoasting ? 0.2 : (hMatch ? 0.085 : 0.06)));
       this.camZ += (targetZ - this.camZ) * 0.06;
       this.camera.position.z = this.camZ;
 
-      const focus = hMatch ? new Set([hMatch.a, hMatch.b]) : this.playingSet();
+      const fmFocus = day[this.state.featuredIdx];
+      const focus = hMatch ? new Set([hMatch.a, hMatch.b]) : (fmFocus ? new Set([fmFocus.a, fmFocus.b]) : this.playingSet());
       for (let i = 0; i < this.markers.length; i++) {
         const mk = this.markers[i];
         const on = focus.has(this.countries[mk.idx].code);
@@ -1879,7 +1958,7 @@ class Component extends DCLogic {
 
     // ---- globe view + buzz view (marble/hover; buzz also reacts to board-row focus) ----
     if (this.arcGroup) this.arcGroup.visible = false;
-    const autoRotate = this.props.autoRotate ?? true;
+    const autoRotate = this.props.autoRotate ?? false;
     // Two-way link: in the Buzz view, hovering a leaderboard row sets legendFocus →
     // bring that nation to center behind the board.
     const gbus = window.__mundial || {};
@@ -1997,13 +2076,32 @@ class Component extends DCLogic {
     return new T.Quaternion().setFromUnitVectors(dir.clone().normalize(), new T.Vector3(0, 0, 1));
   }
 
+  // Fit all 12 group tables in the viewport with no scroll, mirroring the bracket's
+  // fit-to-container scale. The grid lays out at a fixed natural size (4×3); we then
+  // scale it down to whichever of width/height binds. Mobile keeps its own 1-col flow.
+  scaleStandings() {
+    const wrap = this.standingsWrapRef.current, grid = this.standingsGridRef.current;
+    if (!wrap || !grid) return;
+    if (window.innerWidth <= 760) { grid.style.transform = 'none'; return; }
+    grid.style.transform = 'none';
+    const aw = wrap.clientWidth, ah = wrap.clientHeight;
+    const gw = grid.scrollWidth, gh = grid.scrollHeight;
+    if (gw === 0 || gh === 0) return;
+    const s = Math.min(1, aw / gw, ah / gh);
+    grid.style.transformOrigin = 'top center';
+    grid.style.transform = 'scale(' + s.toFixed(4) + ')';
+  }
+
   scaleBracket() {
     const wrap = this.bracketWrapRef.current, inner = this.bracketInnerRef.current;
     if (!wrap || !inner) return;
     if (window.innerWidth <= 760) { inner.style.transform = 'none'; return; }
     inner.style.transform = 'none';
     const aw = wrap.clientWidth, iw = inner.scrollWidth;
-    const s = iw > 0 ? Math.min(1, (aw - 6) / iw) : 1;
+    const ah = wrap.clientHeight, ih = inner.scrollHeight;
+    // Fit BOTH axes so a tall R32 column never clips (the projection strip eats a
+    // little height); width usually binds, height binds on shorter viewports.
+    const s = (iw > 0 && ih > 0) ? Math.min(1, (aw - 6) / iw, (ah - 2) / ih) : 1;
     inner.style.transformOrigin = 'center center';
     inner.style.transform = 'scale(' + s + ')';
   }
@@ -2252,6 +2350,8 @@ class Component extends DCLogic {
         P: r.P, W: r.W, D: r.D, L: r.L, GD: r.GD, Pts: r.Pts
       }))
     }));
+    // Card-order group→codes map, used by the mobile carousel to focus the globe.
+    this._standingsGroups = standings.map((g) => g.rows.map((r) => r.code));
 
     // ---- bracket ----
     const B = this.resolveBracket();
@@ -2435,6 +2535,7 @@ class Component extends DCLogic {
       closeXInspect: () => this.setState({ buzzFocusCode: null }),
       retryBuzz: () => { this.buzzMeta = { ...(this.buzzMeta || {}), status: 'loading' }; this.setState({ buzzTick: (this.state.buzzTick || 0) + 1 }); },
       isLegendView: isStandings || isBracket,
+      viewClass: isBracket ? 'view-bracket' : (isStandings ? 'view-standings' : (isMatchday ? 'view-matchday' : (isBuzz ? 'view-buzz' : 'view-globe'))),
       legendTitle: isBracket ? 'Knockout path' : 'Group locator',
       legendHint: isBracket ? 'Hover a match to trace it' : 'Hover a team to locate it',
       showGlobe: () => this.setView('globe'),
@@ -2475,8 +2576,19 @@ class Component extends DCLogic {
       leftR16: mk(B.r16.slice(0, 4)), rightR16: mk(B.r16.slice(4)),
       leftQF: mk(B.qf.slice(0, 2)), rightQF: mk(B.qf.slice(2)),
       leftSF: mk([B.sf[0]]), rightSF: mk([B.sf[1]]),
+      // Bracket projection (round-by-round rationale, /api/projection.json).
+      projAvailable: !!(this.projection && this.projection.rounds && this.projection.rounds.length),
+      bracketSubtitle: (this.projection && this.projection.headline)
+        ? this.projection.headline
+        : 'Round of 32 from group favourites · winners projected by world ranking · Jun 28 – Jul 19',
+      projHeadline: (this.projection && this.projection.headline) || '',
+      projRounds: (this.projection && this.projection.rounds) ? this.projection.rounds.map((r) => ({ label: r.label, note: r.note })) : [],
+      projTag: this.projection ? ('Projected at ' + (this.projection.phaseLabel || this.projection.phase) + (this.projection.source === 'ai' ? ' · AI read' : '')) : '',
       bracketWrapRef: this.bracketWrapRef,
       bracketInnerRef: this.bracketInnerRef,
+      standingsWrapRef: this.standingsWrapRef,
+      standingsGridRef: this.standingsGridRef,
+      onStandingsScroll: this.onStandingsScroll,
       finalM: this.mkM(B.final, accent),
       champCode: B.champ, champName: champ ? champ.name : '',
       championFinal: (() => { const f = this.mkM(B.final, accent); return { teamA: f.teamA, teamB: f.teamB, onMouseEnter: f.onEnter, onMouseLeave: f.onLeave, onClick: f.onEnter }; })(),

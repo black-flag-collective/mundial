@@ -8,6 +8,7 @@ const { PostHog, setupExpressRequestContext, setupExpressErrorHandler } = requir
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_PATH = path.join(__dirname, 'data', 'matches.json');
+const PROJECTION_PATH = path.join(__dirname, 'data', 'projection.json');
 
 // Don't advertise the framework.
 app.disable('x-powered-by');
@@ -467,6 +468,27 @@ app.get('/api/data.json', (req, res) => {
   } catch (err) {
     console.error('Failed to serve data.json:', err.message);
     res.status(503).json({ error: 'data not available' });
+  }
+});
+
+// Bracket projection — the round-by-round read regenerated at each stage
+// transition (scripts/project.js writes data/projection.json during the update
+// cycle). Optional: if the file isn't present yet, report it cleanly so the
+// bracket UI falls back to its ranking subtitle instead of erroring.
+let _projCache = null;
+let _projMtime = -1;
+app.get('/api/projection.json', (req, res) => {
+  try {
+    const mtime = fs.statSync(PROJECTION_PATH).mtimeMs;
+    if (_projCache === null || mtime !== _projMtime) {
+      _projCache = JSON.parse(fs.readFileSync(PROJECTION_PATH, 'utf8'));
+      _projMtime = mtime;
+    }
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ available: true, ...(_projCache || {}) });
+  } catch (err) {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ available: false });
   }
 });
 

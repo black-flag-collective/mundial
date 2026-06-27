@@ -106,7 +106,6 @@ data/          seeded match data (matches.json)
 docs/          feature tour + data/realtime pipeline docs
 packages/      mundial-ui design-system package
 project/        original HTML/CSS/JS design prototypes (kept for reference)
-chats/          design-iteration transcripts (kept for reference)
 ```
 
 ## Contributing

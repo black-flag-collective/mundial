@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T02:15:58.266Z",
+  "updatedAt": "2026-06-27T03:43:16.559Z",
   "days": [
     {
       "dow": "Thursday",
@@ -738,17 +738,21 @@
         "g": "G",
         "a": "EGY",
         "b": "IRN",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T03:00:00Z",
-        "venue": "Lumen Field, Seattle"
+        "venue": "Lumen Field, Seattle",
+        "as": 1,
+        "bs": 1
       },
       {
         "g": "G",
         "a": "NZL",
         "b": "BEL",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T03:00:00Z",
-        "venue": "BC Place, Vancouver"
+        "venue": "BC Place, Vancouver",
+        "as": 0,
+        "bs": 1
       },
       {
         "g": "H",

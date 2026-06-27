@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T05:13:54.341Z",
+  "updatedAt": "2026-06-27T21:20:37.066Z",
   "days": [
     {
       "dow": "Thursday",
@@ -832,17 +832,21 @@
         "g": "L",
         "a": "PAN",
         "b": "ENG",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T21:00:00Z",
-        "venue": "MetLife Stadium, East Rutherford"
+        "venue": "MetLife Stadium, East Rutherford",
+        "as": 0,
+        "bs": 0
       },
       {
         "g": "L",
         "a": "CRO",
         "b": "GHA",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T21:00:00Z",
-        "venue": "Lincoln Financial Field, Philadelphia"
+        "venue": "Lincoln Financial Field, Philadelphia",
+        "as": 0,
+        "bs": 0
       }
     ],
     [

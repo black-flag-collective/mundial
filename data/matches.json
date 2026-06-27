@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T00:21:35.007Z",
+  "updatedAt": "2026-06-27T01:20:50.351Z",
   "days": [
     {
       "dow": "Thursday",
@@ -768,7 +768,7 @@
         "ko": "2026-06-27T00:00:00Z",
         "venue": "Estadio Akron, Zapopan",
         "as": 0,
-        "bs": 0
+        "bs": 1
       },
       {
         "g": "I",

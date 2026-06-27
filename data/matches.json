@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T21:52:01.955Z",
+  "updatedAt": "2026-06-27T00:21:35.007Z",
   "days": [
     {
       "dow": "Thursday",
@@ -754,17 +754,21 @@
         "g": "H",
         "a": "CPV",
         "b": "KSA",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T00:00:00Z",
-        "venue": "NRG Stadium, Houston"
+        "venue": "NRG Stadium, Houston",
+        "as": 0,
+        "bs": 0
       },
       {
         "g": "H",
         "a": "URU",
         "b": "ESP",
-        "st": "UP",
+        "st": "LIVE",
         "ko": "2026-06-27T00:00:00Z",
-        "venue": "Estadio Akron, Zapopan"
+        "venue": "Estadio Akron, Zapopan",
+        "as": 0,
+        "bs": 0
       },
       {
         "g": "I",

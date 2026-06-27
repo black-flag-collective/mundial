@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T21:20:37.066Z",
+  "updatedAt": "2026-06-27T21:47:41.587Z",
   "days": [
     {
       "dow": "Thursday",
@@ -845,7 +845,7 @@
         "st": "LIVE",
         "ko": "2026-06-27T21:00:00Z",
         "venue": "Lincoln Financial Field, Philadelphia",
-        "as": 0,
+        "as": 1,
         "bs": 0
       }
     ],

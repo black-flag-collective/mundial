@@ -50,7 +50,7 @@ an individual is officially representing the community in public spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the project maintainers privately through GitHub's
-[private vulnerability reporting](https://github.com/black-flag-collective/mundial-buzz/security/advisories/new)
+[private vulnerability reporting](https://github.com/black-flag-collective/mundial/security/advisories/new)
 or by contacting a maintainer directly. All complaints will be reviewed and
 investigated promptly and fairly. Maintainers are obligated to respect the
 privacy and security of the reporter of any incident.

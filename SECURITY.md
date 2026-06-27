@@ -5,7 +5,7 @@
 Please **do not** open a public issue for security problems.
 
 Instead, report privately through GitHub's
-[private vulnerability reporting](https://github.com/black-flag-collective/mundial-buzz/security/advisories/new)
+[private vulnerability reporting](https://github.com/black-flag-collective/mundial/security/advisories/new)
 (the **Security → Report a vulnerability** button on the repo). We'll acknowledge
 the report and work with you on a fix and disclosure timeline.
 

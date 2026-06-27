@@ -8,7 +8,7 @@ the process is light.
 Requires **Node ≥ 20**.
 
 ```bash
-git clone https://github.com/black-flag-collective/mundial-buzz.git
+git clone https://github.com/black-flag-collective/mundial.git
 cd mundial-buzz
 npm install
 npm start          # http://localhost:3000
@@ -43,7 +43,7 @@ optional integrations (live scores, live X buzz) are documented in
 
 ## Reporting bugs & ideas
 
-Open an [issue](https://github.com/black-flag-collective/mundial-buzz/issues)
+Open an [issue](https://github.com/black-flag-collective/mundial/issues)
 using one of the templates. For anything security-sensitive, see
 [SECURITY.md](SECURITY.md) instead of filing a public issue.
 

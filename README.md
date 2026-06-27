@@ -1,6 +1,6 @@
 # mundial.buzz
 
-[![CI](https://github.com/black-flag-collective/mundial-buzz/actions/workflows/ci.yml/badge.svg)](https://github.com/black-flag-collective/mundial-buzz/actions/workflows/ci.yml)
+[![CI](https://github.com/black-flag-collective/mundial/actions/workflows/ci.yml/badge.svg)](https://github.com/black-flag-collective/mundial/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A520-43853d.svg)](https://nodejs.org)
 

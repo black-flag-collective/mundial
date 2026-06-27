@@ -1,6 +1,6 @@
 # Mundial (mundial-buzz) — Architecture & Operations
 
-**Repo:** https://github.com/black-flag-collective/mundial-buzz
+**Repo:** https://github.com/black-flag-collective/mundial
 **Live:** https://mundial-buzz.fly.dev (Fly.io)
 
 > **User-facing feature tour:** see [`docs/FEATURES.md`](docs/FEATURES.md) for

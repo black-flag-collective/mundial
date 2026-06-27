@@ -8,10 +8,10 @@
   "homepage": "https://mundial-buzz.fly.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/black-flag-collective/mundial-buzz.git"
+    "url": "https://github.com/black-flag-collective/mundial.git"
   },
   "bugs": {
-    "url": "https://github.com/black-flag-collective/mundial-buzz/issues"
+    "url": "https://github.com/black-flag-collective/mundial/issues"
   },
   "keywords": [
     "world-cup",

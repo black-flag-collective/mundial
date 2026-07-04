@@ -43,9 +43,9 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "storybook": "^10.4.6",
-    "three": "^0.184.0",
+    "three": "^0.185.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
-    "vite-plugin-dts": "^5.0.2"
+    "vite-plugin-dts": "^5.0.3"
   }
 }

@@ -10,15 +10,19 @@ name: Update match data
 
 on:
   schedule:
-    # Every 30 minutes. Note: GitHub may delay scheduled runs under load, and
-    # disables schedules after 60 days of repo inactivity — fine for a
-    # tournament-length window.
-    - cron: "*/30 * * * *"
+    # Hourly at :17 (offset from mundial-buzz at :47 so the two repos never
+    # stack their runs or Fly deploys). Was every 30 minutes; hourly halves
+    # runner minutes and downstream Fly deploys. Reverting this single cron
+    # line to "*/30 * * * *" restores match-day freshness in one commit.
+    # Note: GitHub may delay scheduled runs under load, and disables schedules
+    # after 60 days of repo inactivity — fine for a tournament-length window.
+    - cron: "17 * * * *"
   workflow_dispatch: {}
 
 concurrency:
   group: update-data
-  cancel-in-progress: true
+  # Never cancel a run mid-commit/mid-deploy; overlapping runs queue instead.
+  cancel-in-progress: false
 permissions:
   contents: write
 
@@ -38,7 +42,17 @@ jobs:
           node-version: 20
           cache: npm
 
+      # Cache the linked node_modules tree, not just the npm tarball cache.
+      # On hit, skips the entire `npm ci` step.
+      - name: Cache node_modules
+        id: node-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.node-cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Verify a data source is configured

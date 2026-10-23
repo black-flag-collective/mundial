@@ -68,7 +68,7 @@ the updater workflow and fly.yml need the FLY_API_TOKEN repo secret.
 | `scripts/buzz-engine.js` | Buzz engine (simulated source). Per-country `score`/`spike` from popularity + live-match state + procedural flares. Source-agnostic — swap in a real X adapter later. |
 | `scripts/smoke-test.js` | `npm test` — boots the server and asserts `/`, `/support.js`, `/api/data.json`, `/api/buzz.json` serve correctly. |
 | `.github/workflows/update-data.yml` | Scheduled (every 30 min) updater: runs the script and commits `matches.json` back to main. Needs `ANTHROPIC_API_KEY` repo secret. |
-| `Dockerfile` | Node 20 Alpine |
+| `Dockerfile` | Node 22.23.4 Alpine, pinned to `sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914` |
 | `fly.toml` | app=`mundial-buzz`, region=iad, 256MB, auto-stop when idle |
 | `.github/workflows/fly.yml` | Auto-deploy on push to main + manual dispatch |
 | `DEPLOY.md` | Full deploy instructions |

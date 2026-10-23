@@ -5,7 +5,7 @@ the process is light.
 
 ## Getting started
 
-Requires **Node ≥ 20**.
+Requires **Node 22.23.4**.
 
 ```bash
 git clone https://github.com/black-flag-collective/mundial.git
@@ -35,7 +35,7 @@ optional integrations (live scores, live X buzz) are documented in
 
 - Match the style of the file you're editing — no repo-wide reformatting in a
   feature PR.
-- Plain modern JavaScript (Node ≥ 20, ES modules / CommonJS as the surrounding
+- Plain modern JavaScript (Node 22.23.4, ES modules / CommonJS as the surrounding
   file uses). No build step for the server or the front end.
 - The files under `public/` are a Design Component export on a self-contained
   React runtime (`support.js`); treat `support.js` and vendored bundles as

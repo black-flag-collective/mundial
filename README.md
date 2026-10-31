@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/black-flag-collective/mundial/actions/workflows/ci.yml/badge.svg)](https://github.com/black-flag-collective/mundial/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A520-43853d.svg)](https://nodejs.org)
+[![Node 22.23.4](https://img.shields.io/badge/node-22.23.4-43853d.svg)](https://nodejs.org)
 
 A live companion to the **FIFA World Cup 2026** (Canada · Mexico · USA,
 Jun 11 – Jul 19) — a 3D globe of all 48 nations paired with day-by-day results,
@@ -36,7 +36,7 @@ is defined in [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md).
 
 ## Running locally
 
-Requires **Node ≥ 20**.
+Requires **Node 22.23.4**.
 
 ```bash
 npm install

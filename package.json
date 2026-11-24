@@ -32,7 +32,7 @@
     "test": "node scripts/x-self-test.js && node scripts/buzz-self-test.js && node scripts/predict-self-test.js && node scripts/project-self-test.js && node scripts/providers-self-test.js && node scripts/rate-limit-self-test.js && node scripts/smoke-test.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.112.3",
+    "@anthropic-ai/sdk": "^1.12.0",
     "@posthog/ai": "^7.21.0",
     "express": "^5.3.0",
     "posthog-node": "^5.45.2"

@@ -15,6 +15,10 @@ updates:
           - minor
           - patch
     ignore:
+      # 2026-11-24: major versions are a deliberate, planned choice, not a weekly stuck PR.
+      # Security updates are unaffected by this rule.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
       # 2026-11-24: @posthog/ai 8.x declares an optional peer on
       # @anthropic-ai/sdk ^0.78, which conflicts with the sdk version used here,
       # so `npm install` fails with ERESOLVE. Revisit when it widens the peer range.
@@ -38,6 +42,10 @@ updates:
           - minor
           - patch
     ignore:
+      # 2026-11-24: major versions are a deliberate, planned choice, not a weekly stuck PR.
+      # Security updates are unaffected by this rule.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
       # 2026-11-24: TypeScript 7 breaks `vite build` config loading for this
       # package (vite-plugin-dts does not support it yet). Revisit later.
       - dependency-name: typescript
@@ -55,3 +63,8 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # 2026-11-24: major versions are a deliberate, planned choice, not a weekly stuck PR.
+      # Security updates are unaffected by this rule.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

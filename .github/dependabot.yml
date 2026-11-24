@@ -3,9 +3,10 @@ updates:
   # Server / root app dependencies
   - package-ecosystem: npm
     directory: "/"
+    target-branch: main
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
       # One PR for routine minor/patch bumps to keep noise low; majors stay
       # separate so they can be reviewed on their own.
@@ -13,13 +14,20 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # 2026-11-24: @posthog/ai 8.x declares an optional peer on
+      # @anthropic-ai/sdk ^0.78, which conflicts with the sdk version used here,
+      # so `npm install` fails with ERESOLVE. Revisit when it widens the peer range.
+      - dependency-name: "@posthog/ai"
+        update-types: ["version-update:semver-major"]
 
   # Design-system package (Storybook / Vite / TS toolchain)
   - package-ecosystem: npm
     directory: "/packages/mundial-ui"
+    target-branch: main
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
       minor-and-patch:
         update-types:
@@ -29,6 +37,12 @@ updates:
   # GitHub Actions used by the CI / deploy / data workflows
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: main
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch

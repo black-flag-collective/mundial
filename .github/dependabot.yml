@@ -20,6 +20,10 @@ updates:
       # so `npm install` fails with ERESOLVE. Revisit when it widens the peer range.
       - dependency-name: "@posthog/ai"
         update-types: ["version-update:semver-major"]
+      # 2026-11-24: posthog-node 6 conflicts with the @posthog/ai 7 peer range
+      # (ERESOLVE on npm ci). Revisit together with @posthog/ai.
+      - dependency-name: "posthog-node"
+        update-types: ["version-update:semver-major"]
 
   # Design-system package (Storybook / Vite / TS toolchain)
   - package-ecosystem: npm
@@ -33,6 +37,11 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # 2026-11-24: TypeScript 7 breaks `vite build` config loading for this
+      # package (vite-plugin-dts does not support it yet). Revisit later.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions used by the CI / deploy / data workflows
   - package-ecosystem: github-actions
